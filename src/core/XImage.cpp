@@ -131,7 +131,14 @@ XError XImage::CopyData( const shared_ptr<XImage>& copyTo ) const
     {
         ret = XError::NullPointer;
     }
-    else if ( ( mWidth != copyTo->mWidth ) || ( mHeight != copyTo->mHeight ) || ( mFormat != copyTo->mFormat ) )
+    // for JPEGs we just make sure there is enough space to copy the image data,
+    // but for all uncompressed formats we check for exact match of width/height
+    else if ( ( mHeight != copyTo->mHeight ) || ( mFormat != copyTo->mFormat ) )
+    {
+        ret = XError::ImageParametersMismatch;
+    }
+    else if  ( ( ( mFormat != XPixelFormat::JPEG ) && ( mWidth != copyTo->mWidth ) ) ||
+               ( ( mFormat == XPixelFormat::JPEG ) && ( mStride > copyTo->mStride ) ) )
     {
         ret = XError::ImageParametersMismatch;
     }
@@ -159,9 +166,11 @@ XError XImage::CopyDataOrClone( std::shared_ptr<XImage>& copyTo ) const
     XError ret = XError::Success;
 
     if ( ( !copyTo ) ||
-         ( copyTo->Width( )  != mWidth  ) ||
          ( copyTo->Height( ) != mHeight ) ||
-         ( copyTo->Format( ) != mFormat ) )
+         ( copyTo->Format( ) != mFormat ) ||
+         ( ( mFormat != XPixelFormat::JPEG ) && ( copyTo->Width( ) != mWidth ) ) ||
+         ( ( mFormat == XPixelFormat::JPEG ) && ( copyTo->Stride( ) < mStride ) )
+       )
     {
         copyTo = Clone( );
         if ( !copyTo )
