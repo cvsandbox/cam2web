@@ -56,8 +56,19 @@ const static char* STR_DEF = "def";
 
 const static list<string> SupportedSubproperties = { STR_MIN, STR_MAX, STR_DEF };
 
-XLocalVideoDeviceConfig::XLocalVideoDeviceConfig( const shared_ptr<XLocalVideoDevice>& camera ) :
-    mCamera( camera )
+// available info read-only propertie
+const static char* STR_DEVICE = "device";
+const static char* STR_WIDTH  = "width";
+const static char* STR_HEIGHT = "height";
+
+const static list<string> SupportedInfoProperties = { STR_DEVICE, STR_WIDTH, STR_HEIGHT };
+
+// ------------------------------------------------------------------------------------------
+
+XLocalVideoDeviceConfig::XLocalVideoDeviceConfig( const shared_ptr<XLocalVideoDevice>& camera,
+                                                  const XDeviceName& deviceName,
+                                                  const XDeviceCapabilities& deviceCapabilities ) :
+    mCamera( camera ), mDeviceName( deviceName ), mDeviceCapabilities( deviceCapabilities )
 {
 
 }
@@ -70,44 +81,51 @@ XError XLocalVideoDeviceConfig::SetProperty( const string& propertyName, const s
     string  subPropertyName;
     int32_t propValue        = 0;
 
-    // assume all configuration values are numeric
-    int scannedCount = sscanf( value.c_str( ), "%d", &propValue );
-
-    if ( scannedCount != 1 )
+    if ( std::find( SupportedInfoProperties.begin( ), SupportedInfoProperties.end( ), propertyName ) != SupportedInfoProperties.end( ) )
     {
-        ret = XError::InvalidPropertyValue;
+        ret = XError::ReadOnlyProperty;
     }
     else
     {
-        string::size_type delimiterPos = basePropertyName.find( ':' );
+        // assume all configuration values are numeric
+        int scannedCount = sscanf( value.c_str( ), "%d", &propValue );
 
-        if ( delimiterPos != string::npos )
+        if ( scannedCount != 1 )
         {
-            subPropertyName  = basePropertyName.substr( delimiterPos + 1 );
-            basePropertyName = basePropertyName.substr( 0, delimiterPos );
-        }
-
-        map<string, XVideoProperty>::const_iterator itSupportedProperty = SupportedProperties.find( basePropertyName );
-
-        if ( itSupportedProperty == SupportedProperties.end( ) )
-        {
-            ret = XError::UnknownProperty;
+            ret = XError::InvalidPropertyValue;
         }
         else
         {
-            if ( subPropertyName.empty( ) )
+            string::size_type delimiterPos = basePropertyName.find( ':' );
+
+            if ( delimiterPos != string::npos )
             {
-                ret = mCamera->SetVideoProperty( itSupportedProperty->second, propValue, false );
+                subPropertyName = basePropertyName.substr( delimiterPos + 1 );
+                basePropertyName = basePropertyName.substr( 0, delimiterPos );
+            }
+
+            map<string, XVideoProperty>::const_iterator itSupportedProperty = SupportedProperties.find( basePropertyName );
+
+            if ( itSupportedProperty == SupportedProperties.end( ) )
+            {
+                ret = XError::UnknownProperty;
             }
             else
             {
-                if ( std::find( SupportedSubproperties.begin( ), SupportedSubproperties.end( ), subPropertyName ) == SupportedSubproperties.end( ) )
+                if ( subPropertyName.empty( ) )
                 {
-                    ret = XError::UnknownProperty;
+                    ret = mCamera->SetVideoProperty( itSupportedProperty->second, propValue, false );
                 }
                 else
                 {
-                    ret = XError::ReadOnlyProperty;
+                    if ( std::find( SupportedSubproperties.begin( ), SupportedSubproperties.end( ), subPropertyName ) == SupportedSubproperties.end( ) )
+                    {
+                        ret = XError::UnknownProperty;
+                    }
+                    else
+                    {
+                        ret = XError::ReadOnlyProperty;
+                    }
                 }
             }
         }
@@ -125,62 +143,80 @@ XError XLocalVideoDeviceConfig::GetProperty( const string& propertyName, string&
     int32_t propValue        = 0;
     char    buffer[32];
 
-    string::size_type delimiterPos = basePropertyName.find( ':' );
-
-    if ( delimiterPos != string::npos )
+    // check for one of the read-only info properties first
+    if ( propertyName == STR_DEVICE )
     {
-        subPropertyName  = basePropertyName.substr( delimiterPos + 1 );
-        basePropertyName = basePropertyName.substr( 0, delimiterPos );
+        value = mDeviceName.Name( );
     }
-
-    // find the property in the list of supported
-    map<string, XVideoProperty>::const_iterator itSupportedProperty = SupportedProperties.find( basePropertyName );
-
-    if ( itSupportedProperty == SupportedProperties.end( ) )
+    else if ( propertyName == STR_WIDTH )
     {
-        ret = XError::UnknownProperty;
+        sprintf( buffer, "%d", mDeviceCapabilities.Width( ) );
+        value = buffer;
+    }
+    else if ( propertyName == STR_HEIGHT )
+    {
+        sprintf( buffer, "%d", mDeviceCapabilities.Height( ) );
+        value = buffer;
     }
     else
     {
-        if ( subPropertyName.empty( ) )
+        string::size_type delimiterPos = basePropertyName.find( ':' );
+
+        if ( delimiterPos != string::npos )
         {
-            // get the property value itself
-            ret = mCamera->GetVideoProperty( itSupportedProperty->second, &propValue );
+            subPropertyName = basePropertyName.substr( delimiterPos + 1 );
+            basePropertyName = basePropertyName.substr( 0, delimiterPos );
+        }
+
+        // find the property in the list of supported
+        map<string, XVideoProperty>::const_iterator itSupportedProperty = SupportedProperties.find( basePropertyName );
+
+        if ( itSupportedProperty == SupportedProperties.end( ) )
+        {
+            ret = XError::UnknownProperty;
         }
         else
         {
-            int32_t min, max, step, default;
-            bool    isAutoSupported;
-
-            // get property features - min/max/default/etc
-            ret = mCamera->GetVideoPropertyRange( itSupportedProperty->second, &min, &max, &step, &default, &isAutoSupported );
-
-            if ( ret )
+            if ( subPropertyName.empty( ) )
             {
-                if ( subPropertyName == STR_MIN )
+                // get the property value itself
+                ret = mCamera->GetVideoProperty( itSupportedProperty->second, &propValue );
+            }
+            else
+            {
+                int32_t min, max, step, default;
+                bool    isAutoSupported;
+
+                // get property features - min/max/default/etc
+                ret = mCamera->GetVideoPropertyRange( itSupportedProperty->second, &min, &max, &step, &default, &isAutoSupported );
+
+                if ( ret )
                 {
-                    propValue = min;
-                }
-                else if ( subPropertyName == STR_MAX )
-                {
-                    propValue = max;
-                }
-                else if ( subPropertyName == STR_DEF )
-                {
-                    propValue = default;
-                }
-                else
-                {
-                    ret = XError::UnknownProperty;
+                    if ( subPropertyName == STR_MIN )
+                    {
+                        propValue = min;
+                    }
+                    else if ( subPropertyName == STR_MAX )
+                    {
+                        propValue = max;
+                    }
+                    else if ( subPropertyName == STR_DEF )
+                    {
+                        propValue = default;
+                    }
+                    else
+                    {
+                        ret = XError::UnknownProperty;
+                    }
                 }
             }
         }
-    }
 
-    if ( ret )
-    {
-        sprintf( buffer, "%d", propValue );
-        value = buffer;
+        if ( ret )
+        {
+            sprintf( buffer, "%d", propValue );
+            value = buffer;
+        }
     }
 
     return ret;
@@ -191,6 +227,14 @@ map<string, string> XLocalVideoDeviceConfig::GetAllProperties( ) const
 {
     map<string, string> properties;
     string              value;
+
+    for ( auto infoProperty : SupportedInfoProperties )
+    {
+        if ( GetProperty( infoProperty, value ) )
+        {
+            properties.insert( pair<string, string>( infoProperty, value ) );
+        }
+    }
 
     for ( auto property : SupportedProperties )
     {

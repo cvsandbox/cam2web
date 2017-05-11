@@ -37,7 +37,9 @@
 class XLocalVideoDeviceConfig : public IObjectConfigurator
 {
 public:
-    XLocalVideoDeviceConfig( const std::shared_ptr<XLocalVideoDevice>& camera );
+    XLocalVideoDeviceConfig( const std::shared_ptr<XLocalVideoDevice>& camera,
+                             const XDeviceName& deviceName, 
+                             const XDeviceCapabilities& deviceCapabilities = XDeviceCapabilities( ) );
 
     XError SetProperty( const std::string& propertyName, const std::string& value );
     XError GetProperty( const std::string& propertyName, std::string& value ) const;
@@ -46,6 +48,8 @@ public:
 
 private:
     std::shared_ptr<XLocalVideoDevice> mCamera;
+    XDeviceName                        mDeviceName;
+    XDeviceCapabilities                mDeviceCapabilities;
 };
 
 #endif // XLOCAL_VIDEO_DEVICE_CONFIG_HPP

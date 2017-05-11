@@ -66,6 +66,7 @@ using namespace std;
 #define IDC_LINK_STATUS         (506)
 
 #define DEFAULT_PORT            (8000)
+#define DEFAULT_MJPEG_RATE      (30)
 
 #define STR_ERROR               TEXT( "Error" )
 #define STR_START_STREAMING     TEXT( "&Start streaming" )
@@ -90,6 +91,8 @@ public:
     vector<XDeviceName>             devices;
     vector<XDeviceCapabilities>     cameraCapabilities;
     shared_ptr<XLocalVideoDevice>   camera;
+    XDeviceName                     selectedDeviceName;
+    XDeviceCapabilities             selectedResolutuion;
     shared_ptr<IObjectConfigurator> cameraConfig;
 
     XWebServer                      server;
@@ -100,8 +103,8 @@ public:
     AppData( ) :
         hInst( NULL ), hwndMain( NULL ), hwndCamerasCombo( NULL ),
         hwndResolutionsCombo( NULL ), hwndStartButton( NULL ), hwndStatusLink( NULL ),
-        devices( ), cameraCapabilities( ), camera( ), cameraConfig(  ),
-        server( ), video2web( ),
+        devices( ), cameraCapabilities( ), camera( ), selectedDeviceName( ), selectedResolutuion( ),
+        cameraConfig( ), server( ), video2web( ),
         streamingInProgress( false )
     {
 
@@ -178,7 +181,7 @@ BOOL CreateMainWindow( HINSTANCE hInstance, int nCmdShow )
         70, 35, 200, 150, hwndMain, (HMENU) IDC_COMBO_RESOLUTIONS, hInstance, NULL );
 
     // streaming start/stop button and link
-    gData->hwndStartButton = CreateWindow( WC_BUTTON, TEXT( "&Start streaming" ),
+    gData->hwndStartButton = CreateWindow( WC_BUTTON, STR_START_STREAMING,
         WS_CHILD | WS_OVERLAPPED | WS_VISIBLE | WS_TABSTOP,
         10, 70, 260, 40, hwndMain, (HMENU) IDC_BUTTON_START, hInstance, NULL );
 
@@ -208,7 +211,10 @@ int APIENTRY _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
     UNREFERENCED_PARAMETER( hPrevInstance );
     UNREFERENCED_PARAMETER( lpCmdLine );
 
+#ifdef _DEBUG
     _CrtMemState memStateAtStart;
+#endif
+
     _CrtMemCheckpoint( &memStateAtStart );
 
     int ret = 0;
@@ -263,7 +269,6 @@ void CenterWindowTo( HWND hWnd, HWND hWndRef )
         0, 0, SWP_NOSIZE );
 }
 
-
 // Convert specfied UTF8 string to wide character string
 static wstring Utf8to16( const string& utf8string )
 {
@@ -295,7 +300,8 @@ static void CreateDeviceAndGetResolutions( )
 
     if ( ( cameraIndex >= 0 ) && ( cameraIndex < (int) gData->devices.size( ) ) )
     {
-        gData->camera = XLocalVideoDevice::Create( gData->devices[cameraIndex].Moniker( ) );
+        gData->selectedDeviceName = gData->devices[cameraIndex];
+        gData->camera = XLocalVideoDevice::Create( gData->selectedDeviceName.Moniker( ) );
 
         if ( gData->camera )
         {
@@ -355,15 +361,16 @@ static bool StartVideoStreaming( )
 
         if ( ( resolutionIndex >= 0 ) && ( resolutionIndex < (int) gData->cameraCapabilities.size( ) ) )
         {
-            gData->camera->SetResolution( gData->cameraCapabilities[resolutionIndex] );
+            gData->selectedResolutuion = gData->cameraCapabilities[resolutionIndex];
+            gData->camera->SetResolution( gData->selectedResolutuion );
         }
         
-        gData->cameraConfig = make_shared<XLocalVideoDeviceConfig>( gData->camera );
+        gData->cameraConfig = make_shared<XLocalVideoDeviceConfig>( gData->camera, gData->selectedDeviceName, gData->selectedResolutuion );
 
         gData->server.SetDocumentRoot( "./web/" ).SetPort( DEFAULT_PORT ).
             AddHandler( make_shared<XObjectConfiguratorRequestHandler>( "/config", gData->cameraConfig ) ).
             AddHandler( gData->video2web.CreateJpegHandler( "/jpeg" ) ).
-            AddHandler( gData->video2web.CreateMjpegHandler( "/mjpeg", 30 ) );
+            AddHandler( gData->video2web.CreateMjpegHandler( "/mjpeg", DEFAULT_MJPEG_RATE ) );
 
         gData->camera->SetListener( gData->video2web.VideoSourceListener( ) );
 
@@ -396,8 +403,6 @@ static void StopVideoStreaming( )
     }
 
     gData->server.Stop( );
-
-    
 }
 
 // Toggle video streaming state
@@ -428,7 +433,6 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
     switch ( message )
     {
-
     case WM_COMMAND:
         wmId    = LOWORD( wParam );
         wmEvent = HIWORD( wParam );
@@ -534,6 +538,7 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 INT_PTR CALLBACK AboutDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
     UNREFERENCED_PARAMETER( lParam );
+
     switch ( message )
     {
     case WM_INITDIALOG:

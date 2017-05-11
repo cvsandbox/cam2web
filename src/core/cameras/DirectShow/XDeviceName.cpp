@@ -31,17 +31,22 @@
 #include "XDeviceName.hpp"
 using namespace std;
 
+XDeviceName::XDeviceName( ) :
+    mMoniker( ), mName( )
+{
+}
+
 XDeviceName::XDeviceName( string moniker, string name ) :
-	mMoniker( moniker ), mName( name )
+    mMoniker( moniker ), mName( name )
 {
 }
 
 // Check if two device names are equal (moniker is checked only)
 bool XDeviceName::operator==( const XDeviceName& rhs ) const
 {
-	return ( mMoniker == rhs.mMoniker );
+    return ( mMoniker == rhs.mMoniker );
 }
 bool XDeviceName::operator==( const std::string& rhsMoniker ) const
 {
-	return ( mMoniker == rhsMoniker );
+    return ( mMoniker == rhsMoniker );
 }

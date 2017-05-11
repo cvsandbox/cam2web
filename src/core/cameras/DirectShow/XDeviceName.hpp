@@ -37,28 +37,29 @@
 class XDeviceName
 {
 public:
-	XDeviceName( std::string moniker, std::string name );
+    XDeviceName( );
+    XDeviceName( std::string moniker, std::string name );
 
-	const std::string Name( ) const { return mName; }
-	const std::string Moniker( ) const { return mMoniker; }
+    const std::string Name( ) const { return mName; }
+    const std::string Moniker( ) const { return mMoniker; }
 
-	// Check if two device names are equal (moniker is checked only)
-	bool operator==( const XDeviceName& rhs ) const;
-	bool operator==( const std::string& rhsMoniker ) const;
+    // Check if two device names are equal (moniker is checked only)
+    bool operator==( const XDeviceName& rhs ) const;
+    bool operator==( const std::string& rhsMoniker ) const;
 
-	// Check if two device names are NOT equal
+    // Check if two device names are NOT equal
     bool operator!=( const XDeviceName& rhs  ) const
-	{
+    {
         return ( !( (*this) == rhs ) ) ;
     }
     bool operator!=( const std::string& rhsMoniker  ) const
-	{
+    {
         return ( !( (*this) == rhsMoniker ) ) ;
     }
 
 private:
-	std::string mMoniker;
-	std::string mName;
+    std::string mMoniker;
+    std::string mName;
 };
 
 #endif // XDEVICE_NAME_HPP
