@@ -1,0 +1,135 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{9AEC3B0A-79C4-4428-8B7E-FEEB1F9EDA5A}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>cam2web</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../core;../../core/Cameras/DirectShow;../../../externals/DirectShow;../../../externals/libjpeg-turbo/include;../../../externals/mongoose;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeaderFile />
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>../../../externals/libjpeg-turbo/lib-win;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>jpeg-static.lib;Comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile />
+      <AdditionalIncludeDirectories>../../core;../../core/Cameras/DirectShow;../../../externals/DirectShow;../../../externals/libjpeg-turbo/include;../../../externals/mongoose;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>../../../externals/libjpeg-turbo/lib-win;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>jpeg-static.lib;Comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries>
+      </IgnoreAllDefaultLibraries>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\core\cameras\DirectShow\XDeviceCapabilities.hpp" />
+    <ClInclude Include="..\..\core\cameras\DirectShow\XDeviceName.hpp" />
+    <ClInclude Include="..\..\core\cameras\DirectShow\XDevicePinInfo.hpp" />
+    <ClInclude Include="..\..\core\cameras\DirectShow\XLocalVideoDevice.hpp" />
+    <ClInclude Include="..\..\core\cameras\DirectShow\XLocalVideoDeviceConfig.hpp" />
+    <ClInclude Include="..\..\core\IObjectConfigurator.hpp" />
+    <ClInclude Include="..\..\core\IVideoSource.hpp" />
+    <ClInclude Include="..\..\core\IVideoSourceListener.hpp" />
+    <ClInclude Include="..\..\core\XError.hpp" />
+    <ClInclude Include="..\..\core\XImage.hpp" />
+    <ClInclude Include="..\..\core\XInterfaces.hpp" />
+    <ClInclude Include="..\..\core\XJpegEncoder.hpp" />
+    <ClInclude Include="..\..\core\XManualResetEvent.hpp" />
+    <ClInclude Include="..\..\core\XObjectConfiguratorRequestHandler.hpp" />
+    <ClInclude Include="..\..\core\XSimpleJsonParser.hpp" />
+    <ClInclude Include="..\..\core\XVideoSourceToWeb.hpp" />
+    <ClInclude Include="..\..\core\XWebServer.hpp" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\externals\mongoose\mongoose.c">
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level3</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Level3</WarningLevel>
+    </ClCompile>
+    <ClCompile Include="..\..\core\cameras\DirectShow\XDeviceCapabilities.cpp" />
+    <ClCompile Include="..\..\core\cameras\DirectShow\XDeviceName.cpp" />
+    <ClCompile Include="..\..\core\cameras\DirectShow\XDevicePinInfo.cpp" />
+    <ClCompile Include="..\..\core\cameras\DirectShow\XLocalVideoDevice.cpp" />
+    <ClCompile Include="..\..\core\cameras\DirectShow\XLocalVideoDeviceConfig.cpp" />
+    <ClCompile Include="..\..\core\XError.cpp" />
+    <ClCompile Include="..\..\core\XImage.cpp" />
+    <ClCompile Include="..\..\core\XJpegEncoder.cpp" />
+    <ClCompile Include="..\..\core\XManualResetEvent.cpp" />
+    <ClCompile Include="..\..\core\XObjectConfiguratorRequestHandler.cpp" />
+    <ClCompile Include="..\..\core\XSimpleJsonParser.cpp" />
+    <ClCompile Include="..\..\core\XVideoSourceToWeb.cpp" />
+    <ClCompile Include="..\..\core\XWebServer.cpp" />
+    <ClCompile Include="cam2web.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="cam2web.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="cam2web.ico" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
