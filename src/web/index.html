@@ -1,0 +1,60 @@
+<!DOCTYPE html> 
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>web2cam :: Remote Camera</title>
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+    <script src="camera.js"></script>
+    <script src="jquery-1.11.1.min.js"></script>
+</head>
+<body>
+
+<header>
+    <div id="title">Remote Camera</div>
+</header>
+
+<div id="main">
+
+<img id="camera" width="640" height="480">
+
+</div>
+
+<footer>
+    <div id="copyright"><a href="https://github.com/cvsandbox/cam2web" target="_blank">cam2web - camera web streamer</a> :: Copyright © 2017 cvsandbox<div>
+</footer>
+
+<script>
+Camera.Start( 30 );
+
+function getCameraInfo( )
+{
+    $.ajax( {
+        type        : "GET",
+        url         : "info",
+        contentType : "application/json; charset=utf-8",
+        async       : true,
+        success: function( data )
+        {
+            if ( data.status == "OK" )
+            {
+                config = data.config;
+                
+                $('#title').html( config.device );
+                $('#camera').width( config.width );
+                $('#camera').height( config.height );
+                
+                document.title = 'web2cam :: ' + config.device;
+            }
+        },
+        failure: function( errMsg )
+        {
+            console.log( errMsg );
+        }
+    } );
+}
+
+getCameraInfo( );
+
+</script>
+</body>
+</html>
