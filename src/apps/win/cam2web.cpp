@@ -418,6 +418,7 @@ static void StopVideoStreaming( )
     }
 
     gData->server.Stop( );
+    gData->server.ClearHandlers( );
 }
 
 // Toggle video streaming state

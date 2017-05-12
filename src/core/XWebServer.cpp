@@ -262,6 +262,7 @@ namespace Private
         void Cleanup( );
         void AddHandler( const shared_ptr<IWebRequestHandler>& handler );
         void RemoveHandler( const shared_ptr<IWebRequestHandler>& handler );
+        void ClearHandlers( );
         shared_ptr<IWebRequestHandler> FindHandler( const string& uri );
 
         static void* pollHandler( void* param );
@@ -376,6 +377,13 @@ void XWebServer::RemoveHandler( const std::shared_ptr<IWebRequestHandler>& handl
     mData->RemoveHandler( handler );
 }
 
+// Remove all handlers
+void XWebServer::ClearHandlers( )
+{
+    mData->ClearHandlers( );
+}
+
+
 /* ================================================================= */
 /* Private implemenetation of the XWebServer                         */
 /* ================================================================= */
@@ -482,6 +490,15 @@ void XWebServerData::RemoveHandler( const shared_ptr<IWebRequestHandler>& handle
 
     FileHandlers.erase( handler->Uri( ) );
     FolderHandlers.remove( handler );
+}
+
+// Remove all handlers
+void XWebServerData::ClearHandlers( )
+{
+    lock_guard<recursive_mutex> lock( DataSync );
+
+    FileHandlers.clear( );
+    FolderHandlers.clear( );
 }
 
 // Find equest handler for the specified URI

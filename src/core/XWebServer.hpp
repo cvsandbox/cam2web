@@ -166,6 +166,9 @@ public:
     XWebServer& AddHandler( const std::shared_ptr<IWebRequestHandler>& handler );
     void RemoveHandler( const std::shared_ptr<IWebRequestHandler>& handler );
 
+    // Remove all handlers
+    void ClearHandlers( );
+
     // ==============================================================
 
     // Start/Stop the Web server
