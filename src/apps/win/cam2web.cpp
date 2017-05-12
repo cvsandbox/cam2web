@@ -48,6 +48,7 @@
 #include "XWebServer.hpp"
 #include "XVideoSourceToWeb.hpp"
 #include "XObjectConfiguratorRequestHandler.hpp"
+#include "XObjectInformationRequestHandler.hpp"
 
 // Enable visual styles by using ComCtl32.dll version 6 or later
 #pragma comment(linker,"\"/manifestdependency:type='win32' \
@@ -364,11 +365,25 @@ static bool StartVideoStreaming( )
             gData->selectedResolutuion = gData->cameraCapabilities[resolutionIndex];
             gData->camera->SetResolution( gData->selectedResolutuion );
         }
-        
-        gData->cameraConfig = make_shared<XLocalVideoDeviceConfig>( gData->camera, gData->selectedDeviceName, gData->selectedResolutuion );
 
+        // prepare some read-only informational properties of the camera
+        PropertyMap cameraInfo;
+        char        strVideoSize[32];
+
+        sprintf( strVideoSize,      "%d", gData->selectedResolutuion.Width( ) );
+        sprintf( strVideoSize + 16, "%d", gData->selectedResolutuion.Height( ) );
+
+        cameraInfo.insert( PropertyMap::value_type( "device", gData->selectedDeviceName.Name( ) ) );
+        cameraInfo.insert( PropertyMap::value_type( "width",  strVideoSize ) );
+        cameraInfo.insert( PropertyMap::value_type( "height", strVideoSize + 16 ) );
+
+        // allow camera configuration through simplified configurator object
+        gData->cameraConfig = make_shared<XLocalVideoDeviceConfig>( gData->camera );
+
+        // configure web server
         gData->server.SetDocumentRoot( "./web/" ).SetPort( DEFAULT_PORT ).
             AddHandler( make_shared<XObjectConfiguratorRequestHandler>( "/config", gData->cameraConfig ) ).
+            AddHandler( make_shared<XObjectInformationRequestHandler>( "/info", make_shared<XObjectInformationMap>( cameraInfo ) ) ).
             AddHandler( gData->video2web.CreateJpegHandler( "/jpeg" ) ).
             AddHandler( gData->video2web.CreateMjpegHandler( "/mjpeg", DEFAULT_MJPEG_RATE ) );
 
@@ -499,32 +514,31 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         break;
 
     case WM_UPDATE_UI:
-        // update UI to reflect current streaming status
-        if ( gData->streamingInProgress )
         {
-            TCHAR strStatusLinkText[256];
+            BOOL   enableCameraSelection = TRUE;
+            int    showStatusLink        = SW_HIDE;
+            TCHAR* startButtonText       = STR_START_STREAMING;
 
-            swprintf( strStatusLinkText, 255, TEXT( "<a href=\"http://localhost:%d/\">Streaming on port %d ...</a>" ), DEFAULT_PORT, DEFAULT_PORT );
+            // update UI to reflect current streaming status
+            if ( gData->streamingInProgress )
+            {
+                TCHAR strStatusLinkText[256];
 
-            SetWindowText( gData->hwndStatusLink, strStatusLinkText );
-            ShowWindow( gData->hwndStatusLink, SW_SHOW );
+                swprintf( strStatusLinkText, 255, TEXT( "<a href=\"http://localhost:%d/\">Streaming on port %d ...</a>" ), DEFAULT_PORT, DEFAULT_PORT );
+                SetWindowText( gData->hwndStatusLink, strStatusLinkText );
+                
+                startButtonText       = STR_STOP_STREAMING;
+                enableCameraSelection = FALSE;
+                showStatusLink        = SW_SHOW;
+            }
 
-            SetWindowText( gData->hwndStartButton, STR_STOP_STREAMING );
-
-            EnableWindow( gData->hwndCamerasCombo, FALSE );
-            EnableWindow( gData->hwndResolutionsCombo, FALSE );
+            SetWindowText( gData->hwndStartButton, startButtonText );
+            ShowWindow( gData->hwndStatusLink, showStatusLink );
+            EnableWindow( gData->hwndCamerasCombo, enableCameraSelection );
+            EnableWindow( gData->hwndResolutionsCombo, enableCameraSelection );
+            EnableWindow( gData->hwndStartButton, TRUE );
+            SetFocus( gData->hwndStartButton );
         }
-        else
-        {
-            ShowWindow( gData->hwndStatusLink, SW_HIDE );
-            SetWindowText( gData->hwndStartButton, STR_START_STREAMING );
-
-            EnableWindow( gData->hwndCamerasCombo, TRUE );
-            EnableWindow( gData->hwndResolutionsCombo, TRUE );
-        }
-
-        EnableWindow( gData->hwndStartButton, TRUE );
-        SetFocus( gData->hwndStartButton );
         break;
 
     default:

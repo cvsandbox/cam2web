@@ -28,24 +28,53 @@
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef XLOCAL_VIDEO_DEVICE_CONFIG_HPP
-#define XLOCAL_VIDEO_DEVICE_CONFIG_HPP
+#ifndef IOBJECT_INFORMATION_HPP
+#define IOBJECT_INFORMATION_HPP
 
-#include "IObjectConfigurator.hpp"
-#include "XLocalVideoDevice.hpp"
+#include <string>
+#include <map>
 
-class XLocalVideoDeviceConfig : public IObjectConfigurator
+#include "XError.hpp"
+
+typedef std::map<std::string, std::string> PropertyMap;
+
+class IObjectInformation
 {
 public:
-    XLocalVideoDeviceConfig( const std::shared_ptr<XLocalVideoDevice>& camera );
+    virtual ~IObjectInformation( ) { }
 
-    XError SetProperty( const std::string& propertyName, const std::string& value );
-    XError GetProperty( const std::string& propertyName, std::string& value ) const;
+    virtual XError GetProperty( const std::string& propertyName, std::string& value ) const = 0;
 
-    std::map<std::string, std::string> GetAllProperties( ) const;
-
-private:
-    std::shared_ptr<XLocalVideoDevice> mCamera;
+    virtual PropertyMap GetAllProperties( ) const = 0;
 };
 
-#endif // XLOCAL_VIDEO_DEVICE_CONFIG_HPP
+class XObjectInformationMap : public IObjectInformation
+{
+public:
+    XObjectInformationMap( const PropertyMap& infoMap ) : InfoMap( infoMap ) { }
+
+    virtual XError GetProperty( const std::string& propertyName, std::string& value ) const
+    {
+        XError ret = XError::UnknownProperty;
+
+        PropertyMap::const_iterator itProperty = InfoMap.find( propertyName );
+
+        if ( itProperty != InfoMap.end( ) )
+        {
+            value = itProperty->second;
+            ret   = XError::Success;
+        }
+
+        return ret;
+    }
+
+    virtual PropertyMap GetAllProperties( ) const
+    {
+        return InfoMap;
+    }
+
+private:
+    PropertyMap InfoMap;
+};
+
+#endif // IOBJECT_INFORMATION_HPP

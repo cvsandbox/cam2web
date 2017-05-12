@@ -90,6 +90,7 @@
     <ClInclude Include="..\..\core\cameras\DirectShow\XLocalVideoDevice.hpp" />
     <ClInclude Include="..\..\core\cameras\DirectShow\XLocalVideoDeviceConfig.hpp" />
     <ClInclude Include="..\..\core\IObjectConfigurator.hpp" />
+    <ClInclude Include="..\..\core\IObjectInformation.hpp" />
     <ClInclude Include="..\..\core\IVideoSource.hpp" />
     <ClInclude Include="..\..\core\IVideoSourceListener.hpp" />
     <ClInclude Include="..\..\core\XError.hpp" />
@@ -98,6 +99,7 @@
     <ClInclude Include="..\..\core\XJpegEncoder.hpp" />
     <ClInclude Include="..\..\core\XManualResetEvent.hpp" />
     <ClInclude Include="..\..\core\XObjectConfiguratorRequestHandler.hpp" />
+    <ClInclude Include="..\..\core\XObjectInformationRequestHandler.hpp" />
     <ClInclude Include="..\..\core\XSimpleJsonParser.hpp" />
     <ClInclude Include="..\..\core\XVideoSourceToWeb.hpp" />
     <ClInclude Include="..\..\core\XWebServer.hpp" />
@@ -118,6 +120,7 @@
     <ClCompile Include="..\..\core\XJpegEncoder.cpp" />
     <ClCompile Include="..\..\core\XManualResetEvent.cpp" />
     <ClCompile Include="..\..\core\XObjectConfiguratorRequestHandler.cpp" />
+    <ClCompile Include="..\..\core\XObjectInformationRequestHandler.cpp" />
     <ClCompile Include="..\..\core\XSimpleJsonParser.cpp" />
     <ClCompile Include="..\..\core\XVideoSourceToWeb.cpp" />
     <ClCompile Include="..\..\core\XWebServer.cpp" />

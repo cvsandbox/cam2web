@@ -28,24 +28,24 @@
     OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#ifndef XLOCAL_VIDEO_DEVICE_CONFIG_HPP
-#define XLOCAL_VIDEO_DEVICE_CONFIG_HPP
+#ifndef XOBJECT_INFORMATION_REQUEST_HANDLER_HPP
+#define XOBJECT_INFORMATION_REQUEST_HANDLER_HPP
 
-#include "IObjectConfigurator.hpp"
-#include "XLocalVideoDevice.hpp"
+#include "IObjectInformation.hpp"
+#include "XWebServer.hpp"
 
-class XLocalVideoDeviceConfig : public IObjectConfigurator
+class XObjectInformationRequestHandler : public IWebRequestHandler
 {
 public:
-    XLocalVideoDeviceConfig( const std::shared_ptr<XLocalVideoDevice>& camera );
+    XObjectInformationRequestHandler( const std::string& uri, const std::shared_ptr<IObjectInformation>& infoObject );
 
-    XError SetProperty( const std::string& propertyName, const std::string& value );
-    XError GetProperty( const std::string& propertyName, std::string& value ) const;
-
-    std::map<std::string, std::string> GetAllProperties( ) const;
+    void HandleHttpRequest( const IWebRequest& request, IWebResponse& response );
 
 private:
-    std::shared_ptr<XLocalVideoDevice> mCamera;
+    void HandleGet( const std::string& varsToGet, IWebResponse& response );
+
+private:
+    std::shared_ptr<IObjectInformation> InfoObject;
 };
 
-#endif // XLOCAL_VIDEO_DEVICE_CONFIG_HPP
+#endif // XOBJECT_INFORMATION_REQUEST_HANDLER_HPP

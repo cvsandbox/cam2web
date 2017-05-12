@@ -81,6 +81,12 @@
     <ClInclude Include="..\..\core\XSimpleJsonParser.hpp">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\core\IObjectInformation.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\XObjectInformationRequestHandler.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cam2web.cpp">
@@ -127,6 +133,9 @@
     </ClCompile>
     <ClCompile Include="..\..\..\externals\mongoose\mongoose.c">
       <Filter>Externals\mongoose</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\XObjectInformationRequestHandler.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
