@@ -50,6 +50,14 @@
 #include "XObjectConfiguratorRequestHandler.hpp"
 #include "XObjectInformationRequestHandler.hpp"
 
+// Release build embeds web resources into executable
+#ifdef NDEBUG
+    #include "index.html.h"
+    #include "styles.css.h"
+    #include "camera.js.h"
+    #include "jquery.js.h"
+#endif
+
 // Enable visual styles by using ComCtl32.dll version 6 or later
 #pragma comment(linker,"\"/manifestdependency:type='win32' \
 name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
@@ -381,11 +389,23 @@ static bool StartVideoStreaming( )
         gData->cameraConfig = make_shared<XLocalVideoDeviceConfig>( gData->camera );
 
         // configure web server
-        gData->server.SetDocumentRoot( "./web/" ).SetPort( DEFAULT_PORT ).
+        gData->server.SetPort( DEFAULT_PORT ).
             AddHandler( make_shared<XObjectConfiguratorRequestHandler>( "/config", gData->cameraConfig ) ).
             AddHandler( make_shared<XObjectInformationRequestHandler>( "/info", make_shared<XObjectInformationMap>( cameraInfo ) ) ).
             AddHandler( gData->video2web.CreateJpegHandler( "/jpeg" ) ).
             AddHandler( gData->video2web.CreateMjpegHandler( "/mjpeg", DEFAULT_MJPEG_RATE ) );
+
+#ifdef _DEBUG
+        // load web content from files in debug builds
+        gData->server.SetDocumentRoot( "./web/" );
+#else
+        // web content is embeded in release builds to get single executable
+        gData->server.AddHandler( make_shared<XEmbeddedContentHandler>( "/", &web_index_html ) ).
+                      AddHandler( make_shared<XEmbeddedContentHandler>( "index.html", &web_index_html) ).
+                      AddHandler( make_shared<XEmbeddedContentHandler>( "styles.css", &web_styles_css ) ).
+                      AddHandler( make_shared<XEmbeddedContentHandler>( "camera.js", &web_camera_js ) ).
+                      AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.js", &web_jquery_js ) );
+#endif
 
         gData->camera->SetListener( gData->video2web.VideoSourceListener( ) );
 

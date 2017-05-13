@@ -41,9 +41,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <LocalDebuggerWorkingDirectory>$(ProjectDir)..\..\..\build\msvc\debug\bin\</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <LocalDebuggerWorkingDirectory>$(ProjectDir)..\..\..\build\msvc\release\bin\</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -60,6 +64,18 @@
       <AdditionalLibraryDirectories>../../../externals/libjpeg-turbo/lib-win;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>jpeg-static.lib;Comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /Y "$(TargetPath)" "$(ProjectDir)..\..\..\build\msvc\debug\bin\"
+xcopy /Y "$(ProjectDir)..\..\web\*.*" "$(ProjectDir)..\..\..\build\msvc\debug\bin\web\"
+xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.js" "$(ProjectDir)..\..\..\build\msvc\debug\bin\web\"
+xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.css" "$(ProjectDir)..\..\..\build\msvc\debug\bin\web\"
+
+</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -70,7 +86,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile />
-      <AdditionalIncludeDirectories>../../core;../../core/Cameras/DirectShow;../../../externals/DirectShow;../../../externals/libjpeg-turbo/include;../../../externals/mongoose;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../core;../../core/Cameras/DirectShow;../../../externals/DirectShow;../../../externals/libjpeg-turbo/include;../../../externals/mongoose;../../../build/msvc/release/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -82,6 +98,24 @@
       <IgnoreAllDefaultLibraries>
       </IgnoreAllDefaultLibraries>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /Y "$(TargetPath)" "$(ProjectDir)..\..\..\build\msvc\release\bin\"</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>xcopy /Y "$(ProjectDir)..\..\web\*.*" "$(ProjectDir)..\..\..\build\msvc\release\include\"
+xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.js" "$(ProjectDir)..\..\..\build\msvc\release\include\"
+xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.css" "$(ProjectDir)..\..\..\build\msvc\release\include\"
+
+"$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\index.html" -o "$(ProjectDir)..\..\..\build\msvc\release\include\index.html.h"
+"$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\styles.css" -o "$(ProjectDir)..\..\..\build\msvc\release\include\styles.css.h"
+"$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\camera.js" -o "$(ProjectDir)..\..\..\build\msvc\release\include\camera.js.h"
+"$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\jquery.js" -o "$(ProjectDir)..\..\..\build\msvc\release\include\jquery.js.h"
+
+del "$(ProjectDir)..\..\..\build\msvc\release\include\*.html"
+del "$(ProjectDir)..\..\..\build\msvc\release\include\*.css"
+del "$(ProjectDir)..\..\..\build\msvc\release\include\*.js"
+</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\core\cameras\DirectShow\XDeviceCapabilities.hpp" />
