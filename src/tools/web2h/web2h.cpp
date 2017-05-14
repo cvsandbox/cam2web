@@ -159,7 +159,11 @@ int GenerateHeaderFile( const char* inputFileName, const char* outputFileName, c
                 inputBaseName = separator + 1;
             }
 
+#ifdef _MSC_VER
             char* outVarName = _strdup( inputBaseName );
+#else
+            char* outVarName = strdup( inputBaseName );
+#endif
 
             // replace '.' with '_' in input file name to be used to form a variable name
             for ( int i = 0; outVarName[i] != 0; i++ )
