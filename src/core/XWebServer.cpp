@@ -213,6 +213,25 @@ namespace Private
     };
 
     /* ================================================================= */
+    /* Data associated with request handler                              */
+    /* ================================================================= */
+    class RequestHandlerData
+    {
+    public:
+        shared_ptr<IWebRequestHandler>  Handler;
+        UserGroup                       AllowedUserGroup;
+
+    public:
+        RequestHandlerData( ) :
+            Handler( ), AllowedUserGroup( UserGroup::Anyone )
+        { }
+
+        RequestHandlerData( const shared_ptr<IWebRequestHandler>& handler, UserGroup allowedUserGroup ) :
+            Handler( handler), AllowedUserGroup( allowedUserGroup )
+        { }
+    };
+
+    /* ================================================================= */
     /* Private data/implementation of the web server                     */
     /* ================================================================= */
     class XWebServerData
@@ -220,6 +239,7 @@ namespace Private
     public:
         recursive_mutex DataSync;
         string          DocumentRoot;
+        string          AuthDomain;
         uint16_t        Port;
 
     private:
@@ -227,14 +247,15 @@ namespace Private
         struct mg_serve_http_opts ServerOptions;
 
         char*                     ActiveDocumentRoot;
+        string                    ActiveAuthDomain;
 
         XManualResetEvent         NeedToStop;
         XManualResetEvent         IsStopped;
         recursive_mutex           StartSync;
         bool                      IsRunning;
 
-        typedef map<string, shared_ptr<IWebRequestHandler>> HandlersMap;
-        typedef list<shared_ptr<IWebRequestHandler>>        HandlersList;
+        typedef map<string, RequestHandlerData> HandlersMap;
+        typedef list<RequestHandlerData>        HandlersList;
 
         HandlersMap  FileHandlers;
         HandlersList FolderHandlers;
@@ -242,11 +263,15 @@ namespace Private
         HandlersMap  ActiveFileHandlers;
         HandlersList ActiveFolderHandlers;
 
+        typedef map<string, pair<string, UserGroup>> UsersMap;
+
+        UsersMap Users;
+
     public:
         XWebServerData( const string& documentRoot, uint16_t port ) :
-            DataSync( ), DocumentRoot( documentRoot ), Port( port ),
+            DataSync( ), DocumentRoot( documentRoot ), AuthDomain( "cam2web" ), Port( port ),
             EventManager( { 0 } ), ServerOptions( { 0 } ),
-            ActiveDocumentRoot( nullptr ),
+            ActiveDocumentRoot( nullptr ), ActiveAuthDomain( ),
             NeedToStop( ), IsStopped( ), StartSync( ), IsRunning( false )
         {
             ServerOptions.enable_directory_listing = "no";
@@ -260,10 +285,15 @@ namespace Private
         bool Start( );
         void Stop( );
         void Cleanup( );
-        void AddHandler( const shared_ptr<IWebRequestHandler>& handler );
+        void AddHandler( const shared_ptr<IWebRequestHandler>& handler, UserGroup userGroup );
         void RemoveHandler( const shared_ptr<IWebRequestHandler>& handler );
         void ClearHandlers( );
-        shared_ptr<IWebRequestHandler> FindHandler( const string& uri );
+        RequestHandlerData FindHandler( const string& uri );
+
+        void AddUser( const string& name, const string& digestHa1, UserGroup group );
+        void RemoveUser( const string& name );
+
+        UserGroup CheckDigestAuth( struct http_message* msg );
 
         static void* pollHandler( void* param );
         static void eventHandler( struct mg_connection* connection, int event, void* param );
@@ -336,6 +366,18 @@ XWebServer& XWebServer::SetDocumentRoot( const string& documentRoot )
     return *this;
 }
 
+// Get/Set digest authentication domain
+std::string XWebServer::AuthDomain( ) const
+{
+    return mData->AuthDomain;
+}
+XWebServer& XWebServer::SetAuthDomain( const std::string& authDomain )
+{
+    lock_guard<recursive_mutex> lock( mData->DataSync );
+    mData->AuthDomain = authDomain;
+    return *this;
+}
+
 // We really love Windows.h, indeed
 #pragma push_macro( "SetPort" )
 #undef SetPort
@@ -365,9 +407,9 @@ void XWebServer::Stop( )
 }
 
 // Add new web request handler
-XWebServer& XWebServer::AddHandler( const shared_ptr<IWebRequestHandler>& handler )
+XWebServer& XWebServer::AddHandler( const shared_ptr<IWebRequestHandler>& handler, UserGroup allowedUserGroup )
 {
-    mData->AddHandler( handler );
+    mData->AddHandler( handler, allowedUserGroup );
     return *this;
 }
 
@@ -383,6 +425,28 @@ void XWebServer::ClearHandlers( )
     mData->ClearHandlers( );
 }
 
+// Add/Remove user to access protected request handlers
+XWebServer& XWebServer::AddUser( const string& name, const string& digestHa1, UserGroup group )
+{
+    mData->AddUser( name, digestHa1, group );
+    return *this;
+}
+void XWebServer::RemoveUser( const string& name )
+{
+    mData->RemoveUser( name );
+}
+
+// Calculate HA1 as defined by Digest authentication algorithm, MD5(user:domain:pass).
+string XWebServer::CalculateDigestAuthHa1( const string& user, const string& domain, const string& pass )
+{
+    char ha1[33];
+
+    cs_md5( ha1, user.c_str( ), user.length( ), ":", 1,
+                 domain.c_str( ), domain.length( ), ":", 1,
+                 pass.c_str( ), pass.length( ), nullptr );
+
+    return string( ha1 );
+}
 
 /* ================================================================= */
 /* Private implemenetation of the XWebServer                         */
@@ -414,6 +478,7 @@ bool XWebServerData::Start( )
         // get a copy of handlers, so we don't need to guard it while server is running
         ActiveFileHandlers   = FileHandlers;
         ActiveFolderHandlers = FolderHandlers;
+        ActiveAuthDomain     = AuthDomain;
     }
 
     mg_mgr_init( &EventManager, this );
@@ -469,17 +534,17 @@ void XWebServerData::Cleanup( )
 }
 
 // Add web server request handler
-void XWebServerData::AddHandler( const shared_ptr<IWebRequestHandler>& handler )
+void XWebServerData::AddHandler( const shared_ptr<IWebRequestHandler>& handler, UserGroup allowedUserGroup )
 {
     lock_guard<recursive_mutex> lock( DataSync );
 
     if ( handler->CanHandleSubContent( ) )
     {
-        FolderHandlers.push_back( handler );
+        FolderHandlers.push_back( RequestHandlerData( handler, allowedUserGroup ) );
     }
     else
     {
-        FileHandlers.insert( pair<string, shared_ptr<IWebRequestHandler>>( handler->Uri( ), handler ) );
+        FileHandlers.insert( pair<string, RequestHandlerData>( handler->Uri( ), RequestHandlerData( handler, allowedUserGroup ) ) );
     }
 }
 
@@ -489,7 +554,15 @@ void XWebServerData::RemoveHandler( const shared_ptr<IWebRequestHandler>& handle
     lock_guard<recursive_mutex> lock( DataSync );
 
     FileHandlers.erase( handler->Uri( ) );
-    FolderHandlers.remove( handler );
+
+    for ( HandlersList::iterator itHandler = FolderHandlers.begin( ); itHandler != FolderHandlers.end( ); itHandler++ )
+    {
+        if ( itHandler->Handler == handler )
+        {
+            FolderHandlers.erase( itHandler );
+            break;
+        }
+    }
 }
 
 // Remove all handlers
@@ -501,11 +574,11 @@ void XWebServerData::ClearHandlers( )
     FolderHandlers.clear( );
 }
 
-// Find equest handler for the specified URI
-shared_ptr<IWebRequestHandler> XWebServerData::FindHandler( const string& uri )
+// Find request handler for the specified URI
+RequestHandlerData XWebServerData::FindHandler( const string& uri )
 {
-    shared_ptr<IWebRequestHandler> handler;
-    HandlersMap::const_iterator    fileIt = ActiveFileHandlers.find( uri );
+    RequestHandlerData          handler;
+    HandlersMap::const_iterator fileIt = ActiveFileHandlers.find( uri );
 
     if ( fileIt != ActiveFileHandlers.end( ) )
     {
@@ -513,17 +586,31 @@ shared_ptr<IWebRequestHandler> XWebServerData::FindHandler( const string& uri )
     }
     else
     {
-        for ( auto& folderHandler : ActiveFolderHandlers )
+        for ( auto& folderHandlerData : ActiveFolderHandlers )
         {
-            if ( uri.compare( 0, folderHandler->Uri( ).length( ), folderHandler->Uri( ) ) == 0 )
+            if ( uri.compare( 0, folderHandlerData.Handler->Uri( ).length( ), folderHandlerData.Handler->Uri( ) ) == 0 )
             {
-                handler = folderHandler;
+                handler = folderHandlerData;
                 break;
             }
         }
     }
 
     return handler;
+}
+
+// Add/Remove user to/from the list of user who can access protected request handlers
+void XWebServerData::AddUser( const string& name, const string& digestHa1, UserGroup group )
+{
+    lock_guard<recursive_mutex> lock( DataSync );
+
+    Users[name] = pair<string, UserGroup>( digestHa1, group );
+}
+void XWebServerData::RemoveUser( const string& name )
+{
+    lock_guard<recursive_mutex> lock( DataSync );
+
+    Users.erase( name );
 }
 
 // Thread to poll web events
@@ -541,10 +628,84 @@ void* XWebServerData::pollHandler( void* param )
     return nullptr;
 }
 
+static void http_send_digest_auth_request( struct mg_connection* c, const char *domain )
+{
+    mg_printf( c,
+        "HTTP/1.1 401 Unauthorized\r\n"
+        "WWW-Authenticate: Digest qop=\"auth\", "
+        "realm=\"%s\", nonce=\"%lx\"\r\n"
+        "Content-Length: 0\r\n\r\n",
+        domain, (unsigned long) mg_time( ) );
+}
+
+static bool check_nonce( const char* nonce )
+{
+    unsigned long now = (unsigned long) mg_time( );
+    unsigned long val = (unsigned long) strtoul( nonce, NULL, 16 );
+    return ( now > val ) && ( now - val < 3600 );
+}
+
+// Check digest authentication and resolve group of the incoming user
+UserGroup XWebServerData::CheckDigestAuth( struct http_message* msg )
+{
+    UserGroup       userGroup = UserGroup::Anyone;
+    struct mg_str*  hdr;
+    char            user[50], cnonce[33], response[40], uri[200], qop[20], nc[20], nonce[30];
+    char            expected_response[33];
+
+    /* parse "Authorization:" header */
+    if ( ( msg != nullptr ) &&
+         ( ( hdr = mg_get_http_header( msg, "Authorization" ) ) != nullptr ) &&
+         ( mg_http_parse_header( hdr, "username", user, sizeof( user ) ) != 0 ) &&
+         ( mg_http_parse_header( hdr, "cnonce", cnonce, sizeof( cnonce ) ) != 0 ) &&
+         ( mg_http_parse_header( hdr, "response", response, sizeof( response ) ) != 0 ) &&
+         ( mg_http_parse_header( hdr, "uri", uri, sizeof( uri ) ) != 0 ) &&
+         ( mg_http_parse_header( hdr, "qop", qop, sizeof( qop ) ) != 0 ) &&
+         ( mg_http_parse_header( hdr, "nc", nc, sizeof( nc ) ) != 0 ) &&
+         ( mg_http_parse_header( hdr, "nonce", nonce, sizeof( nonce ) ) != 0 ) )
+    {
+        // got some authentication data to check
+        if ( check_nonce( nonce ) )
+        {
+            lock_guard<recursive_mutex> lock( DataSync );
+
+            // first find the user
+            UsersMap::const_iterator itUser = Users.find( user );
+
+            if ( itUser != Users.end( ) )
+            {
+                char ha2[33];
+
+                // HA2 = MD5( method:digestURI )
+                cs_md5( ha2, msg->method.p, msg->method.len, ":", 1,
+                             msg->uri.p, msg->uri.len + ( msg->query_string.len ? msg->query_string.len + 1 : 0 ), NULL );
+                
+                // response = MD5( HA1:nonce:nonceCount:cnonce:qop:HA2 )
+                cs_md5( expected_response, 
+                        itUser->second.first.c_str( ), itUser->second.first.length( ), ":", 1, // HA1 of the user
+                        nonce, strlen( nonce ), ":", 1,
+                        nc, strlen( nc ), ":", 1,
+                        cnonce, strlen( cnonce ), ":", 1,
+                        qop, strlen( qop ), ":", 1,
+                        ha2, 32, NULL );
+
+                if ( strcmp( response, expected_response ) == 0 )
+                {
+                    userGroup = itUser->second.second;
+                }
+            }
+        }
+    }
+
+    return userGroup;
+}
+
 // Mangoose web server event handler
 void XWebServerData::eventHandler( struct mg_connection* connection, int event, void* param )
 {
     XWebServerData* self = (XWebServerData*) connection->mgr->user_data;
+
+    static bool isAuth = false;
 
     if ( event == MG_EV_HTTP_REQUEST )
     {
@@ -552,6 +713,7 @@ void XWebServerData::eventHandler( struct mg_connection* connection, int event, 
         MangooseWebRequest   request( message );
         MangooseWebResponse  response( connection );
         string               uri = request.Uri( );
+        UserGroup            authUserGroup = self->CheckDigestAuth( message );
 
         // make sure nothing finishes with / except the root
         while ( ( uri.back( ) == '/' ) && ( uri.length( ) != 1 ) )
@@ -560,13 +722,20 @@ void XWebServerData::eventHandler( struct mg_connection* connection, int event, 
         }
 
         // try finding handler for the URI
-        shared_ptr<IWebRequestHandler> handler = self->FindHandler( uri );
+        RequestHandlerData handlerData = self->FindHandler( uri );
 
-        if ( handler )
+        if ( handlerData.Handler )
         {
-            response.SetHandler( handler.get( ) );
-            // handle request with the found handler
-            handler->HandleHttpRequest( request, response );
+            if ( static_cast<int>( authUserGroup ) < static_cast<int>( handlerData.AllowedUserGroup ) )
+            {
+                http_send_digest_auth_request( connection, self->ActiveAuthDomain.c_str( ) );
+            }
+            else
+            {
+                response.SetHandler( handlerData.Handler.get( ) );
+                // handle request with the found handler
+                handlerData.Handler->HandleHttpRequest( request, response );
+            }
         }
         else if ( self->ActiveDocumentRoot )
         {

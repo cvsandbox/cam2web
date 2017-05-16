@@ -43,6 +43,13 @@ namespace Private
     class XWebServerData;
 }
 
+enum class UserGroup
+{
+    Anyone = 0,
+    User   = 1,
+    Admin  = 2
+};
+
 /* ================================================================= */
 /* Web request data                                                  */
 /* ================================================================= */
@@ -158,12 +165,16 @@ public:
     std::string DocumentRoot( ) const;
     XWebServer& SetDocumentRoot( const std::string& documentRoot );
 
+    // Get/Set authentication domain
+    std::string AuthDomain( ) const;
+    XWebServer& SetAuthDomain( const std::string& authDomain );
+
     // Get/Set port
     uint16_t Port( ) const;
     XWebServer& SetPort( uint16_t port );
 
     // Add/Remove web handler
-    XWebServer& AddHandler( const std::shared_ptr<IWebRequestHandler>& handler );
+    XWebServer& AddHandler( const std::shared_ptr<IWebRequestHandler>& handler, UserGroup allowedUserGroup = UserGroup::Anyone );
     void RemoveHandler( const std::shared_ptr<IWebRequestHandler>& handler );
 
     // Remove all handlers
@@ -174,6 +185,14 @@ public:
     // Start/Stop the Web server
     bool Start( );
     void Stop( );
+
+    // Add/Remove user to access protected request handlers
+    XWebServer& AddUser( const std::string& name, const std::string& digestHa1, UserGroup group );
+    void RemoveUser( const std::string& name );
+
+public:
+    // Calculate HA1 as defined by Digest authentication algorithm, MD5(user:domain:pass).
+    static std::string CalculateDigestAuthHa1( const std::string& user, const std::string& domain, const std::string& pass );
 
 private:
     Private::XWebServerData* mData;

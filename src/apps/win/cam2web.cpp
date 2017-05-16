@@ -76,6 +76,7 @@ using namespace std;
 
 #define DEFAULT_PORT            (8000)
 #define DEFAULT_MJPEG_RATE      (30)
+#define DEFAULT_AUTH_DOMAIN     "cam2web"
 
 #define STR_ERROR               TEXT( "Error" )
 #define STR_START_STREAMING     TEXT( "&Start streaming" )
@@ -116,7 +117,12 @@ public:
         cameraConfig( ), server( ), video2web( ),
         streamingInProgress( false )
     {
+        string userHA1  = XWebServer::CalculateDigestAuthHa1( "user",  DEFAULT_AUTH_DOMAIN, "pass" );
+        string adminHA1 = XWebServer::CalculateDigestAuthHa1( "admin", DEFAULT_AUTH_DOMAIN, "password" );
 
+        server.SetAuthDomain( DEFAULT_AUTH_DOMAIN );
+        server.AddUser( "user", userHA1, UserGroup::User );
+        server.AddUser( "admin", adminHA1, UserGroup::Admin );
     }
 };
 AppData* gData = NULL;
@@ -390,7 +396,7 @@ static bool StartVideoStreaming( )
 
         // configure web server
         gData->server.SetPort( DEFAULT_PORT ).
-            AddHandler( make_shared<XObjectConfiguratorRequestHandler>( "/config", gData->cameraConfig ) ).
+            AddHandler( make_shared<XObjectConfiguratorRequestHandler>( "/config", gData->cameraConfig ), UserGroup::Admin ).
             AddHandler( make_shared<XObjectInformationRequestHandler>( "/info", make_shared<XObjectInformationMap>( cameraInfo ) ) ).
             AddHandler( gData->video2web.CreateJpegHandler( "/jpeg" ) ).
             AddHandler( gData->video2web.CreateMjpegHandler( "/mjpeg", DEFAULT_MJPEG_RATE ) );
