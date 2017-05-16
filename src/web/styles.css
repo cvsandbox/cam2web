@@ -1,63 +1,69 @@
-html {
-    margin: 0;
-    padding: 0;
-    position: relative;
-    min-height: 100%;
+[data-role=page] {
+    min-height: 100% !important;
+    height:auto !important;
 }
 
-body {
-    margin: 60px 0 50px;
-    padding: 0;
-    background-color: #E0E8E0;
+[data-role=footer] {
+    position: absolute !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width:100%;
 }
 
-header {
-    background-color: #00A040;
-    background: linear-gradient(#008040, #00A040);
-    border-bottom: 2px solid #606060;
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 60px;
-    width: 100%;
-    overflow:hidden;
+.ui-page {
+    background-color: #E0E8E0 !important;
 }
 
-footer {
-    background-color: #008040;
-    background: linear-gradient(#00A040, #008040);
-    border-top: 2px solid #606060;
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    height: 50px;
-    width: 100%;
-    overflow:hidden;
+.ui-page .ui-header {
+    background-color: #00A040 !important;
+    background: linear-gradient(#008040, #00A040) !important;
+}
+
+.ui-page .ui-footer {
+    background-color: #008040 !important;
+    background: linear-gradient(#00A040, #008040) !important;
+}
+
+.ui-page .ui-header .ui-btn-right {
+    background-color: #005020 !important;
+}
+
+.ui-page .ui-header .ui-btn-active {
+    background-color: #505050 !important;
+}
+
+.ui-page .ui-content {
+    padding: 20px !important;
+    margin-bottom: 30px !important;
+    width: 100% !important;
+    overflow: hidden !important;
+}
+
+#cameracontainer {
+    float: left;
+    width: 660px;
+}
+
+#cameraproperties {
+    margin-left: 680px;
+    width: 300px;
+    background-color: #D0E8D0;
+    padding: 10px;
+    border: 2px solid #00A040;
+    border-radius: 10px;
+}
+
+#camera {
+    border: 10px #333333 solid;
 }
 
 #copyright {
     text-align: right;
-    padding: 20px 20px 0 0;
+    padding: 10px 20px 10px 0;
     color: #FFFFFF;
     font-size: 12px;
     text-shadow: 1px 1px 0px #006020;
 }
 #copyright a, a:focus, a:hover {
     color: #FFFFFF;
-}
-
-#title {
-    padding: 15px 0 0 20px;
-    color: #FFFFFF;
-    font-size: 30px;
-    font-weight: bold;
-    text-shadow: 2px 2px 0px #006020;
-}
-
-#main {
-    padding: 20px 0 20px 20px;
-}
-
-#camera {
-    border: 10px #333333 solid;
 }

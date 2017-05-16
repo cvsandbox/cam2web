@@ -55,7 +55,11 @@
     #include "index.html.h"
     #include "styles.css.h"
     #include "camera.js.h"
+    #include "cameraproperties.html.h"
+    #include "cameraproperties.js.h"
     #include "jquery.js.h"
+    #include "jquery.mobile.js.h"
+    #include "jquery.mobile.css.h"
 #endif
 
 // Enable visual styles by using ComCtl32.dll version 6 or later
@@ -410,7 +414,11 @@ static bool StartVideoStreaming( )
                       AddHandler( make_shared<XEmbeddedContentHandler>( "index.html", &web_index_html) ).
                       AddHandler( make_shared<XEmbeddedContentHandler>( "styles.css", &web_styles_css ) ).
                       AddHandler( make_shared<XEmbeddedContentHandler>( "camera.js", &web_camera_js ) ).
-                      AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.js", &web_jquery_js ) );
+                      AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.js", &web_cameraproperties_js ) ).
+                      AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.html", &web_cameraproperties_directshow_html ), UserGroup::Admin ).
+                      AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.js", &web_jquery_js ) ).
+                      AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.js", &web_jquery_mobile_js ) ).
+                      AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.css", &web_jquery_mobile_css ) );
 #endif
 
         gData->camera->SetListener( gData->video2web.VideoSourceListener( ) );

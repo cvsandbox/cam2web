@@ -1,0 +1,121 @@
+<div id="properties" style="display: none;">
+
+<label for="brightness">Brightness:</label>
+<input type="range" id="brightness" value="50" min="0" max="100" data-highlight="true" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+
+<label for="contrast">Contrast:</label>
+<input type="range" id="contrast" value="50" min="0" max="100" data-highlight="true" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+
+<label for="hue">Hue:</label>
+<input type="range" id="hue" value="50" min="0" max="100" data-highlight="true" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+
+<label for="saturation">Saturation:</label>
+<input type="range" id="saturation" value="50" min="0" max="100" data-highlight="true" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+
+<label for="sharpness">Sharpness:</label>
+<input type="range" id="sharpness" value="50" min="0" max="100" data-highlight="true" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+
+<label for="gamma">Gamma:</label>
+<input type="range" id="gamma" value="50" min="0" max="100" data-highlight="true" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+
+<input id="color" type="checkbox" data-mini="true" onclick="handleBoolProperty(this);" />
+<label for="color">Color image</label>
+    
+<input id="blc" type="checkbox" data-mini="true" onclick="handleBoolProperty(this);" />
+<label for="blc">Back light compensation</label>
+
+<button type="button" id="reset" onclick="resetToDefaults()">Reset to Defaults</button> 
+ 
+</div>
+
+<script>
+var config = { }
+var rangeProperties = [ "brightness", "contrast", "hue", "saturation", "sharpness", "gamma" ];
+var boolProperties = [ "color", "blc" ];
+
+function handleBoolProperty( cb )
+{
+    setCameraProperty( cb.id, ( cb.checked ) ? 1 : 0 );
+}
+
+function handleRangeProperty( range )
+{
+    setCameraProperty( range.id, range.value );
+}
+
+function configureRangeProperty( range, config )
+{
+    range.min = config[range.id + ":min"];
+    range.max = config[range.id + ":max"];
+    range.value = config[range.id];
+}
+
+function resetToDefaults( )
+{
+    for ( var i = 0, len = rangeProperties.length; i < len; i++ )
+    {
+        var jRange = $( "#" + rangeProperties[i] );
+        var range = jRange[0];
+        
+        range.value = config[rangeProperties[i] + ":def"];
+        range.onchange( );
+
+        jRange.slider( "refresh" );
+    }
+
+    for ( var i = 0, len = boolProperties.length; i < len; i++ )
+    {
+        var jCheck = $( "#" + boolProperties[i] );
+        var check = jCheck[0];
+        
+        check.checked = ( config[boolProperties[i] + ":def"] == "1" );
+        check.onclick( );
+        
+        jCheck.checkboxradio( "refresh" );
+    }
+}
+
+function loadCurrentSetting( )
+{
+    $.ajax( {
+        type        : "GET",
+        url         : "config",
+        contentType : "application/json; charset=utf-8",
+        async       : true,
+        success: function( data )
+        {
+            if ( data.status != "OK" )
+            {
+                console.log( "Failed getting camera properties" );
+            }
+            else
+            {
+                config = data.config;
+                //alert( "loaded: " + JSON.stringify( data.config ) );
+                
+                for ( var i = 0, len = rangeProperties.length; i < len; i++ )
+                {
+                    var jRange = $( "#" + rangeProperties[i] );
+                    
+                    configureRangeProperty( jRange[0], data.config );
+                    jRange.slider( "refresh" );
+                }
+                
+                for ( var i = 0, len = boolProperties.length; i < len; i++ )
+                {
+                    $( "#" + boolProperties[i] ).attr( "checked", ( data.config[boolProperties[i]] == "1" ) ).checkboxradio( "refresh" );
+                }
+
+                $( "#properties" ).show( );
+            }
+        },
+        failure: function( errMsg )
+        {
+            console.log( errMsg );
+        }
+    } );
+}
+
+loadCurrentSetting( );
+
+</script>
