@@ -33,16 +33,6 @@ var config = { }
 var rangeProperties = [ "brightness", "contrast", "hue", "saturation", "sharpness", "gamma" ];
 var boolProperties = [ "color", "blc" ];
 
-function handleBoolProperty( cb )
-{
-    setCameraProperty( cb.id, ( cb.checked ) ? 1 : 0 );
-}
-
-function handleRangeProperty( range )
-{
-    setCameraProperty( range.id, range.value );
-}
-
 function configureRangeProperty( range, config )
 {
     range.min = config[range.id + ":min"];

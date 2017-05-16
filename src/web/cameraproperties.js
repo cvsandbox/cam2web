@@ -32,3 +32,19 @@ function setCameraProperties( variablesMap )
         }
     } );
 }
+
+function handleBoolProperty( cb )
+{
+    setCameraProperty( cb.id, ( cb.checked ) ? 1 : 0 );
+}
+
+function handleRangeProperty( range )
+{
+    setCameraProperty( range.id, range.value );
+}
+
+function handleSelectionProperty( selection )
+{
+    setCameraProperty( selection.id, selection.value );
+}
+

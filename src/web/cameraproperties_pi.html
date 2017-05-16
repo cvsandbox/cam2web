@@ -1,0 +1,137 @@
+<div id="properties" style="display: none;">
+
+<label for="brightness">Brightness:</label>
+<input type="range" id="brightness" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)">
+
+<label for="contrast">Contrast:</label>
+<input type="range" id="contrast" value="0" min="-100" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)">
+
+<label for="saturation">Saturation:</label>
+<input type="range" id="saturation" value="0" min="-100" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)">
+
+<label for="sharpness">Sharpness:</label>
+<input type="range" id="sharpness" value="0" min="-100" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)">
+
+<label for="awb">White Balance:</label>
+<select id="awb" onchange="handleSelectionProperty(this)">
+    <option value="Off">Off</option>
+    <option value="Auto">Auto</option>
+    <option value="Sunlight">Sunlight</option>
+    <option value="Cloudy">Cloudy</option>
+    <option value="Shade">Shade</option>
+    <option value="Tungsten">Tungsten</option>
+    <option value="Fluorescent">Fluorescent</option>
+    <option value="Incandescent">Incandescent</option>
+    <option value="Flash">Flash</option>
+    <option value="Horizon">Horizon</option>
+</select>
+
+<label for="expmode">Exposure Mode:</label>
+<select id="expmode" onchange="handleSelectionProperty(this)">
+    <option value="Off">Off</option>
+    <option value="Auto">Auto</option>
+    <option value="Night">Night</option>
+    <option value="NightPreview">NightPreview</option>
+    <option value="Backlight">Backlight</option>
+    <option value="Spotlight">Spotlight</option>
+    <option value="Sports">Sports</option>
+    <option value="Snow">Snow</option>
+    <option value="Beach">Beach</option>
+    <option value="VeryLong">VeryLong</option>
+    <option value="FixedFps">FixedFps</option>
+    <option value="AntiShake">AntiShake</option>
+    <option value="FireWorks">FireWorks</option>
+</select>
+
+<label for="expmeteringmode">Exposure Metering Mode:</label>
+<select id="expmeteringmode" onchange="handleSelectionProperty(this)">
+    <option value="Average">Average</option>
+    <option value="Spot">Spot</option>
+    <option value="Backlit">Backlit</option>
+    <option value="Matrix">Matrix</option>
+</select>
+
+<label for="effect">Image Effect:</label>
+<select id="effect" onchange="handleSelectionProperty(this)">
+    <option value="None">None</option>
+    <option value="Negative">Negative</option>
+    <option value="Solarize">Solarize</option>
+    <option value="Sketch">Sketch</option>
+    <option value="Denoise">Denoise</option>
+    <option value="Emboss">Emboss</option>
+    <option value="OilPaint">OilPaint</option>
+    <option value="Hatch">Hatch</option>
+    <option value="Gpen">Gpen</option>
+    <option value="Pastel">Pastel</option>
+    <option value="WaterColor">WaterColor</option>
+    <option value="Film">Film</option>
+    <option value="Blur">Blur</option>
+    <option value="Saturation">Saturation</option>
+    <option value="ColorSwap">ColorSwap</option>
+    <option value="WashedOut">WashedOut</option>
+    <option value="Posterise">Posterise</option>
+    <option value="ColorPoint">ColorPoint</option>
+    <option value="ColorBalance">ColorBalance</option>
+    <option value="Cartoon">Cartoon</option>
+</select>
+
+<input id="hflip" type="checkbox" data-mini="true" onclick='handleBoolProperty(this);' />
+<label for="hflip">Horizontal Flip</label>
+
+<input id="vflip" type="checkbox" data-mini="true" onclick='handleBoolProperty(this);' />
+<label for="vflip">Vertical Flip</label>
+
+<input id="videostabilisation" type="checkbox" data-mini="true" onclick='handleBoolProperty(this);' />
+<label for="videostabilisation">Video Stabilisation</label>
+
+</div>
+
+<script>
+
+var config = { }
+var rangeProperties = [ "brightness", "contrast", "saturation", "sharpness" ];
+var boolProperties = [ "hflip", "vflip", "videostabilisation" ];
+
+function loadCurrentSetting( )
+{
+    $.ajax( {
+        type        : "GET",
+        url         : "config",
+        contentType : "application/json; charset=utf-8",
+        async       : true,
+        success: function( data )
+        {
+            if ( data.status != "OK" )
+            {
+                console.log( "Failed getting camera properties" );
+            }
+            else
+            {
+                config = data.config;
+
+                for ( var i = 0, len = rangeProperties.length; i < len; i++ )
+                {
+                    var jRange = $( "#" + rangeProperties[i] );
+                    
+                    jRange[0].value = config[rangeProperties[i]];
+                    jRange.slider( "refresh" );
+                }
+                
+                for ( var i = 0, len = boolProperties.length; i < len; i++ )
+                {
+                    $( "#" + boolProperties[i] ).attr( "checked", ( data.config[boolProperties[i]] == "1" ) ).checkboxradio( "refresh" );
+                }
+
+                $( "#properties" ).show( );
+            }
+        },
+        failure: function( errMsg )
+        {
+            console.log( errMsg );
+        }
+    } );
+}
+
+loadCurrentSetting( );
+
+</script>
