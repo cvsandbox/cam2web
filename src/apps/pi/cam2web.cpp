@@ -61,9 +61,9 @@ int main( void )
     XVideoSourceToWeb                video2web;
     
     server.SetDocumentRoot( "./web/" ).
-           AddHandler( make_shared<XObjectConfiguratorRequestHandler>( "/config", xcameraConfig ) ).      
-           AddHandler( video2web.CreateJpegHandler( "/jpeg" ) ).
-           AddHandler( video2web.CreateMjpegHandler( "/mjpeg", 30 ) );
+           AddHandler( make_shared<XObjectConfiguratorRequestHandler>( "/camera/config", xcameraConfig ) ).      
+           AddHandler( video2web.CreateJpegHandler( "/camera/jpeg" ) ).
+           AddHandler( video2web.CreateMjpegHandler( "/camera/mjpeg", 30 ) );
 
     if ( server.Start( ) )
     {

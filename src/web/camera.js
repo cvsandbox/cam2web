@@ -1,7 +1,7 @@
 var Camera = (function ()
 {
-    var jpegUrl       = '/jpeg';
-    var mjpegUrl      = '/mjpeg';
+    var jpegUrl       = '/camera/jpeg';
+    var mjpegUrl      = '/camera/mjpeg';
     var mjpegMode;
     var frameInterval;
     var imageElement;

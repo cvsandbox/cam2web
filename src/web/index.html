@@ -46,7 +46,7 @@ function getCameraInfo( )
 {
     $.ajax( {
         type        : "GET",
-        url         : "info",
+        url         : "/camera/info",
         contentType : "application/json; charset=utf-8",
         async       : true,
         success: function( data )
@@ -81,7 +81,7 @@ function showSettings( )
     if ( !showingSettings )
     {
         $.ajax({
-            url: 'cameraproperties.html',
+            url: '/cameraproperties.html',
 
             success: function(data)
             {
@@ -99,7 +99,7 @@ function showSettings( )
         $( "#settingsButton" ).removeClass( 'ui-btn-active' );
         showingSettings = false;
     }
-    
+
     return false;
 }
 

@@ -10,7 +10,7 @@ function setCameraProperties( variablesMap )
 {
     $.ajax( {
         type        : "POST",
-        url         : "config",
+        url         : "/camera/config",
         data        : JSON.stringify( variablesMap ),
         contentType : "application/json; charset=utf-8",
         dataType    : "json",

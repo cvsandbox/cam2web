@@ -67,6 +67,7 @@
     <PostBuildEvent>
       <Command>xcopy /Y "$(TargetPath)" "$(ProjectDir)..\..\..\build\msvc\debug\bin\"
 xcopy /Y "$(ProjectDir)..\..\web\*.*" "$(ProjectDir)..\..\..\build\msvc\debug\bin\web\"
+del "$(ProjectDir)..\..\..\build\msvc\debug\bin\web\cameraproperties.html"
 ren "$(ProjectDir)..\..\..\build\msvc\debug\bin\web\cameraproperties_directshow.html" cameraproperties.html
 xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.js" "$(ProjectDir)..\..\..\build\msvc\debug\bin\web\"
 xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.css" "$(ProjectDir)..\..\..\build\msvc\debug\bin\web\"

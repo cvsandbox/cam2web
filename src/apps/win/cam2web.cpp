@@ -390,10 +390,10 @@ static bool StartVideoStreaming( )
 
         // configure web server
         gData->server.SetPort( DEFAULT_PORT ).
-            AddHandler( make_shared<XObjectConfiguratorRequestHandler>( "/config", gData->cameraConfig ), UserGroup::Admin ).
-            AddHandler( make_shared<XObjectInformationRequestHandler>( "/info", make_shared<XObjectInformationMap>( cameraInfo ) ) ).
-            AddHandler( gData->video2web.CreateJpegHandler( "/jpeg" ) ).
-            AddHandler( gData->video2web.CreateMjpegHandler( "/mjpeg", DEFAULT_MJPEG_RATE ) );
+            AddHandler( make_shared<XObjectConfiguratorRequestHandler>( "/camera/config", gData->cameraConfig ), UserGroup::Admin ).
+            AddHandler( make_shared<XObjectInformationRequestHandler>( "/camera/info", make_shared<XObjectInformationMap>( cameraInfo ) ) ).
+            AddHandler( gData->video2web.CreateJpegHandler( "/camera/jpeg" ) ).
+            AddHandler( gData->video2web.CreateMjpegHandler( "/camera/mjpeg", DEFAULT_MJPEG_RATE ) );
 
 #ifdef _DEBUG
         // load web content from files in debug builds
