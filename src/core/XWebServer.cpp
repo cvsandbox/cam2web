@@ -640,7 +640,7 @@ UserGroup XWebServerData::CheckDigestAuth( struct http_message* msg )
 {
     UserGroup       userGroup = UserGroup::Anyone;
     struct mg_str*  hdr;
-    char            user[50], cnonce[33], response[40], uri[200], qop[20], nc[20], nonce[30];
+    char            user[50], cnonce[45], response[40], uri[200], qop[20], nc[20], nonce[30];
     char            expected_response[33];
 
     /* parse "Authorization:" header */
