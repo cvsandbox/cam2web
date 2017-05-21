@@ -122,7 +122,26 @@ public:
     // Set video source listener returning the old one
     IVideoSourceListener* SetListener( IVideoSourceListener* listener );
 
-public: // Different settings of the video source
+public: // Camera configuration to be done before starting it
+    
+    // Get/Set video size
+    uint32_t Width( ) const;
+    uint32_t Height( ) const;
+    void SetVideoSize( uint32_t width, uint32_t height );
+    
+    // Get/Set frame rate
+    uint32_t FrameRate( ) const;
+    void SetFrameRate( uint32_t frameRate );
+    
+    // Enable/Disable JPEG encoding
+    bool IsJpegEncodingEnabled( ) const;
+    void EnableJpegEncoding( bool enable );
+    
+    // Get/Set JPEG quality
+    uint32_t JpegQuality( ) const;
+    void SetJpegQuality( uint32_t jpegQuality );
+
+public: // Different settings of the video source (can be changed at run time)
 
     // Get/Set camera's horizontal/vertical flip
     bool GetHorizontalFlip( ) const;
@@ -134,20 +153,20 @@ public: // Different settings of the video source
     bool SetVideoStabilisation( bool enabled );
 
     // Get/Set camera's sharpness value, [-100, 100]
-    int GetSharpness( ) const;
-    bool SetSharpness( int sharpness );
+    int32_t GetSharpness( ) const;
+    bool SetSharpness( int32_t sharpness );
 
     // Get/Set camera's contrast value, [-100, 100]
-    int GetContrast( ) const;
-    bool SetContrast( int contrast );
+    int32_t GetContrast( ) const;
+    bool SetContrast( int32_t contrast );
 
     // Get/Set camera's brightness value, [0, 100]
-    int GetBrightness( ) const;
-    bool SetBrightness( int brightness );
+    int32_t GetBrightness( ) const;
+    bool SetBrightness( int32_t brightness );
 
     // Get/Set camera's saturation value, [-100, 100]
-    int GetSaturation( ) const;
-    bool SetSaturation( int saturation );
+    int32_t GetSaturation( ) const;
+    bool SetSaturation( int32_t saturation );
     
     // Get/Set camera's Automatic White Balance mode
     AwbMode GetWhiteBalanceMode( ) const;

@@ -39,20 +39,12 @@ using namespace std;
 namespace Private
 {
     #define CAMERA_VIDEO_PORT   (1)
-//    #define FRAME_WIDTH         (640)
-//    #define FRAME_HEIGHT        (480)
-    #define FRAME_WIDTH         (320)
-    #define FRAME_HEIGHT        (240)
-    #define FRAME_RATE          (30)
     #define BUFFER_COUNT        (2)
-    #define JPEG_QUALITY        (10)
 
     // Private details of the implementation
     class XRaspiCameraData
     {
     private:
-        bool                    EnableJpegEncoding;
-
         recursive_mutex         Sync;
         recursive_mutex         ConfigSync;
         thread                  ControlThread;
@@ -70,13 +62,19 @@ namespace Private
         static bool             HostInitDone;
         
     public:
+        uint32_t                FramesReceived;
+        uint32_t                FrameWidth;
+        uint32_t                FrameHeight;
+        uint32_t                FrameRate;
+        uint32_t                JpegQuality;
+        bool                    JpegEncoding;
         bool                    HorizontalFlip;
         bool                    VerticalFlip;
         bool                    VideoStabilisation;
-        int                     Sharpness;
-        int                     Contrast;
-        int                     Brightness;
-        int                     Saturation;
+        int32_t                 Sharpness;
+        int32_t                 Contrast;
+        int32_t                 Brightness;
+        int32_t                 Saturation;
         AwbMode                 WhiteBalanceMode;
         ExposureMode            CameraExposureMode;
         ExposureMeteringMode    CameraExposureMeteringMode;
@@ -84,10 +82,11 @@ namespace Private
         
     public:
         XRaspiCameraData( ) :
-            EnableJpegEncoding( true ),
             Sync( ), ConfigSync( ), ControlThread( ), NeedToStop( ), Listener( nullptr ), Running( false ),
             Camera( nullptr ), JpegEncoder( nullptr ), JpegEncoderConnection( nullptr ),
             VideoPort( nullptr ), VideoBufferPort( nullptr ), VideoBufferPool( nullptr ),
+            FramesReceived( 0 ),
+            FrameWidth( 640 ), FrameHeight( 480 ), FrameRate( 30 ), JpegQuality( 10 ), JpegEncoding( true ),
             HorizontalFlip( false ), VerticalFlip( false ), VideoStabilisation( false ),
             Sharpness( 0 ), Contrast( 0 ), Brightness( 50 ), Saturation( 0 ),
             WhiteBalanceMode( AwbMode::Auto ), CameraExposureMode( ExposureMode::Auto ),
@@ -108,12 +107,17 @@ namespace Private
         bool Init( );
         void Cleanup( );
 
+        void SetVideoSize( uint32_t width, uint32_t height );
+        void SetFrameRate( uint32_t frameRate );
+        void EnableJpegEncoding( bool enable );
+        void SetJpegQuality( uint32_t jpegQuality );
+
         bool SetCameraFlip( bool horizontal, bool vertical );
         bool SetVideoStabilisation( bool enabled );
-        bool SetSharpness( int sharpness );
-        bool SetContrast( int contrast );
-        bool SetBrightness( int brightness );
-        bool SetSaturation( int saturation );
+        bool SetSharpness( int32_t sharpness );
+        bool SetContrast( int32_t contrast );
+        bool SetBrightness( int32_t brightness );
+        bool SetSaturation( int32_t saturation );
         bool SetWhiteBalanceMode( AwbMode mode );
         bool SetExposureMode( ExposureMode mode );
         bool SetExposureMeteringMode( ExposureMeteringMode mode );
@@ -169,13 +173,57 @@ bool XRaspiCamera::IsRunning( )
 // Get number of frames received since the start of the video source
 uint32_t XRaspiCamera::FramesReceived( )
 {
-    return 0;
+    return mData->FramesReceived;
 }
 
 // Set video source listener
 IVideoSourceListener* XRaspiCamera::SetListener( IVideoSourceListener* listener )
 {
     return mData->SetListener( listener );
+}
+
+// Get/Set video size
+uint32_t XRaspiCamera::Width( ) const
+{
+    return mData->FrameWidth;
+}
+uint32_t XRaspiCamera::Height( ) const
+{
+    return mData->FrameHeight;
+}
+void XRaspiCamera::SetVideoSize( uint32_t width, uint32_t height )
+{
+    mData->SetVideoSize( width, height );
+}
+
+// Get/Set frame rate
+uint32_t XRaspiCamera::FrameRate( ) const
+{
+    return mData->FrameRate;
+}
+void XRaspiCamera::SetFrameRate( uint32_t frameRate )
+{
+    mData->SetFrameRate( frameRate );
+}
+
+// Enable/Disable JPEG encoding
+bool XRaspiCamera::IsJpegEncodingEnabled( ) const
+{
+    return mData->JpegEncoding;
+}
+void XRaspiCamera::EnableJpegEncoding( bool enable )
+{
+    mData->EnableJpegEncoding( enable );
+}
+
+// Get/Set JPEG quality
+uint32_t XRaspiCamera::JpegQuality( ) const
+{
+    return mData->JpegQuality;
+}
+void XRaspiCamera::SetJpegQuality( uint32_t jpegQuality )
+{
+    mData->SetJpegQuality( jpegQuality );
 }
 
 // Get/Set camera's horizontal/vertical flip
@@ -203,41 +251,41 @@ bool XRaspiCamera::SetVideoStabilisation( bool enabled )
 }
 
 // Get/Set camera's sharpness value, [-100, 100]
-int XRaspiCamera::GetSharpness( ) const
+int32_t XRaspiCamera::GetSharpness( ) const
 {
     return mData->Sharpness;
 }
-bool XRaspiCamera::SetSharpness( int sharpness )
+bool XRaspiCamera::SetSharpness( int32_t sharpness )
 {
     return mData->SetSharpness( sharpness );
 }
 
 // Get/Set camera's contrast value, [-100, 100]
-int XRaspiCamera::GetContrast( ) const
+int32_t XRaspiCamera::GetContrast( ) const
 {
     return mData->Contrast;
 }
-bool XRaspiCamera::SetContrast( int contrast )
+bool XRaspiCamera::SetContrast( int32_t contrast )
 {
     return mData->SetContrast( contrast );
 }
 
 // Get/Set camera's brightness value, [0, 100]
-int XRaspiCamera::GetBrightness( ) const
+int32_t XRaspiCamera::GetBrightness( ) const
 {
     return mData->Brightness;
 }
-bool XRaspiCamera::SetBrightness( int brightness )
+bool XRaspiCamera::SetBrightness( int32_t brightness )
 {
     return mData->SetBrightness( brightness );
 }
 
 // Get/Set camera's saturation value, [-100, 100]
-int XRaspiCamera::GetSaturation( ) const
+int32_t XRaspiCamera::GetSaturation( ) const
 {
     return mData->Saturation;
 }
-bool XRaspiCamera::SetSaturation( int saturation )
+bool XRaspiCamera::SetSaturation( int32_t saturation )
 {
     return mData->SetSaturation( saturation );
 }
@@ -294,6 +342,7 @@ bool XRaspiCameraData::Start( )
     {
         NeedToStop.Reset( );
         Running = true;
+        FramesReceived = 0;
         
         ControlThread = thread( ControlThreadHanlder, this );
     }
@@ -394,9 +443,6 @@ bool XRaspiCameraData::Init( )
     {
         VideoPort = Camera->output[CAMERA_VIDEO_PORT];
 
-        //printf( "Opened camera component, ports count: %d \n", Camera->output_num );
-        //printf( "Name: %s \n", Camera->name );
-        
         status = mmal_port_enable( Camera->control, CameraControlCallback );
         if ( status != MMAL_SUCCESS )
         {
@@ -411,12 +457,12 @@ bool XRaspiCameraData::Init( )
 
         cam_config.hdr.id                                = MMAL_PARAMETER_CAMERA_CONFIG;
         cam_config.hdr.size                              = sizeof( cam_config );
-        cam_config.max_stills_w                          = FRAME_WIDTH;
-        cam_config.max_stills_h                          = FRAME_HEIGHT;
+        cam_config.max_stills_w                          = FrameWidth;
+        cam_config.max_stills_h                          = FrameHeight;
         cam_config.stills_yuv422                         = 0;
         cam_config.one_shot_stills                       = 0;
-        cam_config.max_preview_video_w                   = FRAME_WIDTH;
-        cam_config.max_preview_video_h                   = FRAME_HEIGHT;
+        cam_config.max_preview_video_w                   = FrameWidth;
+        cam_config.max_preview_video_h                   = FrameHeight;
         cam_config.num_preview_video_frames              = 2;
         cam_config.stills_capture_circular_buffer_height = 0;
         cam_config.fast_preview_resume                   = 0;
@@ -434,15 +480,15 @@ bool XRaspiCameraData::Init( )
         // set-up video port format
         MMAL_ES_FORMAT_T* format = VideoPort->format;
         
-        format->encoding                 = ( EnableJpegEncoding ) ? MMAL_ENCODING_I420 : MMAL_ENCODING_RGB24;
+        format->encoding                 = ( JpegEncoding ) ? MMAL_ENCODING_I420 : MMAL_ENCODING_RGB24;
         format->encoding_variant         = format->encoding;
-        format->es->video.width          = FRAME_WIDTH;
-        format->es->video.height         = FRAME_HEIGHT;
+        format->es->video.width          = FrameWidth;
+        format->es->video.height         = FrameHeight;
         format->es->video.crop.x         = 0;
         format->es->video.crop.y         = 0;
-        format->es->video.crop.width     = FRAME_WIDTH;
-        format->es->video.crop.height    = FRAME_HEIGHT;
-        format->es->video.frame_rate.num = FRAME_RATE;
+        format->es->video.crop.width     = FrameWidth;
+        format->es->video.crop.height    = FrameHeight;
+        format->es->video.frame_rate.num = FrameRate;
         format->es->video.frame_rate.den = 1;
         
         status = mmal_port_format_commit( VideoPort );
@@ -463,7 +509,7 @@ bool XRaspiCameraData::Init( )
     }
 
     // configure JPEG encoder in case user prefers getting JPEGs instead of RGB pixel data
-    if ( EnableJpegEncoding )
+    if ( JpegEncoding )
     {
         if ( status == MMAL_SUCCESS )
         {
@@ -513,7 +559,7 @@ bool XRaspiCameraData::Init( )
                     }
 
                     // set JPEG quality
-                    status = mmal_port_parameter_set_uint32( outputPort, MMAL_PARAMETER_JPEG_Q_FACTOR, JPEG_QUALITY );
+                    status = mmal_port_parameter_set_uint32( outputPort, MMAL_PARAMETER_JPEG_Q_FACTOR, JpegQuality );
     
                     if ( status != MMAL_SUCCESS )
                     {
@@ -548,7 +594,7 @@ bool XRaspiCameraData::Init( )
     if ( status == MMAL_SUCCESS )
     {
         // create video buffer pool
-        VideoBufferPort = ( EnableJpegEncoding ) ? JpegEncoder->output[0] : VideoPort;
+        VideoBufferPort = ( JpegEncoding ) ? JpegEncoder->output[0] : VideoPort;
         VideoBufferPort->userdata = reinterpret_cast<MMAL_PORT_USERDATA_T*>( this );
 
         if ( VideoBufferPort->buffer_num < BUFFER_COUNT )
@@ -673,6 +719,51 @@ void XRaspiCameraData::Cleanup( )
     VideoBufferPort = nullptr;
 }
 
+// Set size of video frames to be provided
+void XRaspiCameraData::SetVideoSize( uint32_t width, uint32_t height )
+{
+    lock_guard<recursive_mutex> lock( ConfigSync );
+    
+    if ( !IsRunning( ) )
+    {
+        FrameWidth  = width;
+        FrameHeight = height;
+    }
+}
+
+// Set frame rate to be set when starting camera
+void XRaspiCameraData::SetFrameRate( uint32_t frameRate )
+{
+    lock_guard<recursive_mutex> lock( ConfigSync );
+    
+    if ( !IsRunning( ) )
+    {
+        FrameRate = frameRate;
+    }
+}
+
+// Enable/disable JPEG encoding
+void XRaspiCameraData::EnableJpegEncoding( bool enable )
+{
+    lock_guard<recursive_mutex> lock( ConfigSync );
+    
+    if ( !IsRunning( ) )
+    {
+        JpegEncoding = enable;
+    }    
+}
+
+// Set quality of provided JPEG images
+void XRaspiCameraData::SetJpegQuality( uint32_t jpegQuality )
+{
+    lock_guard<recursive_mutex> lock( ConfigSync );
+    
+    if ( !IsRunning( ) )
+    {
+        JpegQuality = jpegQuality;
+    }
+}
+
 // Set camera's horizontal/vertical flip
 bool XRaspiCameraData::SetCameraFlip( bool horizontal, bool vertical )
 {
@@ -720,7 +811,7 @@ bool XRaspiCameraData::SetVideoStabilisation( bool enabled )
 }
 
 // Set camera's sharpness value
-bool XRaspiCameraData::SetSharpness( int sharpness )
+bool XRaspiCameraData::SetSharpness( int32_t sharpness )
 {
     lock_guard<recursive_mutex> lock( ConfigSync );
     bool                        ret = true;
@@ -741,7 +832,7 @@ bool XRaspiCameraData::SetSharpness( int sharpness )
 }
 
 // Set camera's contrast value
-bool XRaspiCameraData::SetContrast( int contrast )
+bool XRaspiCameraData::SetContrast( int32_t contrast )
 {
     lock_guard<recursive_mutex> lock( ConfigSync );
     bool                        ret = true;
@@ -762,7 +853,7 @@ bool XRaspiCameraData::SetContrast( int contrast )
 }
 
 // Set camera's brightness value
-bool XRaspiCameraData::SetBrightness( int brightness )
+bool XRaspiCameraData::SetBrightness( int32_t brightness )
 {
     lock_guard<recursive_mutex> lock( ConfigSync );
     bool                        ret = true;
@@ -783,7 +874,7 @@ bool XRaspiCameraData::SetBrightness( int brightness )
 }
 
 // Set camera's saturation value
-bool XRaspiCameraData::SetSaturation( int saturation )
+bool XRaspiCameraData::SetSaturation( int32_t saturation )
 {
     lock_guard<recursive_mutex> lock( ConfigSync );
     bool                        ret = true;
@@ -980,23 +1071,21 @@ void XRaspiCameraData::CameraControlCallback( MMAL_PORT_T* port, MMAL_BUFFER_HEA
 {
 }
 
-// Callback signaling availability of a new video frame
+// Callback signalling availability of a new video frame
 void XRaspiCameraData::VideoBufferCallback( MMAL_PORT_T* port, MMAL_BUFFER_HEADER_T* buffer )
 {
     XRaspiCameraData* me = reinterpret_cast<XRaspiCameraData*>( port->userdata );
     
-//    printf( "video callback, port = %08X, buffer = %08X, data = %08X \n", (uint32_t) port, (uint32_t) buffer, port->userdata );
-    
-//    printf( "got data: %d, offset: %d \n", buffer->length, buffer->offset );
-
     if ( buffer->length != 0 )
     {
         mmal_buffer_header_mem_lock( buffer );
 
         {
-            shared_ptr<XImage> image = ( !me->EnableJpegEncoding ) ?
-                XImage::Create( buffer->data + buffer->offset, FRAME_WIDTH, FRAME_HEIGHT, FRAME_WIDTH * 3, XPixelFormat::RGB24 ) :
+            shared_ptr<XImage> image = ( !me->JpegEncoding ) ?
+                XImage::Create( buffer->data + buffer->offset, me->FrameWidth, me->FrameHeight, me->FrameWidth * 3, XPixelFormat::RGB24 ) :
                 XImage::Create( buffer->data + buffer->offset, buffer->length, 1, buffer->length, XPixelFormat::JPEG );
+                
+            me->FramesReceived++;
 
             if ( image )
             {
