@@ -19,6 +19,7 @@
 */
 
 #include <map>
+#include <algorithm>
 #include "XRaspiCameraConfig.hpp"
 
 using namespace std;
@@ -39,7 +40,7 @@ const static string* SupportedProperties[] =
 {
     &PROP_HFLIP, &PROP_VFLIP, &PROP_VIDEO_STABILISATION,
     &PROP_SHARPNESS, &PROP_CONTRAST, &PROP_BRIGHTNESS, &PROP_SATURATION,
-    &PROP_AWBMODE
+    &PROP_AWBMODE, &PROP_EXPMODE, &PROP_EXPMETERINGMODE, &PROP_EFFECT
 };
 
 const static map<string, AwbMode> SupportedAwbModes =
@@ -286,6 +287,58 @@ XError XRaspiCameraConfig::GetProperty( const string& propertyName, string& valu
     {
         numericValue   = mCamera->GetSaturation( );
         valueIsANumber = true;
+    }
+    else if ( propertyName == PROP_AWBMODE )
+    {
+        AwbMode awbMode = mCamera->GetWhiteBalanceMode( );
+
+        for ( auto supportedMode : SupportedAwbModes )
+        {
+            if ( supportedMode.second == awbMode )
+            {
+                value = supportedMode.first;
+                break;
+            }
+        }
+    }
+    else if ( propertyName == PROP_EXPMODE )
+    {
+        ExposureMode expMode = mCamera->GetExposureMode( );
+
+        for ( auto supportedMode : SupportedExposureModes )
+        {
+            if ( supportedMode.second == expMode )
+            {
+                value = supportedMode.first;
+                break;
+            }
+        }
+    }
+    else if ( propertyName == PROP_EXPMETERINGMODE )
+    {
+        ExposureMeteringMode expMeteringMode = mCamera->GetExposureMeteringMode( );
+
+        for ( auto supportedMode : SupportedExposureMeteringModes )
+        {
+            if ( supportedMode.second == expMeteringMode )
+            {
+                value = supportedMode.first;
+                break;
+            }
+        }
+    }
+    else if ( propertyName == PROP_EFFECT )
+    {
+        ImageEffect imageEffect = mCamera->GetImageEffect( );
+
+        for ( auto supportedEffect : SupportedImageEffects )
+        {
+            if ( supportedEffect.second == imageEffect )
+            {
+                value = supportedEffect.first;
+                break;
+            }
+        }
     }
     else
     {

@@ -13,7 +13,7 @@
 <input type="range" id="sharpness" value="0" min="-100" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)">
 
 <label for="awb">White Balance:</label>
-<select id="awb" onchange="handleSelectionProperty(this)">
+<select id="awb" data-mini="true" onchange="handleSelectionProperty(this)">
     <option value="Off">Off</option>
     <option value="Auto">Auto</option>
     <option value="Sunlight">Sunlight</option>
@@ -27,7 +27,7 @@
 </select>
 
 <label for="expmode">Exposure Mode:</label>
-<select id="expmode" onchange="handleSelectionProperty(this)">
+<select id="expmode" data-mini="true" onchange="handleSelectionProperty(this)">
     <option value="Off">Off</option>
     <option value="Auto">Auto</option>
     <option value="Night">Night</option>
@@ -44,7 +44,7 @@
 </select>
 
 <label for="expmeteringmode">Exposure Metering Mode:</label>
-<select id="expmeteringmode" onchange="handleSelectionProperty(this)">
+<select id="expmeteringmode" data-mini="true" onchange="handleSelectionProperty(this)">
     <option value="Average">Average</option>
     <option value="Spot">Spot</option>
     <option value="Backlit">Backlit</option>
@@ -52,7 +52,7 @@
 </select>
 
 <label for="effect">Image Effect:</label>
-<select id="effect" onchange="handleSelectionProperty(this)">
+<select id="effect" data-mini="true" onchange="handleSelectionProperty(this)">
     <option value="None">None</option>
     <option value="Negative">Negative</option>
     <option value="Solarize">Solarize</option>
@@ -91,6 +91,7 @@
 var config = { }
 var rangeProperties = [ "brightness", "contrast", "saturation", "sharpness" ];
 var boolProperties = [ "hflip", "vflip", "videostabilisation" ];
+var selectionProperties = [ "awb", "expmode", "expmeteringmode", "effect" ];
 
 function loadCurrentSetting( )
 {
@@ -120,6 +121,13 @@ function loadCurrentSetting( )
                 for ( var i = 0, len = boolProperties.length; i < len; i++ )
                 {
                     $( "#" + boolProperties[i] ).attr( "checked", ( data.config[boolProperties[i]] == "1" ) ).checkboxradio( "refresh" );
+                }
+
+                console.log( "doing selection properties" );
+
+                for ( var i = 0, len = selectionProperties.length; i < len; i++ )
+                {
+                    $( "#" + selectionProperties[i] ).val( data.config[selectionProperties[i]] ).change( );
                 }
 
                 $( "#properties" ).show( );
