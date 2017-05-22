@@ -80,8 +80,10 @@ function showSettings( )
 {
     if ( !showingSettings )
     {
+        var timeNow = new Date( ).getTime( );
+
         $.ajax({
-            url: '/cameraproperties.html',
+            url: '/cameraproperties.html?=' + timeNow,
 
             success: function(data)
             {
