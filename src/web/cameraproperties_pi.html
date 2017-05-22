@@ -84,6 +84,8 @@
 <input id="videostabilisation" type="checkbox" data-mini="true" onclick='handleBoolProperty(this);' />
 <label for="videostabilisation">Video Stabilisation</label>
 
+<button type="button" id="reset" onclick="resetToDefaults()">Reset to Defaults</button> 
+ 
 </div>
 
 <script>
@@ -92,6 +94,46 @@ var config = { }
 var rangeProperties = [ "brightness", "contrast", "saturation", "sharpness" ];
 var boolProperties = [ "hflip", "vflip", "videostabilisation" ];
 var selectionProperties = [ "awb", "expmode", "expmeteringmode", "effect" ];
+
+var rangePropertiesDefaults = [ 50, 0, 0, 0 ];
+var boolPropertiesDefaults = [ false, false, false ];
+var selectionPropertiesDefaults = [ "Auto", "Auto", "Average", "None" ];
+
+function resetToDefaults( )
+{
+    for ( var i = 0, len = rangeProperties.length; i < len; i++ )
+    {
+        var jRange = $( "#" + rangeProperties[i] );
+        var range = jRange[0];
+        
+        range.value = rangePropertiesDefaults[i];
+        range.onchange( );
+
+        jRange.slider( "refresh" );
+    }
+
+    for ( var i = 0, len = boolProperties.length; i < len; i++ )
+    {
+        var jCheck = $( "#" + boolProperties[i] );
+        var check = jCheck[0];
+
+        check.checked = boolPropertiesDefaults[i];
+        check.onclick( );
+
+        jCheck.checkboxradio( "refresh" );
+    }
+
+    for ( var i = 0, len = selectionProperties.length; i < len; i++ )
+    {
+        var jSelection = $( "#" + selectionProperties[i] );
+        var selection = jSelection[0];
+        
+        selection.value = selectionPropertiesDefaults[i];
+        selection.onchange( );
+
+        jSelection.change( );
+    }
+}
 
 function loadCurrentSetting( )
 {
@@ -122,8 +164,6 @@ function loadCurrentSetting( )
                 {
                     $( "#" + boolProperties[i] ).attr( "checked", ( data.config[boolProperties[i]] == "1" ) ).checkboxradio( "refresh" );
                 }
-
-                console.log( "doing selection properties" );
 
                 for ( var i = 0, len = selectionProperties.length; i < len; i++ )
                 {
