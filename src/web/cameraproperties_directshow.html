@@ -1,7 +1,7 @@
 <div id="properties" style="display: none;">
 
 <label for="brightness">Brightness:</label>
-<input type="range" id="brightness" value="50" min="0" max="100" data-highlight="true" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+<input type="range" id="brightness" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
 
 <label for="contrast">Contrast:</label>
 <input type="range" id="contrast" value="50" min="0" max="100" data-highlight="true" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
@@ -29,6 +29,7 @@
 </div>
 
 <script>
+
 var config = { }
 var rangeProperties = [ "brightness", "contrast", "hue", "saturation", "sharpness", "gamma" ];
 var boolProperties = [ "color", "blc" ];
@@ -65,6 +66,12 @@ function resetToDefaults( )
     }
 }
 
+function hideControl( id )
+{
+    $( "label[for='" + id + "']").hide( );
+    $( "#" + id ).hide( );
+}
+
 function loadCurrentSetting( )
 {
     $.ajax( {
@@ -81,19 +88,32 @@ function loadCurrentSetting( )
             else
             {
                 config = data.config;
-                //alert( "loaded: " + JSON.stringify( data.config ) );
                 
                 for ( var i = 0, len = rangeProperties.length; i < len; i++ )
                 {
-                    var jRange = $( "#" + rangeProperties[i] );
-                    
-                    configureRangeProperty( jRange[0], data.config );
-                    jRange.slider( "refresh" );
+                    if ( config[rangeProperties[i]] )
+                    {
+                        var jRange = $( "#" + rangeProperties[i] );
+                        
+                        configureRangeProperty( jRange[0], data.config );
+                        jRange.slider( "refresh" );
+                    }
+                    else
+                    {
+                        hideControl( rangeProperties[i] );
+                    }
                 }
                 
                 for ( var i = 0, len = boolProperties.length; i < len; i++ )
                 {
-                    $( "#" + boolProperties[i] ).attr( "checked", ( data.config[boolProperties[i]] == "1" ) ).checkboxradio( "refresh" );
+                    if ( config[boolProperties[i]] )
+                    {
+                        $( "#" + boolProperties[i] ).attr( "checked", ( data.config[boolProperties[i]] == "1" ) ).checkboxradio( "refresh" );
+                    }
+                    else
+                    {
+                        hideControl( boolProperties[i] );
+                    }
                 }
 
                 $( "#properties" ).show( );

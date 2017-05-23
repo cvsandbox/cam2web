@@ -1,16 +1,16 @@
 <div id="properties" style="display: none;">
 
 <label for="brightness">Brightness:</label>
-<input type="range" id="brightness" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)">
+<input type="range" id="brightness" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
 
 <label for="contrast">Contrast:</label>
-<input type="range" id="contrast" value="0" min="-100" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)">
+<input type="range" id="contrast" value="0" min="-100" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
 
 <label for="saturation">Saturation:</label>
-<input type="range" id="saturation" value="0" min="-100" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)">
+<input type="range" id="saturation" value="0" min="-100" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
 
 <label for="sharpness">Sharpness:</label>
-<input type="range" id="sharpness" value="0" min="-100" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)">
+<input type="range" id="sharpness" value="0" min="-100" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
 
 <label for="awb">White Balance:</label>
 <select id="awb" data-mini="true" onchange="handleSelectionProperty(this)">
@@ -75,13 +75,13 @@
     <option value="Cartoon">Cartoon</option>
 </select>
 
-<input id="hflip" type="checkbox" data-mini="true" onclick='handleBoolProperty(this);' />
+<input id="hflip" type="checkbox" data-mini="true" onclick="handleBoolProperty(this);" />
 <label for="hflip">Horizontal Flip</label>
 
-<input id="vflip" type="checkbox" data-mini="true" onclick='handleBoolProperty(this);' />
+<input id="vflip" type="checkbox" data-mini="true" onclick="handleBoolProperty(this);" />
 <label for="vflip">Vertical Flip</label>
 
-<input id="videostabilisation" type="checkbox" data-mini="true" onclick='handleBoolProperty(this);' />
+<input id="videostabilisation" type="checkbox" data-mini="true" onclick="handleBoolProperty(this);" />
 <label for="videostabilisation">Video Stabilisation</label>
 
 <button type="button" id="reset" onclick="resetToDefaults()">Reset to Defaults</button> 
