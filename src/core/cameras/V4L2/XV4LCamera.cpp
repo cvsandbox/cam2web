@@ -18,6 +18,7 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
+#include <map>
 #include <mutex>
 #include <thread>
 #include <chrono>
@@ -43,7 +44,7 @@ namespace Private
     class XV4LCameraData
     {
     private:
-        recursive_mutex         Sync;
+        mutable recursive_mutex Sync;
         recursive_mutex         ConfigSync;
         thread                  ControlThread;
         XManualResetEvent       NeedToStop;
@@ -54,6 +55,8 @@ namespace Private
         bool                    VideoStreamingActive;
         uint8_t*                MappedBuffers[BUFFER_COUNT];
         uint32_t                MappedBufferLength[BUFFER_COUNT];
+
+        map<XVideoProperty, int32_t> PropertiesToSet;
 
     public:
         uint32_t                VideoDevice;
@@ -66,7 +69,7 @@ namespace Private
     public:
         XV4LCameraData( ) :
             Sync( ), ConfigSync( ), ControlThread( ), NeedToStop( ), Listener( nullptr ), Running( false ),
-            VideoFd( -1 ), VideoStreamingActive( false ), MappedBuffers( ), MappedBufferLength( ),
+            VideoFd( -1 ), VideoStreamingActive( false ), MappedBuffers( ), MappedBufferLength( ), PropertiesToSet( ),
             VideoDevice( 0 ),
             FramesReceived( 0 ), FrameWidth( 640 ), FrameHeight( 480 ), FrameRate( 30 ), JpegEncoding( true )
         {
@@ -87,7 +90,10 @@ namespace Private
         void SetVideoSize( uint32_t width, uint32_t height );
         void SetFrameRate( uint32_t frameRate );
         void EnableJpegEncoding( bool enable );
-        void SetJpegQuality( uint32_t jpegQuality );
+
+        XError SetVideoProperty( XVideoProperty property, int32_t value );
+        XError GetVideoProperty( XVideoProperty property, int32_t* value ) const;
+        XError GetVideoPropertyRange( XVideoProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* def ) const;
 
     private:
         bool Init( );
@@ -190,6 +196,24 @@ bool XV4LCamera::IsJpegEncodingEnabled( ) const
 void XV4LCamera::EnableJpegEncoding( bool enable )
 {
     mData->EnableJpegEncoding( enable );
+}
+
+// Set the specified video property
+XError XV4LCamera::SetVideoProperty( XVideoProperty property, int32_t value )
+{
+    return mData->SetVideoProperty( property, value );
+}
+
+// Get current value if the specified video property
+XError XV4LCamera::GetVideoProperty( XVideoProperty property, int32_t* value ) const
+{
+    return mData->GetVideoProperty( property, value );
+}
+
+// Get range of values supported by the specified video property
+XError XV4LCamera::GetVideoPropertyRange( XVideoProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* def ) const
+{
+    return mData->GetVideoPropertyRange( property, min, max, step, def );
 }
 
 namespace Private
@@ -451,6 +475,23 @@ bool XV4LCameraData::Init( )
         }
     }
 
+    // configure all properties, which were set before device got running
+    if ( ret )
+    {
+        bool configOK = true;
+
+        for ( auto property : PropertiesToSet )
+        {
+            configOK &= static_cast<bool>( SetVideoProperty( property.first, property.second ) );
+        }
+        PropertiesToSet.clear( );
+    
+        if ( !configOK )
+        {
+            NotifyError( "Failed applying video configuration" );
+        }
+    }
+
     return ret;
 }
 
@@ -671,6 +712,143 @@ void XV4LCameraData::EnableJpegEncoding( bool enable )
     }
 }
 
+static const uint32_t nativeVideoProperties[] =
+{
+    V4L2_CID_BRIGHTNESS,
+    V4L2_CID_CONTRAST,
+    V4L2_CID_SATURATION,
+    V4L2_CID_HUE,
+    V4L2_CID_SHARPNESS,
+    V4L2_CID_GAIN,
+    V4L2_CID_BACKLIGHT_COMPENSATION,
+    V4L2_CID_RED_BALANCE,
+    V4L2_CID_BLUE_BALANCE,
+    V4L2_CID_AUTO_WHITE_BALANCE,
+    V4L2_CID_HFLIP,
+    V4L2_CID_VFLIP
+};
+
+// Set the specified video property
+XError XV4LCameraData::SetVideoProperty( XVideoProperty property, int32_t value )
+{
+    lock_guard<recursive_mutex> lock( Sync );
+    XError                      ret = XError::Success;
+
+    if ( ( property < XVideoProperty::Brightness ) || ( property > XVideoProperty::Gain ) )
+    {
+        ret = XError::UnknownProperty;
+    }
+    else if ( ( !Running ) || ( VideoFd == -1 ) )
+    {
+        // save property value and try setting it when device gets runnings
+        PropertiesToSet[property] = value;
+    }
+    else
+    {
+        v4l2_control control;
+
+        control.id    = nativeVideoProperties[static_cast<int>( property )];
+        control.value = value;
+
+        if ( ioctl( VideoFd, VIDIOC_S_CTRL, &control ) < 0 )
+        {
+            ret = XError::Failed;
+        }
+    }
+
+    return ret;
+}
+
+// Get current value if the specified video property
+XError XV4LCameraData::GetVideoProperty( XVideoProperty property, int32_t* value ) const
+{
+    lock_guard<recursive_mutex> lock( Sync );
+    XError                      ret = XError::Success;
+
+    if ( value == nullptr )
+    {
+        ret = XError::NullPointer;
+    }
+    else if ( ( property < XVideoProperty::Brightness ) || ( property > XVideoProperty::Gain ) )
+    {
+        ret = XError::UnknownProperty;
+    }
+    else if ( ( !Running ) || ( VideoFd == -1 ) )
+    {
+        ret = XError::DeivceNotReady;
+    }
+    else
+    {
+        v4l2_control control;
+
+        control.id = nativeVideoProperties[static_cast<int>( property )];
+
+        if ( ioctl( VideoFd, VIDIOC_G_CTRL, &control ) < 0 )
+        {
+            ret = XError::Failed;
+        }
+        else
+        {
+            *value = control.value;
+        }
+    }
+
+    return ret;
+}
+
+// Get range of values supported by the specified video property
+XError XV4LCameraData::GetVideoPropertyRange( XVideoProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* def ) const
+{
+    lock_guard<recursive_mutex> lock( Sync );
+    XError                      ret = XError::Success;
+
+    if ( ( min == nullptr ) || ( max == nullptr ) || ( step == nullptr ) || ( def == nullptr ) )
+    {
+        ret = XError::NullPointer;
+    }
+    else if ( ( property < XVideoProperty::Brightness ) || ( property > XVideoProperty::Gain ) )
+    {
+        ret = XError::UnknownProperty;
+    }
+    else if ( ( !Running ) || ( VideoFd == -1 ) )
+    {
+        ret = XError::DeivceNotReady;
+    }
+    else
+    {
+        v4l2_queryctrl queryControl;
+
+        queryControl.id = nativeVideoProperties[static_cast<int>( property )];
+
+        if ( ioctl( VideoFd, VIDIOC_QUERYCTRL, &queryControl ) < 0 )
+        {
+            ret = XError::Failed;
+        }
+        else if ( ( queryControl.flags & V4L2_CTRL_FLAG_DISABLED ) != 0 )
+        {
+            ret = XError::ConfigurationNotSupported;
+        }
+        else if ( ( queryControl.type & ( V4L2_CTRL_TYPE_BOOLEAN | V4L2_CTRL_TYPE_INTEGER ) ) != 0 )
+        {
+            /*
+            printf( "property: %d, min: %d, max: %d, step: %d, def: %d, type: %s \n ", static_cast<int>( property ),
+                    queryControl.minimum, queryControl.maximum, queryControl.step, queryControl.default_value,
+                    ( queryControl.type & V4L2_CTRL_TYPE_BOOLEAN ) ? "bool" : "int" );
+            */
+
+            *min  = queryControl.minimum;
+            *max  = queryControl.maximum;
+            *step = queryControl.step;
+            *def  = queryControl.default_value;
+        }
+        else
+        {
+            ret = XError::ConfigurationNotSupported;
+        }
+    }
+
+    return ret;
+}
 
 } // namespace Private
 

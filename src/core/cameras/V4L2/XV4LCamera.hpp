@@ -31,6 +31,23 @@ namespace Private
     class XV4LCameraData;
 }
 
+enum class XVideoProperty
+{
+    Brightness = 0,
+    Contrast,
+    Saturation,
+    Hue,
+    Sharpness,
+    Gain,
+    BacklightCompensation,
+    RedBalance,
+    BlueBalance,
+    AutoWhiteBalance,
+    HorizontalFlip,
+    VerticalFlip
+};
+
+// Class which provides access to cameras using V4L2 API (Video for Linux, v2)
 class XV4LCamera : public IVideoSource, private Uncopyable
 {
 protected:
@@ -75,6 +92,16 @@ public: // Set of poperties, which can be set only when device is NOT running.
     // Enable/Disable JPEG encoding
     bool IsJpegEncodingEnabled( ) const;
     void EnableJpegEncoding( bool enable );
+
+public:
+
+    // Set the specified video property. The device does not have to be running. If it is not,
+    // the setting will be cached and applied as soon as the device gets running.
+    XError SetVideoProperty( XVideoProperty property, int32_t value );
+    // Get current value if the specified video property. The device must be running.
+    XError GetVideoProperty( XVideoProperty property, int32_t* value ) const;
+    // Get range of values supported by the specified video property
+    XError GetVideoPropertyRange( XVideoProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* def ) const;
 
 private:
     Private::XV4LCameraData* mData;

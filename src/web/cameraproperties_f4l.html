@@ -1,0 +1,172 @@
+<div id="properties" style="display: none;">
+
+<div id="div_brightness">
+<label for="brightness">Brightness:</label>
+<input type="range" id="brightness" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+</div>
+
+<div id="div_contrast">
+<label for="contrast">Contrast:</label>
+<input type="range" id="contrast" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+</div>
+
+<div id="div_saturation">
+<label for="saturation">Saturation:</label>
+<input type="range" id="saturation" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+</div>
+
+<div id="div_hue">
+<label for="hue">Hue:</label>
+<input type="range" id="hue" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+</div>
+
+<div id="div_sharpness">
+<label for="sharpness">Sharpness:</label>
+<input type="range" id="sharpness" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+</div>
+
+<div id="div_gain">
+<label for="gain">Gain:</label>
+<input type="range" id="gain" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+</div>
+
+<div id="div_blc">
+<label for="blc">Backlight Compensation</label>
+<input type="range" id="blc" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+</div>
+
+<div id="div_redBalance">
+<label for="redBalance">Red Balance:</label>
+<input type="range" id="redBalance" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+</div>
+
+<div id="div_blueBalance">
+<label for="blueBalance">Blue Balance:</label>
+<input type="range" id="blueBalance" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+</div>
+
+<div id="div_awb">
+<input id="awb" type="checkbox" data-mini="true" onclick="handleBoolProperty(this);" />
+<label for="awb">Automatic White Balance</label>
+</div>
+
+<div id="div_hflip">
+<input id="hflip" type="checkbox" data-mini="true" onclick="handleBoolProperty(this);" />
+<label for="hflip">Horizontal Flip</label>
+</div>
+
+<div id="div_vflip">
+<input id="vflip" type="checkbox" data-mini="true" onclick="handleBoolProperty(this);" />
+<label for="vflip">Vertical Flip</label>
+</div>
+
+<button type="button" id="reset" onclick="resetToDefaults()">Reset to Defaults</button> 
+ 
+</div>
+
+<script>
+
+var config = { }
+var rangeProperties = [ "brightness", "contrast", "saturation", "hue", "sharpness", "gain", "blc", "redBalance", "blueBalance" ];
+var boolProperties = [ "awb", "hflip", "vflip" ];
+
+function configureRangeProperty( range, config )
+{
+    range.min = config[range.id + ":min"];
+    range.max = config[range.id + ":max"];
+    range.value = config[range.id];
+}
+
+function resetToDefaults( )
+{
+    for ( var i = 0, len = rangeProperties.length; i < len; i++ )
+    {
+        if ( config[rangeProperties[i] + ":def"] )
+        {
+            var jRange = $( "#" + rangeProperties[i] );
+            var range = jRange[0];
+            
+            range.value = config[rangeProperties[i] + ":def"];
+            range.onchange( );
+    
+            jRange.slider( "refresh" );
+        }
+    }
+
+    for ( var i = 0, len = boolProperties.length; i < len; i++ )
+    {
+        if ( config[boolProperties[i] + ":def"] )
+        {
+            var jCheck = $( "#" + boolProperties[i] );
+            var check = jCheck[0];
+            
+            check.checked = ( config[boolProperties[i] + ":def"] == "1" );
+            check.onclick( );
+            
+            jCheck.checkboxradio( "refresh" );
+        }
+    }
+}
+
+function hideControl( id )
+{
+    $( "#div_" + id ).hide( );
+}
+
+function loadCurrentSetting( )
+{
+    $.ajax( {
+        type        : "GET",
+        url         : "/camera/config",
+        contentType : "application/json; charset=utf-8",
+        async       : true,
+        success: function( data )
+        {
+            if ( data.status != "OK" )
+            {
+                console.log( "Failed getting camera properties" );
+            }
+            else
+            {
+                config = data.config;
+                
+                for ( var i = 0, len = rangeProperties.length; i < len; i++ )
+                {
+                    if ( config[rangeProperties[i]] )
+                    {
+                        var jRange = $( "#" + rangeProperties[i] );
+                        
+                        configureRangeProperty( jRange[0], data.config );
+                        jRange.slider( "refresh" );
+                    }
+                    else
+                    {
+                        hideControl( rangeProperties[i] );
+                    }
+                }
+                
+                for ( var i = 0, len = boolProperties.length; i < len; i++ )
+                {
+                    if ( config[boolProperties[i]] )
+                    {
+                        $( "#" + boolProperties[i] ).attr( "checked", ( data.config[boolProperties[i]] == "1" ) ).checkboxradio( "refresh" );
+                    }
+                    else
+                    {
+                        hideControl( boolProperties[i] );
+                    }
+                }
+
+                $( "#properties" ).show( );
+            }
+        },
+        failure: function( errMsg )
+        {
+            console.log( errMsg );
+        }
+    } );
+}
+
+loadCurrentSetting( );
+
+</script>

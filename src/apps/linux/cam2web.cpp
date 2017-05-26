@@ -24,6 +24,7 @@
 #include <signal.h>
 
 #include "XV4LCamera.hpp"
+#include "XV4LCameraConfig.hpp"
 #include "XWebServer.hpp"
 #include "XVideoSourceToWeb.hpp"
 #include "XObjectConfiguratorRequestHandler.hpp"
@@ -161,7 +162,8 @@ int main( int argc, char* argv[] )
     sigaction( SIGHUP,  &sigIntAction, NULL );
 
     // create camera object
-    shared_ptr<XV4LCamera>  xcamera = XV4LCamera::Create( );
+    shared_ptr<XV4LCamera>           xcamera       = XV4LCamera::Create( );
+    shared_ptr<IObjectConfigurator>  xcameraConfig = make_shared<XV4LCameraConfig>( xcamera );
 
     // prepare some read-only informational properties of the camera
     PropertyMap cameraInfo;
@@ -183,7 +185,7 @@ int main( int argc, char* argv[] )
     xcamera->SetFrameRate( Settings.FrameRate );
 
     server.SetDocumentRoot( "./web/" ).
-//           AddHandler( make_shared<XObjectConfiguratorRequestHandler>( "/camera/config", xcameraConfig ) ).
+           AddHandler( make_shared<XObjectConfiguratorRequestHandler>( "/camera/config", xcameraConfig ) ).
            AddHandler( make_shared<XObjectInformationRequestHandler>( "/camera/info", make_shared<XObjectInformationMap>( cameraInfo ) ) ).
            AddHandler( video2web.CreateJpegHandler( "/camera/jpeg" ) ).
            AddHandler( video2web.CreateMjpegHandler( "/camera/mjpeg", Settings.FrameRate ) );
