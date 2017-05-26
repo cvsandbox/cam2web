@@ -1,28 +1,44 @@
 <div id="properties" style="display: none;">
 
+<div id="div_brightness">
 <label for="brightness">Brightness:</label>
 <input type="range" id="brightness" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+</div>
 
+<div id="div_contrast">
 <label for="contrast">Contrast:</label>
-<input type="range" id="contrast" value="50" min="0" max="100" data-highlight="true" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+<input type="range" id="contrast" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+</div>
 
+<div id="div_hue">
 <label for="hue">Hue:</label>
-<input type="range" id="hue" value="50" min="0" max="100" data-highlight="true" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+<input type="range" id="hue" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+</div>
 
+<div id="div_saturation">
 <label for="saturation">Saturation:</label>
-<input type="range" id="saturation" value="50" min="0" max="100" data-highlight="true" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+<input type="range" id="saturation" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+</div>
 
+<div id="div_sharpness">
 <label for="sharpness">Sharpness:</label>
-<input type="range" id="sharpness" value="50" min="0" max="100" data-highlight="true" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+<input type="range" id="sharpness" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+</div>
 
+<div id="div_gamma">
 <label for="gamma">Gamma:</label>
-<input type="range" id="gamma" value="50" min="0" max="100" data-highlight="true" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+<input type="range" id="gamma" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
+</div>
 
+<div id="div_color">
 <input id="color" type="checkbox" data-mini="true" onclick="handleBoolProperty(this);" />
-<label for="color">Color image</label>
+<label for="color">Color Image</label>
+</div>
     
+<div id="div_blc">
 <input id="blc" type="checkbox" data-mini="true" onclick="handleBoolProperty(this);" />
-<label for="blc">Back light compensation</label>
+<label for="blc">Back Light Compensation</label>
+</div>
 
 <button type="button" id="reset" onclick="resetToDefaults()">Reset to Defaults</button> 
  
@@ -45,31 +61,36 @@ function resetToDefaults( )
 {
     for ( var i = 0, len = rangeProperties.length; i < len; i++ )
     {
-        var jRange = $( "#" + rangeProperties[i] );
-        var range = jRange[0];
-        
-        range.value = config[rangeProperties[i] + ":def"];
-        range.onchange( );
+        if ( config[rangeProperties[i] + ":def"] )
+        {
+            var jRange = $( "#" + rangeProperties[i] );
+            var range = jRange[0];
+            
+            range.value = config[rangeProperties[i] + ":def"];
+            range.onchange( );
 
-        jRange.slider( "refresh" );
+            jRange.slider( "refresh" );
+        }
     }
 
     for ( var i = 0, len = boolProperties.length; i < len; i++ )
     {
-        var jCheck = $( "#" + boolProperties[i] );
-        var check = jCheck[0];
-        
-        check.checked = ( config[boolProperties[i] + ":def"] == "1" );
-        check.onclick( );
-        
-        jCheck.checkboxradio( "refresh" );
+        if ( config[boolProperties[i] + ":def"] )
+        {
+            var jCheck = $( "#" + boolProperties[i] );
+            var check = jCheck[0];
+            
+            check.checked = ( config[boolProperties[i] + ":def"] == "1" );
+            check.onclick( );
+            
+            jCheck.checkboxradio( "refresh" );
+        }
     }
 }
 
 function hideControl( id )
 {
-    $( "label[for='" + id + "']").hide( );
-    $( "#" + id ).hide( );
+    $( "#div_" + id ).hide( );
 }
 
 function loadCurrentSetting( )
