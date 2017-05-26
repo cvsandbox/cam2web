@@ -72,11 +72,11 @@ namespace Private
     class XLocalVideoDeviceData
     {
     public:
-        recursive_mutex     Sync;
-        string              DeviceMoniker;
-        XDeviceCapabilities Resolution;
-        XDevicePinInfo      VideoInput;
-        volatile bool       NeedToSetVideoInput;
+        recursive_mutex             Sync;
+        string                      DeviceMoniker;
+        XDeviceCapabilities         Resolution;
+        XDevicePinInfo              VideoInput;
+        volatile bool               NeedToSetVideoInput;
 
         vector<XDeviceCapabilities> Capabilities;
         vector<XDevicePinInfo>      VideoPins;
@@ -84,17 +84,17 @@ namespace Private
         XManualResetEvent           InfoCollectedEvent;
 
     private:
-        IVideoSourceListener* Listener;
+        IVideoSourceListener*       Listener;
 
-        XManualResetEvent     ExitEvent;
-        thread                BackgroundThread;
-        bool                  Running;
-        uint32_t              FramesCounter;
+        XManualResetEvent           ExitEvent;
+        thread                      BackgroundThread;
+        bool                        Running;
+        uint32_t                    FramesCounter;
 
-        mutable recursive_mutex RunningSync;
-        XManualResetEvent       DeviceIsRunningEvent;
-        bool                    DeviceIsRunning;
-        IAMVideoProcAmp*        VideoProcAmp;
+        mutable recursive_mutex     RunningSync;
+        XManualResetEvent           DeviceIsRunningEvent;
+        bool                        DeviceIsRunning;
+        IAMVideoProcAmp*            VideoProcAmp;
 
         typedef pair<uint32_t, bool> PropValue;
         map<XVideoProperty, PropValue> PropertiesToSet;
@@ -382,29 +382,29 @@ bool XLocalVideoDevice::IsCrossbarSupported( )
 vector<XDeviceName> XLocalVideoDevice::GetAvailableDevices( )
 {
     vector<XDeviceName> devices;
-    bool needToTerminateCOM = ( CoInitializeEx( NULL, COINIT_MULTITHREADED ) != RPC_E_CHANGED_MODE );
+    bool needToTerminateCOM = ( CoInitializeEx( nullptr, COINIT_MULTITHREADED ) != RPC_E_CHANGED_MODE );
 
-    IMalloc* pMalloc = NULL;
-    HRESULT  hr = CoGetMalloc( 1, &pMalloc );
+    IMalloc* pMalloc = nullptr;
+    HRESULT  hr      = CoGetMalloc( 1, &pMalloc );
 
     if ( SUCCEEDED( hr ) )
     {
-        ICreateDevEnum* pSysDevEnum = NULL;
+        ICreateDevEnum* pSysDevEnum = nullptr;
 
         // create System Device Enumerator
-        hr = CoCreateInstance( CLSID_SystemDeviceEnum, NULL, CLSCTX_INPROC_SERVER,
+        hr = CoCreateInstance( CLSID_SystemDeviceEnum, nullptr, CLSCTX_INPROC_SERVER,
                                IID_ICreateDevEnum, (void **) &pSysDevEnum );
 
         if ( SUCCEEDED( hr ) )
         {
             // obtain a class enumerator for the video device category
-            IEnumMoniker* pEnumCat = NULL;
+            IEnumMoniker* pEnumCat = nullptr;
             hr = pSysDevEnum->CreateClassEnumerator( CLSID_VideoInputDeviceCategory, &pEnumCat, 0 );
 
             if  ( ( SUCCEEDED( hr ) ) && ( pEnumCat != 0 ) )
             {
                 // enumerate the monikers
-                IMoniker* pMoniker = NULL;
+                IMoniker* pMoniker = nullptr;
                 ULONG     cFetched;
 
                 while( pEnumCat->Next( 1, &pMoniker, &cFetched ) == S_OK )
@@ -413,7 +413,7 @@ vector<XDeviceName> XLocalVideoDevice::GetAvailableDevices( )
                     LPOLESTR displayName;
 
                     // get moniker string
-                    if ( SUCCEEDED( pMoniker->GetDisplayName( NULL, NULL, &displayName ) ) )
+                    if ( SUCCEEDED( pMoniker->GetDisplayName( nullptr, nullptr, &displayName ) ) )
                     {
                         moniker = Private::Utf16to8( displayName );
                         pMalloc->Free( displayName );
@@ -645,7 +645,7 @@ void XLocalVideoDeviceData::RunVideo( bool run )
     AM_MEDIA_TYPE           mediaType;
     HRESULT                 hr;
 
-    bool                    needToTerminateCOM      = ( CoInitializeEx( NULL, COINIT_MULTITHREADED ) != RPC_E_CHANGED_MODE );
+    bool                    needToTerminateCOM      = ( CoInitializeEx( nullptr, COINIT_MULTITHREADED ) != RPC_E_CHANGED_MODE );
 
     do
     {
@@ -768,8 +768,6 @@ void XLocalVideoDeviceData::RunVideo( bool run )
                                             {
                                                 bool configOK = true;
 
-                                                printf( "++ Can control image adjustments \n" );
-
                                                 // configure all properties, which were set before device got running
                                                 for ( auto property : PropertiesToSet )
                                                 {
@@ -781,10 +779,6 @@ void XLocalVideoDeviceData::RunVideo( bool run )
                                                 {
                                                     NotifyError( "Failed applying video configuration" );
                                                 }
-                                            }
-                                            else
-                                            {
-                                                printf( "-- Can not control image adjustments \n" );
                                             }
                                         }
 
