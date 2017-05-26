@@ -72,8 +72,6 @@ namespace Private
         {
         }
 
-        void SetVideoDevice( uint32_t videoDevice );
-
         bool Start( );
         void SignalToStop( );
         void WaitForStop( );
@@ -84,6 +82,12 @@ namespace Private
         void NotifyError( const string& errorMessage, bool fatal = false );
 
         static void ControlThreadHanlder( XV4LCameraData* me );
+
+        void SetVideoDevice( uint32_t videoDevice );
+        void SetVideoSize( uint32_t width, uint32_t height );
+        void SetFrameRate( uint32_t frameRate );
+        void EnableJpegEncoding( bool enable );
+        void SetJpegQuality( uint32_t jpegQuality );
 
     private:
         bool Init( );
@@ -106,16 +110,6 @@ XV4LCamera::XV4LCamera( ) :
 XV4LCamera::~XV4LCamera( )
 {
     delete mData;
-}
-
-// Set/get video device
-uint32_t XV4LCamera::VideoDevice( ) const
-{
-    return mData->VideoDevice;
-}
-void XV4LCamera::SetVideoDevice( uint32_t videoDevice )
-{
-    mData->SetVideoDevice( videoDevice );
 }
 
 // Start the video source
@@ -154,19 +148,52 @@ IVideoSourceListener* XV4LCamera::SetListener( IVideoSourceListener* listener )
     return mData->SetListener( listener );
 }
 
+// Set/get video device
+uint32_t XV4LCamera::VideoDevice( ) const
+{
+    return mData->VideoDevice;
+}
+void XV4LCamera::SetVideoDevice( uint32_t videoDevice )
+{
+    mData->SetVideoDevice( videoDevice );
+}
+
+// Get/Set video size
+uint32_t XV4LCamera::Width( ) const
+{
+    return mData->FrameWidth;
+}
+uint32_t XV4LCamera::Height( ) const
+{
+    return mData->FrameHeight;
+}
+void XV4LCamera::SetVideoSize( uint32_t width, uint32_t height )
+{
+    mData->SetVideoSize( width, height );
+}
+
+// Get/Set frame rate
+uint32_t XV4LCamera::FrameRate( ) const
+{
+    return mData->FrameRate;
+}
+void XV4LCamera::SetFrameRate( uint32_t frameRate )
+{
+    mData->SetFrameRate( frameRate );
+}
+
+// Enable/Disable JPEG encoding
+bool XV4LCamera::IsJpegEncodingEnabled( ) const
+{
+    return mData->JpegEncoding;
+}
+void XV4LCamera::EnableJpegEncoding( bool enable )
+{
+    mData->EnableJpegEncoding( enable );
+}
+
 namespace Private
 {
-
-// Set vide device number to use
-void XV4LCameraData::SetVideoDevice( uint32_t videoDevice )
-{
-    lock_guard<recursive_mutex> lock( Sync );
-
-    if ( !IsRunning( ) )
-    {
-        VideoDevice = videoDevice;
-    }
-}
 
 // Start video source so it initializes and begins providing video frames
 bool XV4LCameraData::Start( )
@@ -549,6 +576,8 @@ void XV4LCameraData::VideoCaptureLoop( )
         {
             shared_ptr<XImage> image;
 
+            FramesReceived++;
+
             if ( JpegEncoding )
             {
                 image = XImage::Create( MappedBuffers[videoBuffer.index], videoBuffer.bytesused, 1, videoBuffer.bytesused, XPixelFormat::JPEG );
@@ -596,6 +625,52 @@ void XV4LCameraData::ControlThreadHanlder( XV4LCameraData* me )
         me->Running = false;
     }
 }
+
+// Set vide device number to use
+void XV4LCameraData::SetVideoDevice( uint32_t videoDevice )
+{
+    lock_guard<recursive_mutex> lock( Sync );
+
+    if ( !IsRunning( ) )
+    {
+        VideoDevice = videoDevice;
+    }
+}
+
+// Set size of video frames to request
+void XV4LCameraData::SetVideoSize( uint32_t width, uint32_t height )
+{
+    lock_guard<recursive_mutex> lock( Sync );
+
+    if ( !IsRunning( ) )
+    {
+        FrameWidth  = width;
+        FrameHeight = height;
+    }
+}
+
+// Set rate to query images at
+void XV4LCameraData::SetFrameRate( uint32_t frameRate )
+{
+    lock_guard<recursive_mutex> lock( Sync );
+
+    if ( !IsRunning( ) )
+    {
+        FrameRate = frameRate;
+    }
+}
+
+// Enable/disable JPEG encoding
+void XV4LCameraData::EnableJpegEncoding( bool enable )
+{
+    lock_guard<recursive_mutex> lock( Sync );
+
+    if ( !IsRunning( ) )
+    {
+        JpegEncoding = enable;
+    }
+}
+
 
 } // namespace Private
 

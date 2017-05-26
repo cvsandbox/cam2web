@@ -37,6 +37,7 @@ XManualResetEvent ExitEvent;
 // Different application settings
 struct
 {
+    uint32_t DeviceNumber;
     uint32_t FrameWidth;
     uint32_t FrameHeight;
     uint32_t FrameRate;
@@ -52,15 +53,91 @@ void sigIntHandler( int s )
 // Set default values for settings
 void SetDefaultSettings( )
 {
-    Settings.FrameWidth  = 640;
-    Settings.FrameHeight = 480;
-    Settings.FrameRate   = 30;
+    Settings.DeviceNumber = 0;
+    Settings.FrameWidth   = 640;
+    Settings.FrameHeight  = 480;
+    Settings.FrameRate    = 30;
 }
 
 // Parse command line and override default settings
 bool ParsetCommandLine( int argc, char* argv[] )
 {
-    return true;
+    static const uint32_t SupportedWidth[]  = { 320, 480, 640, 800, 1120 };
+    static const uint32_t SupportedHeight[] = { 240, 360, 480, 600, 840 };
+
+    bool ret = true;
+    int  i;
+
+    for ( i = 1; i < argc; i++ )
+    {
+        char* ptrDelimiter = strchr( argv[i], ':' );
+
+        if ( ( ptrDelimiter == nullptr ) || ( argv[i][0] != '-' ) )
+        {
+            break;
+        }
+
+        string key   = string( argv[i] + 1, ptrDelimiter - argv[i] - 1 );
+        string value = string( ptrDelimiter + 1 );
+
+        if ( ( key.empty( ) ) || ( value.empty( ) ) )
+            break;
+
+        if ( key == "dev" )
+        {
+            int scanned = sscanf( value.c_str( ), "%u", &(Settings.DeviceNumber) );
+
+            if ( scanned != 1 )
+                break;
+        }
+        else if ( key == "size" )
+        {
+            int v = value[0] - '0';
+
+            if ( ( v < 0 ) || ( v > 4 ) )
+                break;
+
+            Settings.FrameWidth  = SupportedWidth[v];
+            Settings.FrameHeight = SupportedHeight[v];
+        }
+        else if ( key == "fps" )
+        {
+            int scanned = sscanf( value.c_str( ), "%u", &(Settings.FrameRate) );
+
+            if ( scanned != 1 )
+                break;
+
+            if ( ( Settings.FrameRate < 1 ) || ( Settings.FrameRate > 30 ) )
+                Settings.FrameRate = 30;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    if ( i != argc )
+    {
+        printf( "cam2web - streaming camera to web \n\n" );
+        printf( "Available command line options: \n" );
+        printf( "  -dev:<num>  Sets video device number to use. \n" );
+        printf( "              Default is 0. \n" );
+        printf( "  -size:<0-4> Sets video size to one from the list below: \n" );
+        printf( "              0: 320x240 \n" );
+        printf( "              1: 640x360 \n" );
+        printf( "              2: 640x480 (default) \n" );
+        printf( "              3: 848x480 \n" );
+        printf( "              4: 1280x720 \n" );
+        printf( "              Note: video device may switch to a different frame size, \n" );
+        printf( "                    the one it supports." );
+        printf( "  -fps:<1-30> Sets camera frame rate. Same is used for MJPEG stream. \n" );
+        printf( "              Default is 30. \n" );
+        printf( "\n" );
+
+        ret = false;
+    }
+
+    return ret;
 }
 
 int main( int argc, char* argv[] )
@@ -101,8 +178,9 @@ int main( int argc, char* argv[] )
     XWebServer                       server( "", 8000 );
     XVideoSourceToWeb                video2web;
 
-    //xcamera->SetVideoSize( Settings.FrameWidth, Settings.FrameHeight );
-    //xcamera->SetFrameRate( Settings.FrameRate );
+    xcamera->SetVideoDevice( Settings.DeviceNumber );
+    xcamera->SetVideoSize( Settings.FrameWidth, Settings.FrameHeight );
+    xcamera->SetFrameRate( Settings.FrameRate );
 
     server.SetDocumentRoot( "./web/" ).
 //           AddHandler( make_shared<XObjectConfiguratorRequestHandler>( "/camera/config", xcameraConfig ) ).
