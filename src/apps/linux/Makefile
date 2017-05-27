@@ -37,7 +37,7 @@ OUT = cam2web
 # Compiler to use
 COMPILER = g++
 # Base compiler flags
-CFLAGS = -O2 -s -DNDEBUG -std=c++0x
+CFLAGS = -std=c++0x
 
 # Object files list
 OBJ = $(SRC_CPP:.cpp=.o) $(SRC_C:.c=.o)
@@ -53,12 +53,34 @@ LIBS = -ljpeg
 # Enable threads in Mongoose
 CFLAGS += -DMG_ENABLE_THREADS
 
+ifneq "$(findstring debug, $(MAKECMDGOALS))" ""
+# "Debug" build - no optimization and add debugging symbols 
+OUT_FOLDER = ../../../build/gcc/debug/
+CFLAGS += -O0 -g 
+else 
+# "Release" build - optimization and no debug symbols 
+OUT_FOLDER = ../../../build/gcc/release/
+CFLAGS += -O2 -s -DNDEBUG
+INCLUDE += -I$(OUT_FOLDER)include
+endif
+
+# Update compiler/linker flags inlude folders and libraries
 CFLAGS += $(INCLUDE) 
 LDFLAGS = $(LIBS) -pthread
 
+# Different output folders
+OUT_BIN = $(OUT_FOLDER)bin/
+OUT_INC = $(OUT_FOLDER)include/
+OUT_WEB = $(OUT_BIN)web/
+
+# web2h tool used to generate header files for web files
+WEB2H = $(OUT_BIN)web2h
+
 # ===================================
 
-all: build
+all: generateweb build
+ 
+debug: build copyweb
  
 %.o: %.c
 	$(COMPILER) $(CFLAGS) -c $^ -o $@
@@ -69,7 +91,35 @@ $(OUT): $(OBJ)
 	$(COMPILER) -o $@ $(OBJ) $(LDFLAGS)
 
 build: $(OUT)
+	mkdir -p $(OUT_BIN)
+	cp $(OUT) $(OUT_BIN)
 
 clean:
 	rm $(OBJ) $(OUT)
+	rm -rf web
+
+copyweb:
+	mkdir -p $(OUT_WEB)
+	cp ../../web/* $(OUT_WEB)
+	cp ../../../externals/jquery/*.js $(OUT_WEB)
+	cp ../../../externals/jquery/*.css $(OUT_WEB)
+	mv $(OUT_WEB)cameraproperties_v4l.html $(OUT_WEB)cameraproperties.html
+	cp -r $(OUT_WEB) .
+
+generateweb:
+	mkdir -p $(OUT_INC)
+	cp ../../web/* $(OUT_INC)
+	cp ../../../externals/jquery/*.js $(OUT_INC)
+	cp ../../../externals/jquery/*.css $(OUT_INC)
+	$(WEB2H) -i $(OUT_INC)index.html -o $(OUT_INC)index.html.h
+	$(WEB2H) -i $(OUT_INC)cameraproperties_v4l.html -o $(OUT_INC)cameraproperties.html.h
+	$(WEB2H) -i $(OUT_INC)styles.css -o $(OUT_INC)styles.css.h
+	$(WEB2H) -i $(OUT_INC)camera.js -o $(OUT_INC)camera.js.h
+	$(WEB2H) -i $(OUT_INC)cameraproperties.js -o $(OUT_INC)cameraproperties.js.h
+	$(WEB2H) -i $(OUT_INC)jquery.js -o $(OUT_INC)jquery.js.h
+	$(WEB2H) -i $(OUT_INC)jquery.mobile.js -o $(OUT_INC)jquery.mobile.js.h
+	$(WEB2H) -i $(OUT_INC)jquery.mobile.css -o $(OUT_INC)jquery.mobile.css.h
+	rm $(OUT_INC)*.html
+	rm $(OUT_INC)*.css
+	rm $(OUT_INC)*.js
 
