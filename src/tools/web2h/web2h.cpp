@@ -121,7 +121,7 @@ int GenerateHeaderFile( const char* inputFileName, const char* outputFileName, c
 
     if ( inputFile == nullptr )
     {
-        printf( "Error: failed openning the specified input file.\n\n" );
+        printf( "Error: failed openning the specified input file:\n%s\n\n", inputFileName );
         ret = 3;
     }
     else
@@ -130,7 +130,7 @@ int GenerateHeaderFile( const char* inputFileName, const char* outputFileName, c
 
         if ( outputFile == nullptr )
         {
-            printf( "Error: failed creating/openning the specified output file.\n\n" );
+            printf( "Error: failed creating/openning the specified output file:\n%s\n\n", outputFileName );
             ret = 4;
         }
         else

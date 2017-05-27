@@ -35,6 +35,9 @@ CFLAGS = -O2 -s -DNDEBUG -std=c++0x
 # Object files list
 OBJ = $(SRC_CPP:.cpp=.o)
 
+# Output folder for the build result
+OUT_FOLDER = ../../../../../build/gcc/release/bin
+
 # ===================================
 
 all: build
@@ -46,6 +49,8 @@ $(OUT): $(OBJ)
 	$(COMPILER) -o $@ $(OBJ)
 
 build: $(OUT)
+	mkdir -p $(OUT_FOLDER)
+	cp $(OUT) $(OUT_FOLDER)
 
 clean:
 	rm $(OBJ) $(OUT)
