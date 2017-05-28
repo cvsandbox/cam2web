@@ -69,6 +69,7 @@ void SetDefaultSettings( )
     Settings.FrameWidth  = 640;
     Settings.FrameHeight = 480;
     Settings.FrameRate   = 30;
+    Settings.WebPort     = 8000;
 }
 
 // Parse command line and override default settings
