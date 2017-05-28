@@ -216,7 +216,7 @@ int main( int argc, char* argv[] )
            AddHandler( video2web.CreateMjpegHandler( "/camera/mjpeg", Settings.FrameRate ) );
 
 #ifdef NDEBUG
-    // web content is embeded in release builds to get single executable
+    // web content is embedded in release builds to get single executable
     server.AddHandler( make_shared<XEmbeddedContentHandler>( "/", &web_index_html ) ).
            AddHandler( make_shared<XEmbeddedContentHandler>( "index.html", &web_index_html) ).
            AddHandler( make_shared<XEmbeddedContentHandler>( "styles.css", &web_styles_css ) ).

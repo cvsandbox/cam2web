@@ -31,6 +31,18 @@
 #include "XObjectInformationRequestHandler.hpp"
 #include "XManualResetEvent.hpp"
 
+// Release build embeds web resources into executable
+#ifdef NDEBUG
+    #include "index.html.h"
+    #include "styles.css.h"
+    #include "camera.js.h"
+    #include "cameraproperties.html.h"
+    #include "cameraproperties.js.h"
+    #include "jquery.js.h"
+    #include "jquery.mobile.js.h"
+    #include "jquery.mobile.css.h"
+#endif
+
 using namespace std;
 
 XManualResetEvent ExitEvent;
@@ -167,12 +179,27 @@ int main( int argc, char* argv[] )
     xcamera->SetVideoSize( Settings.FrameWidth, Settings.FrameHeight );
     xcamera->SetFrameRate( Settings.FrameRate );
     
-    server.SetDocumentRoot( "./web/" ).
-           AddHandler( make_shared<XObjectConfiguratorRequestHandler>( "/camera/config", xcameraConfig ) ).
+    server.AddHandler( make_shared<XObjectConfiguratorRequestHandler>( "/camera/config", xcameraConfig ) ).
            AddHandler( make_shared<XObjectInformationRequestHandler>( "/camera/info", make_shared<XObjectInformationMap>( cameraInfo ) ) ).
            AddHandler( video2web.CreateJpegHandler( "/camera/jpeg" ) ).
            AddHandler( video2web.CreateMjpegHandler( "/camera/mjpeg", Settings.FrameRate ) );
 
+#ifdef NDEBUG
+    // web content is embedded in release builds to get single executable
+    server.AddHandler( make_shared<XEmbeddedContentHandler>( "/", &web_index_html ) ).
+           AddHandler( make_shared<XEmbeddedContentHandler>( "index.html", &web_index_html) ).
+           AddHandler( make_shared<XEmbeddedContentHandler>( "styles.css", &web_styles_css ) ).
+           AddHandler( make_shared<XEmbeddedContentHandler>( "camera.js", &web_camera_js ) ).
+           AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.js", &web_cameraproperties_js ) ).
+           AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.html", &web_cameraproperties_pi_html ) ).
+           AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.js", &web_jquery_js ) ).
+           AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.js", &web_jquery_mobile_js ) ).
+           AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.css", &web_jquery_mobile_css ) );
+#else
+    // load web content from files in debug builds
+    server.SetDocumentRoot( "./web/" );
+#endif
+           
     if ( server.Start( ) )
     {
         printf( "Web server started on port %d ...\n", server.Port( ) );

@@ -64,7 +64,7 @@ CFLAGS += -O2 -s -DNDEBUG
 INCLUDE += -I$(OUT_FOLDER)include
 endif
 
-# Update compiler/linker flags inlude folders and libraries
+# Update compiler/linker flags include folders and libraries
 CFLAGS += $(INCLUDE) 
 LDFLAGS = $(LIBS) -pthread
 
@@ -78,8 +78,10 @@ WEB2H = $(OUT_BIN)web2h
 
 # ===================================
 
-all: generateweb build
- 
+all: release
+
+release: generateweb build
+
 debug: build copyweb
  
 %.o: %.c
@@ -122,4 +124,3 @@ generateweb:
 	rm $(OUT_INC)*.html
 	rm $(OUT_INC)*.css
 	rm $(OUT_INC)*.js
-
