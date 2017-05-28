@@ -154,10 +154,10 @@ bool ParsetCommandLine( int argc, char* argv[] )
         printf( "              3: 848x480 \n" );
         printf( "              4: 1280x720 \n" );
         printf( "              Note: video device may switch to a different frame size, \n" );
-        printf( "                    the one it supports." );
+        printf( "                    the one it supports. \n" );
         printf( "  -fps:<1-30> Sets camera frame rate. Same is used for MJPEG stream. \n" );
         printf( "              Default is 30. \n" );
-        printf( " -port:<num>  Port number for web server to listen on. \n" );
+        printf( "  -port:<num> Port number for web server to listen on. \n" );
         printf( "              Default is 8000. \n" );
         printf( "\n" );
 

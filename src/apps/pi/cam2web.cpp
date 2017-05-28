@@ -47,14 +47,17 @@ using namespace std;
 
 XManualResetEvent ExitEvent;
 
+// Different application settings
 struct
 {
     uint32_t FrameWidth;
     uint32_t FrameHeight;
     uint32_t FrameRate;
+    uint32_t WebPort;
 }
 Settings;
 
+// Raise exit event when signal is received
 void sigIntHandler( int s )
 {
     ExitEvent.Signal( );
@@ -112,6 +115,16 @@ bool ParsetCommandLine( int argc, char* argv[] )
             if ( ( Settings.FrameRate < 1 ) || ( Settings.FrameRate > 30 ) )
                 Settings.FrameRate = 30;
         }
+        else if ( key == "port" )
+        {
+            int scanned = sscanf( value.c_str( ), "%u", &(Settings.WebPort) );
+
+            if ( scanned != 1 )
+                break;
+
+            if ( Settings.WebPort > 65535 )
+                Settings.WebPort = 65535;
+        }
         else
         {
             break;
@@ -129,6 +142,9 @@ bool ParsetCommandLine( int argc, char* argv[] )
         printf( "              3: 800x600 \n" );
         printf( "              4: 1120x840 \n" );
         printf( "  -fps:<1-30> Sets camera frame rate. Same is used for MJPEG stream. \n" );
+        printf( "              Default is 30. \n" );
+        printf( "  -port:<num> Port number for web server to listen on. \n" );
+        printf( "              Default is 8000. \n" );
         printf( "\n" );
         
         ret = false;
@@ -173,7 +189,7 @@ int main( int argc, char* argv[] )
     cameraInfo.insert( PropertyMap::value_type( "height", strVideoSize + 16 ) );
 
     // create and configure web server
-    XWebServer                       server( "", 8000 );
+    XWebServer                       server( "", Settings.WebPort );
     XVideoSourceToWeb                video2web;
         
     xcamera->SetVideoSize( Settings.FrameWidth, Settings.FrameHeight );
@@ -218,9 +234,8 @@ int main( int argc, char* argv[] )
     }
     else
     {
-        printf( "Failed starting web server on port %d", server.Port( ) );
+        printf( "Failed starting web server on port %d\n", server.Port( ) );
     }
         
     return 0;
 }
-
