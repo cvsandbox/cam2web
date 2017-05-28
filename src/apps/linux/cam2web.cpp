@@ -184,8 +184,10 @@ int main( int argc, char* argv[] )
     sigIntAction.sa_flags = 0;
 
     sigaction( SIGINT,  &sigIntAction, NULL );
+    sigaction( SIGQUIT, &sigIntAction, NULL );
     sigaction( SIGTERM, &sigIntAction, NULL );
-    sigaction( SIGHUP,  &sigIntAction, NULL );
+    sigaction( SIGABRT, &sigIntAction, NULL );
+    sigaction( SIGTERM, &sigIntAction, NULL );
 
     // create camera object
     shared_ptr<XV4LCamera>           xcamera       = XV4LCamera::Create( );
