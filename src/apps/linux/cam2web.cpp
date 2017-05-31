@@ -64,6 +64,25 @@ void sigIntHandler( int s )
     ExitEvent.Signal( );
 }
 
+// Listener for camera errors
+class CameraErrorListener : public IVideoSourceListener
+{
+public:
+    // New video frame notification - ignore it
+    virtual void OnNewImage( const std::shared_ptr<const XImage>& image ) { };
+
+    // Video source error notification
+    virtual void OnError( const std::string& errorMessage, bool fatal )
+    {
+        printf( "[%s] : %s \n", ( ( fatal ) ? "Fatal" : "Error" ), errorMessage.c_str( ) );
+        if ( fatal )
+        {
+            // time to exit if something has bad happened
+            ExitEvent.Signal( );
+        }
+    }
+};
+
 // Set default values for settings
 void SetDefaultSettings( )
 {
@@ -233,12 +252,19 @@ int main( int argc, char* argv[] )
     server.SetDocumentRoot( "./web/" );
 #endif
 
+    // set camera listeners
+    XVideoSourceListenerChain   listenerChain;
+    CameraErrorListener         cameraErrorListener;
+
+    listenerChain.Add( video2web.VideoSourceListener( ) );
+    listenerChain.Add( &cameraErrorListener );
+    xcamera->SetListener( &listenerChain );
+
     if ( server.Start( ) )
     {
         printf( "Web server started on port %d ...\n", server.Port( ) );
         printf( "Ctrl+C to stop.\n" );
 
-        xcamera->SetListener( video2web.VideoSourceListener( ) );
         xcamera->Start( );
 
         ExitEvent.Wait( );

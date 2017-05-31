@@ -23,7 +23,9 @@
 
 #include "XImage.hpp"
 #include <string>
+#include <list>
 
+// Interface for video source events' listener
 class IVideoSourceListener
 {
 public:
@@ -34,6 +36,47 @@ public:
 
     // Video source error notification
     virtual void OnError( const std::string& errorMessage, bool fatal ) = 0;
+};
+
+// A helper class to chain several listeners
+class XVideoSourceListenerChain : public IVideoSourceListener
+{
+public:
+    // New video frame notification
+    virtual void OnNewImage( const std::shared_ptr<const XImage>& image )
+    {
+        for ( auto listener : chain )
+        {
+            listener->OnNewImage( image );
+        }
+    }
+
+    // Video source error notification
+    virtual void OnError( const std::string& errorMessage, bool fatal )
+    {
+        for ( auto listener : chain )
+        {
+            listener->OnError( errorMessage, fatal );
+        }
+    }
+    
+    // Add new listener into the chain
+    void Add( IVideoSourceListener* listener )
+    {
+        if ( listener != nullptr )
+        {
+            chain.push_back( listener );
+        }
+    }
+    
+    // Clear all listeners from the chain
+    void Clear( )
+    {
+        chain.clear( );
+    }
+    
+private:
+    std::list<IVideoSourceListener*> chain;
 };
 
 #endif // IVIDEO_SOURCE_LISTENER_HPP
