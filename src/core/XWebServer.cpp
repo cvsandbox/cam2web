@@ -31,6 +31,8 @@ using namespace std;
 
 namespace Private
 {
+    #define DEFAULT_AUTH_DOMAIN "cam2web"
+
     /* ================================================================= */
     /* Web request implementation using Mangoose APIs                    */
     /* ================================================================= */
@@ -259,7 +261,7 @@ namespace Private
 
     public:
         XWebServerData( const string& documentRoot, uint16_t port ) :
-            DataSync( ), DocumentRoot( documentRoot ), AuthDomain( "cam2web" ), Port( port ),
+            DataSync( ), DocumentRoot( documentRoot ), AuthDomain( DEFAULT_AUTH_DOMAIN ), Port( port ),
             EventManager( { 0 } ), ServerOptions( { 0 } ),
             ActiveDocumentRoot( nullptr ), ActiveAuthDomain( ),
             NeedToStop( ), IsStopped( ), StartSync( ), IsRunning( false )
@@ -282,6 +284,7 @@ namespace Private
 
         void AddUser( const string& name, const string& digestHa1, UserGroup group );
         void RemoveUser( const string& name );
+        uint32_t LoadUsersFromFile( const string& fileName );
 
         UserGroup CheckDigestAuth( struct http_message* msg );
 
@@ -424,6 +427,12 @@ XWebServer& XWebServer::AddUser( const string& name, const string& digestHa1, Us
 void XWebServer::RemoveUser( const string& name )
 {
     mData->RemoveUser( name );
+}
+
+// Load users from file having "htdigest" format
+uint32_t XWebServer::LoadUsersFromFile( const std::string& fileName )
+{
+    return mData->LoadUsersFromFile( fileName );
 }
 
 // Calculate HA1 as defined by Digest authentication algorithm, MD5(user:domain:pass).
@@ -601,6 +610,66 @@ void XWebServerData::RemoveUser( const string& name )
     lock_guard<recursive_mutex> lock( DataSync );
 
     Users.erase( name );
+}
+
+// Load users from file having "htdigest" format
+uint32_t XWebServerData::LoadUsersFromFile( const string& fileName )
+{
+    uint32_t userCounter = 0;
+    FILE*    file        = fopen( fileName.c_str( ), "r" );
+
+    if ( file )
+    {
+        char buff[256];
+
+        // htdigest tool does not escape ':' found in user name or auth domain, so there is
+        // no way to resolve what is what in cases like this:
+        // test::cam2web::6568681ab858b3cce0f75bba97c9db8e
+        // so we'll ignore anything like this
+
+        while ( fgets( buff, 256, file ) != nullptr )
+        {
+            string userName;
+            string userDomain;
+            string digestHa1;
+            char*  realmPtr  = strchr( buff, ':' );
+            char*  digestPtr = nullptr;
+
+            if ( realmPtr != nullptr )
+            {
+                userName  = string( buff, realmPtr );
+                digestPtr = strchr( ++realmPtr, ':' );
+
+                if ( digestPtr != nullptr )
+                {
+                    userDomain = string( realmPtr, digestPtr );
+
+                    // copy the rest as digest HA1
+                    digestHa1 = string( ++digestPtr );
+                    // remove trailing spaces
+                    while ( ( digestHa1.back( ) == ' '  ) || ( digestHa1.back( ) == '\t' ) ||
+                            ( digestHa1.back( ) == '\n' ) || ( digestHa1.back( ) == '\r' ) )
+                    {
+                        digestHa1.pop_back( );
+                    }
+                }
+            }
+
+            // make sure digest is 32 character long
+            if ( digestHa1.length( ) == 32 )
+            {
+                if ( userDomain == AuthDomain )
+                {
+                    AddUser( userName, digestHa1, ( userName == "admin" ) ? UserGroup::Admin : UserGroup::User );
+                    userCounter++;
+                }
+            }
+        }
+
+        fclose( file );
+    }
+
+    return userCounter;
 }
 
 // Thread to poll web events

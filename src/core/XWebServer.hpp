@@ -37,7 +37,8 @@ enum class UserGroup
 {
     Anyone = 0,
     User   = 1,
-    Admin  = 2
+    Power  = 2,
+    Admin  = 3
 };
 
 /* ================================================================= */
@@ -179,6 +180,9 @@ public:
     // Add/Remove user to access protected request handlers
     XWebServer& AddUser( const std::string& name, const std::string& digestHa1, UserGroup group );
     void RemoveUser( const std::string& name );
+
+    // Load users from file having "htdigest" format (returns number of loaded users)
+    uint32_t LoadUsersFromFile( const std::string& fileName );
 
 public:
     // Calculate HA1 as defined by Digest authentication algorithm, MD5(user:domain:pass).
