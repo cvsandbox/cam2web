@@ -108,6 +108,8 @@ function loadCurrentSetting( )
             }
             else
             {
+                var propertiesLoaded = 0;
+                
                 config = data.config;
                 
                 for ( var i = 0, len = rangeProperties.length; i < len; i++ )
@@ -118,6 +120,8 @@ function loadCurrentSetting( )
                         
                         configureRangeProperty( jRange[0], data.config );
                         jRange.slider( "refresh" );
+                        
+                        propertiesLoaded++;
                     }
                     else
                     {
@@ -130,6 +134,8 @@ function loadCurrentSetting( )
                     if ( config[boolProperties[i]] )
                     {
                         $( "#" + boolProperties[i] ).attr( "checked", ( data.config[boolProperties[i]] == "1" ) ).checkboxradio( "refresh" );
+                        
+                        propertiesLoaded++;
                     }
                     else
                     {
@@ -137,6 +143,11 @@ function loadCurrentSetting( )
                     }
                 }
 
+                if ( propertiesLoaded == 0 )
+                {
+                    $( "#properties" ).text( "The camera does not expose any configuration properties." );
+                }
+                
                 $( "#properties" ).show( );
             }
         },
