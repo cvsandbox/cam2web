@@ -28,7 +28,7 @@ SRC_C = mongoose.c
 # C++ code
 SRC_CPP = cam2web.cpp XImage.cpp XJpegEncoder.cpp XManualResetEvent.cpp \
     XRaspiCamera.cpp XRaspiCameraConfig.cpp XVideoSourceToWeb.cpp XWebServer.cpp \
-    XSimpleJsonParser.cpp XObjectConfiguratorRequestHandler.cpp \
+    XSimpleJsonParser.cpp XObjectConfigurationRequestHandler.cpp \
     XObjectInformationRequestHandler.cpp XError.cpp
 
 # Output name    

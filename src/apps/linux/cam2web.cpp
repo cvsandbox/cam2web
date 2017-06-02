@@ -29,7 +29,7 @@
 #include "XV4LCameraConfig.hpp"
 #include "XWebServer.hpp"
 #include "XVideoSourceToWeb.hpp"
-#include "XObjectConfiguratorRequestHandler.hpp"
+#include "XObjectConfigurationRequestHandler.hpp"
 #include "XObjectInformationRequestHandler.hpp"
 #include "XManualResetEvent.hpp"
 
@@ -340,7 +340,7 @@ int main( int argc, char* argv[] )
     xcamera->SetFrameRate( Settings.FrameRate );
 
     // add web handlers
-    server.AddHandler( make_shared<XObjectConfiguratorRequestHandler>( "/camera/config", xcameraConfig ), configGroup ).
+    server.AddHandler( make_shared<XObjectConfigurationRequestHandler>( "/camera/config", xcameraConfig ), configGroup ).
            AddHandler( make_shared<XObjectInformationRequestHandler>( "/camera/info", make_shared<XObjectInformationMap>( cameraInfo ) ), viewersGroup ).
            AddHandler( video2web.CreateJpegHandler( "/camera/jpeg" ), viewersGroup ).
            AddHandler( video2web.CreateMjpegHandler( "/camera/mjpeg", Settings.FrameRate ), viewersGroup );

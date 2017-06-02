@@ -37,7 +37,7 @@
 #include "XLocalVideoDeviceConfig.hpp"
 #include "XWebServer.hpp"
 #include "XVideoSourceToWeb.hpp"
-#include "XObjectConfiguratorRequestHandler.hpp"
+#include "XObjectConfigurationRequestHandler.hpp"
 #include "XObjectInformationRequestHandler.hpp"
 
 // Release build embeds web resources into executable
@@ -390,7 +390,7 @@ static bool StartVideoStreaming( )
 
         // configure web server
         gData->server.SetPort( DEFAULT_PORT ).
-            AddHandler( make_shared<XObjectConfiguratorRequestHandler>( "/camera/config", gData->cameraConfig ), UserGroup::Admin ).
+            AddHandler( make_shared<XObjectConfigurationRequestHandler>( "/camera/config", gData->cameraConfig ), UserGroup::Admin ).
             AddHandler( make_shared<XObjectInformationRequestHandler>( "/camera/info", make_shared<XObjectInformationMap>( cameraInfo ) ) ).
             AddHandler( gData->video2web.CreateJpegHandler( "/camera/jpeg" ) ).
             AddHandler( gData->video2web.CreateMjpegHandler( "/camera/mjpeg", DEFAULT_MJPEG_RATE ) );

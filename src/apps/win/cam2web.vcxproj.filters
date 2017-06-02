@@ -66,9 +66,6 @@
     <ClInclude Include="..\..\core\XManualResetEvent.hpp">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\XObjectConfiguratorRequestHandler.hpp">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\core\XVideoSourceToWeb.hpp">
       <Filter>Core</Filter>
     </ClInclude>
@@ -85,6 +82,9 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="..\..\core\XObjectInformationRequestHandler.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\XObjectConfigurationRequestHandler.hpp">
       <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
@@ -116,9 +116,6 @@
     <ClCompile Include="..\..\core\XManualResetEvent.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\core\XObjectConfiguratorRequestHandler.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\core\XVideoSourceToWeb.cpp">
       <Filter>Core</Filter>
     </ClCompile>
@@ -135,6 +132,9 @@
       <Filter>Externals\mongoose</Filter>
     </ClCompile>
     <ClCompile Include="..\..\core\XObjectInformationRequestHandler.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\XObjectConfigurationRequestHandler.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>

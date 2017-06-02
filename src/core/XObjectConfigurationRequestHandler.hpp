@@ -18,16 +18,16 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
-#ifndef XOBJECT_CONFIGURATOR_REQUEST_HANDLER_HPP
-#define XOBJECT_CONFIGURATOR_REQUEST_HANDLER_HPP
+#ifndef XOBJECT_CONFIGURATION_REQUEST_HANDLER_HPP
+#define XOBJECT_CONFIGURATION_REQUEST_HANDLER_HPP
 
 #include "IObjectConfigurator.hpp"
 #include "XWebServer.hpp"
 
-class XObjectConfiguratorRequestHandler : public IWebRequestHandler
+class XObjectConfigurationRequestHandler : public IWebRequestHandler
 {
 public:
-    XObjectConfiguratorRequestHandler( const std::string& uri, const std::shared_ptr<IObjectConfigurator>& objectToConfig );
+    XObjectConfigurationRequestHandler( const std::string& uri, const std::shared_ptr<IObjectConfigurator>& objectToConfig );
 
     void HandleHttpRequest( const IWebRequest& request, IWebResponse& response );
 
@@ -39,4 +39,4 @@ private:
     std::shared_ptr<IObjectConfigurator> ObjectToConfig;
 };
 
-#endif // XOBJECT_CONFIGURATOR_REQUEST_HANDLER_HPP
+#endif // XOBJECT_CONFIGURATION_REQUEST_HANDLER_HPP

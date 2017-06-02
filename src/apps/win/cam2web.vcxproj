@@ -139,7 +139,7 @@ del "$(ProjectDir)..\..\..\build\msvc\release\include\*.js"
     <ClInclude Include="..\..\core\XInterfaces.hpp" />
     <ClInclude Include="..\..\core\XJpegEncoder.hpp" />
     <ClInclude Include="..\..\core\XManualResetEvent.hpp" />
-    <ClInclude Include="..\..\core\XObjectConfiguratorRequestHandler.hpp" />
+    <ClInclude Include="..\..\core\XObjectConfigurationRequestHandler.hpp" />
     <ClInclude Include="..\..\core\XObjectInformationRequestHandler.hpp" />
     <ClInclude Include="..\..\core\XSimpleJsonParser.hpp" />
     <ClInclude Include="..\..\core\XVideoSourceToWeb.hpp" />
@@ -160,7 +160,7 @@ del "$(ProjectDir)..\..\..\build\msvc\release\include\*.js"
     <ClCompile Include="..\..\core\XImage.cpp" />
     <ClCompile Include="..\..\core\XJpegEncoder.cpp" />
     <ClCompile Include="..\..\core\XManualResetEvent.cpp" />
-    <ClCompile Include="..\..\core\XObjectConfiguratorRequestHandler.cpp" />
+    <ClCompile Include="..\..\core\XObjectConfigurationRequestHandler.cpp" />
     <ClCompile Include="..\..\core\XObjectInformationRequestHandler.cpp" />
     <ClCompile Include="..\..\core\XSimpleJsonParser.cpp" />
     <ClCompile Include="..\..\core\XVideoSourceToWeb.cpp" />

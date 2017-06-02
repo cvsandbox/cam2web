@@ -27,7 +27,7 @@
 #include "XRaspiCameraConfig.hpp"
 #include "XWebServer.hpp"
 #include "XVideoSourceToWeb.hpp"
-#include "XObjectConfiguratorRequestHandler.hpp"
+#include "XObjectConfigurationRequestHandler.hpp"
 #include "XObjectInformationRequestHandler.hpp"
 #include "XManualResetEvent.hpp"
 
@@ -217,7 +217,7 @@ int main( int argc, char* argv[] )
     xcamera->SetVideoSize( Settings.FrameWidth, Settings.FrameHeight );
     xcamera->SetFrameRate( Settings.FrameRate );
     
-    server.AddHandler( make_shared<XObjectConfiguratorRequestHandler>( "/camera/config", xcameraConfig ) ).
+    server.AddHandler( make_shared<XObjectConfigurationRequestHandler>( "/camera/config", xcameraConfig ) ).
            AddHandler( make_shared<XObjectInformationRequestHandler>( "/camera/info", make_shared<XObjectInformationMap>( cameraInfo ) ) ).
            AddHandler( video2web.CreateJpegHandler( "/camera/jpeg" ) ).
            AddHandler( video2web.CreateMjpegHandler( "/camera/mjpeg", Settings.FrameRate ) );

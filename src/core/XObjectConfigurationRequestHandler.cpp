@@ -20,7 +20,7 @@
 
 #include <string.h>
 
-#include "XObjectConfiguratorRequestHandler.hpp"
+#include "XObjectConfigurationRequestHandler.hpp"
 #include "XSimpleJsonParser.hpp"
 
 using namespace std;
@@ -31,15 +31,15 @@ const static char* StatusUnknownProperty      = "Unknown property";
 const static char* StatusInvalidPropertyValue = "Invalid property value";
 const static char* StatusPropertyFailed       = "Failed setting property";
 
-XObjectConfiguratorRequestHandler::XObjectConfiguratorRequestHandler( const string& uri,
-                                                                      const shared_ptr<IObjectConfigurator>& objectToConfig ) :
+XObjectConfigurationRequestHandler::XObjectConfigurationRequestHandler( const string& uri,
+                                                                        const shared_ptr<IObjectConfigurator>& objectToConfig ) :
     IWebRequestHandler( uri, false ),
     ObjectToConfig( objectToConfig )
 {
 }
 
 // Handle object configuration request by providing its current configuration or setting specified varaibles/properties
-void XObjectConfiguratorRequestHandler::HandleHttpRequest( const IWebRequest& request, IWebResponse& response )
+void XObjectConfigurationRequestHandler::HandleHttpRequest( const IWebRequest& request, IWebResponse& response )
 {
     string method = request.Method( );
 
@@ -63,7 +63,7 @@ void XObjectConfiguratorRequestHandler::HandleHttpRequest( const IWebRequest& re
 }
 
 // Get all or the list of specified variables
-void XObjectConfiguratorRequestHandler::HandleGet( const string& varsToGet, IWebResponse& response )
+void XObjectConfigurationRequestHandler::HandleGet( const string& varsToGet, IWebResponse& response )
 {
     map<string, string> values;
     string              reply = "{\"status\":\"OK\",\"config\":{";
@@ -138,7 +138,7 @@ void XObjectConfiguratorRequestHandler::HandleGet( const string& varsToGet, IWeb
 }
 
 // Set all variables specified in the posted JSON
-void XObjectConfiguratorRequestHandler::HandlePost( const string& body, IWebResponse& response )
+void XObjectConfigurationRequestHandler::HandlePost( const string& body, IWebResponse& response )
 {
     const char*         status = StatusOK;
     map<string, string> values;
