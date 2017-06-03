@@ -27,6 +27,7 @@ static const char* ErrorMessages[] =
     "Generic failure",
     "Input parameter is a null pointer",
     "Out of memory",
+    "I/O error",
     "Device is not ready",
     "Configuration is not supported",
     "Property is not known",

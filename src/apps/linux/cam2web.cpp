@@ -22,6 +22,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <pwd.h>
 #include <linux/limits.h>
 #include <map>
 
@@ -29,6 +30,7 @@
 #include "XV4LCameraConfig.hpp"
 #include "XWebServer.hpp"
 #include "XVideoSourceToWeb.hpp"
+#include "XObjectConfigurationSerializer.hpp"
 #include "XObjectConfigurationRequestHandler.hpp"
 #include "XObjectInformationRequestHandler.hpp"
 #include "XManualResetEvent.hpp"
@@ -59,6 +61,7 @@ struct
     uint32_t WebPort;
     string   HtRealm;
     string   HtDigestFileName;
+    string   CameraConfigFileName;
 
     UserGroup ViewersGroup;
     UserGroup ConfigGroup;
@@ -104,6 +107,13 @@ void SetDefaultSettings( )
 
     Settings.ViewersGroup = UserGroup::Anyone;
     Settings.ConfigGroup  = UserGroup::Anyone;
+
+    struct passwd* pwd = getpwuid( getuid( ) );
+    if ( pwd )
+    {
+        Settings.CameraConfigFileName  = pwd->pw_dir;
+        Settings.CameraConfigFileName += "/.cam_config";
+    }
 }
 
 // Parse command line and override default settings
@@ -219,6 +229,10 @@ bool ParsetCommandLine( int argc, char* argv[] )
                 overrideConfigGroup = true;
             }
         }
+        else if ( key == "fcfg" )
+        {
+            Settings.CameraConfigFileName = value;
+        }
         else
         {
             break;
@@ -274,6 +288,8 @@ bool ParsetCommandLine( int argc, char* argv[] )
         printf( "  -config:<?> Group of users allowed to change camera settings. \n" );
         printf( "              Default is 'any' if users file is not specified, \n" );
         printf( "              or 'admin' otherwise. \n" );
+        printf( "  -fcfg:<?>   Name of the file to store camera settings in. \n" );
+        printf( "              Default is '~/.cam_config'. \n" );
         printf( "\n" );
 
         ret = false;
@@ -307,6 +323,7 @@ int main( int argc, char* argv[] )
     // create camera object
     shared_ptr<XV4LCamera>           xcamera       = XV4LCamera::Create( );
     shared_ptr<IObjectConfigurator>  xcameraConfig = make_shared<XV4LCameraConfig>( xcamera );
+    XObjectConfigurationSerializer   serializer( Settings.CameraConfigFileName, xcameraConfig );
 
     // prepare some read-only informational properties of the camera
     PropertyMap cameraInfo;
@@ -338,6 +355,9 @@ int main( int argc, char* argv[] )
     xcamera->SetVideoDevice( Settings.DeviceNumber );
     xcamera->SetVideoSize( Settings.FrameWidth, Settings.FrameHeight );
     xcamera->SetFrameRate( Settings.FrameRate );
+
+    // restore camera settings
+    serializer.LoadConfiguration( );
 
     // add web handlers
     server.AddHandler( make_shared<XObjectConfigurationRequestHandler>( "/camera/config", xcameraConfig ), configGroup ).
@@ -376,7 +396,13 @@ int main( int argc, char* argv[] )
 
         xcamera->Start( );
 
-        ExitEvent.Wait( );
+        while ( !ExitEvent.Wait( 60000 ) )
+        {
+            // save camera settings from time to time
+            serializer.SaveConfiguration( );
+        }
+
+        serializer.SaveConfiguration( );
 
         xcamera->SignalToStop( );
         xcamera->WaitForStop( );
