@@ -62,6 +62,7 @@ struct
     string   HtRealm;
     string   HtDigestFileName;
     string   CameraConfigFileName;
+    string   CustomWebContent;
 
     UserGroup ViewersGroup;
     UserGroup ConfigGroup;
@@ -114,6 +115,13 @@ void SetDefaultSettings( )
         Settings.CameraConfigFileName  = pwd->pw_dir;
         Settings.CameraConfigFileName += "/.cam_config";
     }
+
+#ifdef NDEBUG
+    Settings.CustomWebContent.clear( );
+#else
+    // default location of web content for debug builds
+    Settings.CustomWebContent = "./web";
+#endif
 }
 
 // Parse command line and override default settings
@@ -233,6 +241,10 @@ bool ParsetCommandLine( int argc, char* argv[] )
         {
             Settings.CameraConfigFileName = value;
         }
+        else if ( key == "web" )
+        {
+            Settings.CustomWebContent = value;
+        }
         else
         {
             break;
@@ -290,6 +302,8 @@ bool ParsetCommandLine( int argc, char* argv[] )
         printf( "              or 'admin' otherwise. \n" );
         printf( "  -fcfg:<?>   Name of the file to store camera settings in. \n" );
         printf( "              Default is '~/.cam_config'. \n" );
+        printf( "  -web:<?>    Name of the folder to serve custom web content. \n" );
+        printf( "              By default embedded web files are used. \n" );
         printf( "\n" );
 
         ret = false;
@@ -365,21 +379,26 @@ int main( int argc, char* argv[] )
            AddHandler( video2web.CreateJpegHandler( "/camera/jpeg" ), viewersGroup ).
            AddHandler( video2web.CreateMjpegHandler( "/camera/mjpeg", Settings.FrameRate ), viewersGroup );
 
-#ifdef NDEBUG
-    // web content is embedded in release builds to get single executable
-    server.AddHandler( make_shared<XEmbeddedContentHandler>( "/", &web_index_html ), viewersGroup ).
-           AddHandler( make_shared<XEmbeddedContentHandler>( "index.html", &web_index_html ), viewersGroup ).
-           AddHandler( make_shared<XEmbeddedContentHandler>( "styles.css", &web_styles_css ), viewersGroup ).
-           AddHandler( make_shared<XEmbeddedContentHandler>( "camera.js", &web_camera_js ), viewersGroup ).
-           AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.js", &web_cameraproperties_js ), viewersGroup ).
-           AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.html", &web_cameraproperties_v4l_html ), configGroup ).
-           AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.js", &web_jquery_js ), viewersGroup ).
-           AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.js", &web_jquery_mobile_js ), viewersGroup ).
-           AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.css", &web_jquery_mobile_css ), viewersGroup );
-#else
-    // load web content from files in debug builds
-    server.SetDocumentRoot( "./web/" );
-#endif
+    // use custom or embedded web content
+    if ( !Settings.CustomWebContent.empty( ) )
+    {
+        server.SetDocumentRoot( Settings.CustomWebContent );
+    }
+    else
+    {
+    #ifdef NDEBUG
+        // web content is embedded in release builds to get single executable
+        server.AddHandler( make_shared<XEmbeddedContentHandler>( "/", &web_index_html ), viewersGroup ).
+               AddHandler( make_shared<XEmbeddedContentHandler>( "index.html", &web_index_html ), viewersGroup ).
+               AddHandler( make_shared<XEmbeddedContentHandler>( "styles.css", &web_styles_css ), viewersGroup ).
+               AddHandler( make_shared<XEmbeddedContentHandler>( "camera.js", &web_camera_js ), viewersGroup ).
+               AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.js", &web_cameraproperties_js ), viewersGroup ).
+               AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.html", &web_cameraproperties_v4l_html ), configGroup ).
+               AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.js", &web_jquery_js ), viewersGroup ).
+               AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.js", &web_jquery_mobile_js ), viewersGroup ).
+               AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.css", &web_jquery_mobile_css ), viewersGroup );
+    #endif
+    }
 
     // set camera listeners
     XVideoSourceListenerChain   listenerChain;
