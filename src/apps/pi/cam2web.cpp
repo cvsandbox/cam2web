@@ -22,11 +22,15 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
+#include <pwd.h>
+#include <linux/limits.h>
+#include <map>
 
 #include "XRaspiCamera.hpp"
 #include "XRaspiCameraConfig.hpp"
 #include "XWebServer.hpp"
 #include "XVideoSourceToWeb.hpp"
+#include "XObjectConfigurationSerializer.hpp"
 #include "XObjectConfigurationRequestHandler.hpp"
 #include "XObjectInformationRequestHandler.hpp"
 #include "XManualResetEvent.hpp"
@@ -54,6 +58,13 @@ struct
     uint32_t FrameHeight;
     uint32_t FrameRate;
     uint32_t WebPort;
+    string   HtRealm;
+    string   HtDigestFileName;
+    string   CameraConfigFileName;
+    string   CustomWebContent;
+
+    UserGroup ViewersGroup;
+    UserGroup ConfigGroup;
 }
 Settings;
 
@@ -89,6 +100,26 @@ void SetDefaultSettings( )
     Settings.FrameHeight = 480;
     Settings.FrameRate   = 30;
     Settings.WebPort     = 8000;
+
+    Settings.HtRealm = "cam2web";
+    Settings.HtDigestFileName.clear( );
+
+    Settings.ViewersGroup = UserGroup::Anyone;
+    Settings.ConfigGroup  = UserGroup::Anyone;
+
+    struct passwd* pwd = getpwuid( getuid( ) );
+    if ( pwd )
+    {
+        Settings.CameraConfigFileName  = pwd->pw_dir;
+        Settings.CameraConfigFileName += "/.cam_config";
+    }
+
+#ifdef NDEBUG
+    Settings.CustomWebContent.clear( );
+#else
+    // default location of web content for debug builds
+    Settings.CustomWebContent = "./web";
+#endif
 }
 
 // Parse command line and override default settings
@@ -96,42 +127,54 @@ bool ParsetCommandLine( int argc, char* argv[] )
 {
     static const uint32_t SupportedWidth[]  = { 320, 480, 640, 800, 1120 };
     static const uint32_t SupportedHeight[] = { 240, 360, 480, 600, 840 };
+    static const map<string, UserGroup> SupportedUserGroups =
+    {
+        { "any",    UserGroup::Anyone   },
+        { "user",   UserGroup::User     },
+        { "admin",  UserGroup::Admin    }
+    };
+
+    bool overrideViewersGroup = false;
+    bool overrideConfigGroup  = false;
+
+    UserGroup viewersGroup;
+    UserGroup configGroup;
 
     bool ret = true;
     int  i;
-    
+
     for ( i = 1; i < argc; i++ )
     {
         char* ptrDelimiter = strchr( argv[i], ':' );
-        
+
         if ( ( ptrDelimiter == nullptr ) || ( argv[i][0] != '-' ) )
         {
             break;
         }
-        
+
         string key   = string( argv[i] + 1, ptrDelimiter - argv[i] - 1 );
         string value = string( ptrDelimiter + 1 );
-        
+
         if ( ( key.empty( ) ) || ( value.empty( ) ) )
             break;
-        
+
         if ( key == "size" )
         {
             int v = value[0] - '0';
 
             if ( ( v < 0 ) || ( v > 4 ) )
                 break;
-            
+
             Settings.FrameWidth  = SupportedWidth[v];
             Settings.FrameHeight = SupportedHeight[v];
         }
         else if ( key == "fps" )
         {
             int scanned = sscanf( value.c_str( ), "%u", &(Settings.FrameRate) );
-            
+
             if ( scanned != 1 )
                 break;
-                
+
             if ( ( Settings.FrameRate < 1 ) || ( Settings.FrameRate > 30 ) )
                 Settings.FrameRate = 30;
         }
@@ -145,12 +188,78 @@ bool ParsetCommandLine( int argc, char* argv[] )
             if ( Settings.WebPort > 65535 )
                 Settings.WebPort = 65535;
         }
+        else if ( key == "realm" )
+        {
+            Settings.HtRealm = value;
+        }
+        else if ( key == "htpass" )
+        {
+            Settings.HtDigestFileName = value;
+            // if user specified password file, then he wants some security most probably
+            // allow viewing only to users and changing settings to admin
+            Settings.ViewersGroup = UserGroup::User;
+            Settings.ConfigGroup  = UserGroup::Admin;
+        }
+        else if ( key == "viewer" )
+        {
+            map<string, UserGroup>::const_iterator itGroup = SupportedUserGroups.find( value );
+
+            if ( itGroup == SupportedUserGroups.end( ) )
+            {
+                break;
+            }
+            else
+            {
+                viewersGroup = itGroup->second;
+                overrideViewersGroup = true;
+            }
+        }
+        else if ( key == "config" )
+        {
+            map<string, UserGroup>::const_iterator itGroup = SupportedUserGroups.find( value );
+
+            if ( itGroup == SupportedUserGroups.end( ) )
+            {
+                break;
+            }
+            else
+            {
+                configGroup = itGroup->second;
+                overrideConfigGroup = true;
+            }
+        }
+        else if ( key == "fcfg" )
+        {
+            Settings.CameraConfigFileName = value;
+        }
+        else if ( key == "web" )
+        {
+            Settings.CustomWebContent = value;
+        }
         else
         {
             break;
         }
     }
-    
+
+    if ( ( ( ( overrideViewersGroup ) && ( viewersGroup != UserGroup::Anyone ) ) ||
+           ( ( overrideConfigGroup ) && ( configGroup != UserGroup::Anyone ) ) ) &&
+         ( Settings.HtDigestFileName.empty( ) ) )
+    {
+        printf( "Warning: users file was not specified, so ignoring the specified viewer/configuration groups. \n\n" );
+    }
+    else
+    {
+        if ( overrideViewersGroup )
+        {
+            Settings.ViewersGroup = viewersGroup;
+        }
+        if ( overrideConfigGroup )
+        {
+            Settings.ConfigGroup = configGroup;
+        }
+    }
+
     if ( i != argc )
     {
         printf( "cam2web - streaming camera to web \n\n" );
@@ -165,20 +274,37 @@ bool ParsetCommandLine( int argc, char* argv[] )
         printf( "              Default is 30. \n" );
         printf( "  -port:<num> Port number for web server to listen on. \n" );
         printf( "              Default is 8000. \n" );
+        printf( "  -realm:<?>  HTTP digest authentication domain. \n" );
+        printf( "              Default is 'cam2web'. \n" );
+        printf( "  -htpass:<?> htdigest file containing list of users to access the camera. \n" );
+        printf( "              Note: only users for the specified/default realm are loaded. \n" );
+        printf( "              Note: if users file is specified, then by default only users \n" );
+        printf( "                    from that list are allowed to view camera and only \n" );
+        printf( "                    'admin' user is allowed to change its settings. \n" );
+        printf( "  -viewer:<?> Group of users allowed to view camera: any, user, admin. \n" );
+        printf( "              Default is 'any' if users file is not specified, \n" );
+        printf( "              or 'user' otherwise. \n" );
+        printf( "  -config:<?> Group of users allowed to change camera settings. \n" );
+        printf( "              Default is 'any' if users file is not specified, \n" );
+        printf( "              or 'admin' otherwise. \n" );
+        printf( "  -fcfg:<?>   Name of the file to store camera settings in. \n" );
+        printf( "              Default is '~/.cam_config'. \n" );
+        printf( "  -web:<?>    Name of the folder to serve custom web content. \n" );
+        printf( "              By default embedded web files are used. \n" );
         printf( "\n" );
-        
+
         ret = false;
     }
-    
+
     return ret;
 }
 
 int main( int argc, char* argv[] )
 {
     struct sigaction sigIntAction;
-    
+
     SetDefaultSettings( );
-    
+
     if ( !ParsetCommandLine( argc, argv ) )
     {
         return -1;
@@ -198,6 +324,7 @@ int main( int argc, char* argv[] )
     // create camera object
     shared_ptr<XRaspiCamera>         xcamera       = XRaspiCamera::Create( );
     shared_ptr<IObjectConfigurator>  xcameraConfig = make_shared<XRaspiCameraConfig>( xcamera );
+    XObjectConfigurationSerializer   serializer( Settings.CameraConfigFileName, xcameraConfig );
     
     // prepare some read-only informational properties of the camera
     PropertyMap cameraInfo;
@@ -211,32 +338,53 @@ int main( int argc, char* argv[] )
     cameraInfo.insert( PropertyMap::value_type( "height", strVideoSize + 16 ) );
 
     // create and configure web server
-    XWebServer                       server( "", Settings.WebPort );
-    XVideoSourceToWeb                video2web;
-        
+    XWebServer          server( "", Settings.WebPort );
+    XVideoSourceToWeb   video2web;
+    UserGroup           viewersGroup = Settings.ViewersGroup;
+    UserGroup           configGroup  = Settings.ConfigGroup;
+
+    if ( !Settings.HtRealm.empty( ) )
+    {
+        server.SetAuthDomain( Settings.HtRealm );
+    }
+    if ( !Settings.HtDigestFileName.empty( ) )
+    {
+        server.LoadUsersFromFile( Settings.HtDigestFileName );
+    }
+
+    // set camera configuration
     xcamera->SetVideoSize( Settings.FrameWidth, Settings.FrameHeight );
     xcamera->SetFrameRate( Settings.FrameRate );
-    
-    server.AddHandler( make_shared<XObjectConfigurationRequestHandler>( "/camera/config", xcameraConfig ) ).
-           AddHandler( make_shared<XObjectInformationRequestHandler>( "/camera/info", make_shared<XObjectInformationMap>( cameraInfo ) ) ).
-           AddHandler( video2web.CreateJpegHandler( "/camera/jpeg" ) ).
-           AddHandler( video2web.CreateMjpegHandler( "/camera/mjpeg", Settings.FrameRate ) );
 
-#ifdef NDEBUG
+    // restore camera settings
+    serializer.LoadConfiguration( );
+
+    // add web handlers
+    server.AddHandler( make_shared<XObjectConfigurationRequestHandler>( "/camera/config", xcameraConfig ), configGroup ).
+           AddHandler( make_shared<XObjectInformationRequestHandler>( "/camera/info", make_shared<XObjectInformationMap>( cameraInfo ) ), viewersGroup ).
+           AddHandler( video2web.CreateJpegHandler( "/camera/jpeg" ), viewersGroup ).
+           AddHandler( video2web.CreateMjpegHandler( "/camera/mjpeg", Settings.FrameRate ), viewersGroup );
+
+    // use custom or embedded web content
+    if ( !Settings.CustomWebContent.empty( ) )
+    {
+        server.SetDocumentRoot( Settings.CustomWebContent );
+    }
+    else
+    {
+    #ifdef NDEBUG
     // web content is embedded in release builds to get single executable
-    server.AddHandler( make_shared<XEmbeddedContentHandler>( "/", &web_index_html ) ).
-           AddHandler( make_shared<XEmbeddedContentHandler>( "index.html", &web_index_html) ).
-           AddHandler( make_shared<XEmbeddedContentHandler>( "styles.css", &web_styles_css ) ).
-           AddHandler( make_shared<XEmbeddedContentHandler>( "camera.js", &web_camera_js ) ).
-           AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.js", &web_cameraproperties_js ) ).
-           AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.html", &web_cameraproperties_pi_html ) ).
-           AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.js", &web_jquery_js ) ).
-           AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.js", &web_jquery_mobile_js ) ).
-           AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.css", &web_jquery_mobile_css ) );
-#else
-    // load web content from files in debug builds
-    server.SetDocumentRoot( "./web/" );
-#endif
+        server.AddHandler( make_shared<XEmbeddedContentHandler>( "/", &web_index_html ), viewersGroup ).
+               AddHandler( make_shared<XEmbeddedContentHandler>( "index.html", &web_index_html ), viewersGroup ).
+               AddHandler( make_shared<XEmbeddedContentHandler>( "styles.css", &web_styles_css ), viewersGroup ).
+               AddHandler( make_shared<XEmbeddedContentHandler>( "camera.js", &web_camera_js ), viewersGroup ).
+               AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.js", &web_cameraproperties_js ), viewersGroup ).
+               AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.html", &web_cameraproperties_pi_html ), configGroup ).
+               AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.js", &web_jquery_js ), viewersGroup ).
+               AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.js", &web_jquery_mobile_js ), viewersGroup ).
+               AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.css", &web_jquery_mobile_css ), viewersGroup );
+    #endif
+    }
 
     // set camera listeners
     XVideoSourceListenerChain   listenerChain;
@@ -253,7 +401,13 @@ int main( int argc, char* argv[] )
 
         xcamera->Start( );
 
-        ExitEvent.Wait( );
+        while ( !ExitEvent.Wait( 60000 ) )
+        {
+            // save camera settings from time to time
+            serializer.SaveConfiguration( );
+        }
+
+        serializer.SaveConfiguration( );
 
         xcamera->SignalToStop( );
         xcamera->WaitForStop( );
@@ -265,6 +419,6 @@ int main( int argc, char* argv[] )
     {
         printf( "Failed starting web server on port %d\n", server.Port( ) );
     }
-        
+
     return 0;
 }
