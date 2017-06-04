@@ -175,7 +175,7 @@ void VideoListener::OnNewImage( const shared_ptr<const XImage>& image )
         Owner->NewImageAvailable = true;
     }
 
-    // since we got an image from video source, clear any error repored by it
+    // since we got an image from video source, clear any error reported by it
     Owner->VideoSourceErrorMessage.clear( );
     Owner->VideoSourceError = false;
 }
@@ -218,11 +218,12 @@ void JpegRequestHandler::HandleHttpRequest( const IWebRequest& /* request */, IW
                              "\r\n",  Owner->JpegSize );
     
             response.Send( Owner->JpegBuffer, Owner->JpegSize );
+            printf( "Sent JPEG, size: %d \n", Owner->JpegSize );
         }
     }
 }
 
-// Handle MJPEG request - continuosly provide camera images as MJPEG stream
+// Handle MJPEG request - continuously provide camera images as MJPEG stream
 void MjpegRequestHandler::HandleHttpRequest( const IWebRequest& /* request */, IWebResponse& response )
 {
     uint32_t handlingTime = 0;
