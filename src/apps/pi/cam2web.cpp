@@ -57,6 +57,7 @@ struct
     uint32_t FrameWidth;
     uint32_t FrameHeight;
     uint32_t FrameRate;
+    uint32_t JpegQuality;
     uint32_t WebPort;
     string   HtRealm;
     string   HtDigestFileName;
@@ -99,6 +100,7 @@ void SetDefaultSettings( )
     Settings.FrameWidth  = 640;
     Settings.FrameHeight = 480;
     Settings.FrameRate   = 30;
+    Settings.JpegQuality = 10;
     Settings.WebPort     = 8000;
 
     Settings.HtRealm = "cam2web";
@@ -177,6 +179,18 @@ bool ParsetCommandLine( int argc, char* argv[] )
 
             if ( ( Settings.FrameRate < 1 ) || ( Settings.FrameRate > 30 ) )
                 Settings.FrameRate = 30;
+        }
+        else if ( key == "jpeg" )
+        {
+            int scanned = sscanf( value.c_str( ), "%u", &(Settings.JpegQuality) );
+
+            if ( scanned != 1 )
+                break;
+
+            if ( Settings.JpegQuality < 1 )
+                Settings.JpegQuality = 1;
+            if ( Settings.JpegQuality > 100 )
+                Settings.JpegQuality = 100;
         }
         else if ( key == "port" )
         {
@@ -272,6 +286,8 @@ bool ParsetCommandLine( int argc, char* argv[] )
         printf( "              4: 1120x840 \n" );
         printf( "  -fps:<1-30> Sets camera frame rate. Same is used for MJPEG stream. \n" );
         printf( "              Default is 30. \n" );
+        printf( "  -jpeg:<num> JPEG quantization factor (quality). \n" );
+        printf( "              Default is 10. \n" );
         printf( "  -port:<num> Port number for web server to listen on. \n" );
         printf( "              Default is 8000. \n" );
         printf( "  -realm:<?>  HTTP digest authentication domain. \n" );
@@ -355,6 +371,7 @@ int main( int argc, char* argv[] )
     // set camera configuration
     xcamera->SetVideoSize( Settings.FrameWidth, Settings.FrameHeight );
     xcamera->SetFrameRate( Settings.FrameRate );
+    xcamera->SetJpegQuality( Settings.JpegQuality );
 
     // restore camera settings
     serializer.LoadConfiguration( );
