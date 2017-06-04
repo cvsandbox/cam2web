@@ -218,7 +218,6 @@ void JpegRequestHandler::HandleHttpRequest( const IWebRequest& /* request */, IW
                              "\r\n",  Owner->JpegSize );
     
             response.Send( Owner->JpegBuffer, Owner->JpegSize );
-            printf( "Sent JPEG, size: %d \n", Owner->JpegSize );
         }
     }
 }
