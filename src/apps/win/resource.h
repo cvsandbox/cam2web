@@ -6,11 +6,20 @@
 #define IDS_APP_TITLE           103
 
 #define IDD_ABOUTBOX            103
+#define IDD_SETTINGS_BOX        112
 #define IDM_ABOUT               104
 #define IDM_EXIT                105
+#define IDM_SETTINGS            111
 #define IDI_CAM2WEB             107
 #define IDC_CAM2WEB             109
 #define IDC_MYICON              2
+#define IDC_JPEG_Q_EDIT         113
+#define IDC_JPEG_Q_SPIN         114
+#define IDC_MJPEG_RATE_EDIT     115
+#define IDC_MJPEG_RATE_SPIN     116
+#define IDC_HTTP_PORT_EDIT      117
+#define IDC_HTTP_PORT_SPIN      118
+#define IDC_CUSTOM_WEB_EDIT     119
 #ifndef IDC_STATIC
 #define IDC_STATIC              -1
 #endif

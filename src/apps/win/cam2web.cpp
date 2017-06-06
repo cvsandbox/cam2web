@@ -32,6 +32,8 @@
 #include <future>
 
 #include "resource.h"
+#include "UiTools.hpp"
+#include "SettingsDialog.hpp"
 
 #include "XLocalVideoDevice.hpp"
 #include "XLocalVideoDeviceConfig.hpp"
@@ -39,6 +41,7 @@
 #include "XVideoSourceToWeb.hpp"
 #include "XObjectConfigurationRequestHandler.hpp"
 #include "XObjectInformationRequestHandler.hpp"
+#include "AppConfig.hpp"
 
 // Release build embeds web resources into executable
 #ifdef NDEBUG
@@ -68,10 +71,6 @@ using namespace std;
 #define IDC_BUTTON_START        (505)
 #define IDC_LINK_STATUS         (506)
 
-#define DEFAULT_PORT            (8000)
-#define DEFAULT_MJPEG_RATE      (30)
-#define DEFAULT_AUTH_DOMAIN     "cam2web"
-
 #define STR_ERROR               TEXT( "Error" )
 #define STR_START_STREAMING     TEXT( "&Start streaming" )
 #define STR_STOP_STREAMING      TEXT( "&Stop streaming" )
@@ -98,6 +97,7 @@ public:
     XDeviceName                     selectedDeviceName;
     XDeviceCapabilities             selectedResolutuion;
     shared_ptr<IObjectConfigurator> cameraConfig;
+    shared_ptr<AppConfig>           appConfig;
 
     XWebServer                      server;
     XVideoSourceToWeb               video2web;
@@ -108,13 +108,13 @@ public:
         hInst( NULL ), hwndMain( NULL ), hwndCamerasCombo( NULL ),
         hwndResolutionsCombo( NULL ), hwndStartButton( NULL ), hwndStatusLink( NULL ),
         devices( ), cameraCapabilities( ), camera( ), selectedDeviceName( ), selectedResolutuion( ),
-        cameraConfig( ), server( ), video2web( ),
+        cameraConfig( ), appConfig( new AppConfig( ) ), server( ), video2web( ),
         streamingInProgress( false )
     {
-        string userHA1  = XWebServer::CalculateDigestAuthHa1( "user",  DEFAULT_AUTH_DOMAIN, "pass" );
-        string adminHA1 = XWebServer::CalculateDigestAuthHa1( "admin", DEFAULT_AUTH_DOMAIN, "password" );
+        string userHA1  = XWebServer::CalculateDigestAuthHa1( "user",  appConfig->AuthDomain( ), "pass" );
+        string adminHA1 = XWebServer::CalculateDigestAuthHa1( "admin", appConfig->AuthDomain( ), "password" );
 
-        server.SetAuthDomain( DEFAULT_AUTH_DOMAIN );
+        server.SetAuthDomain( appConfig->AuthDomain( ) );
         server.AddUser( "user", userHA1, UserGroup::User );
         server.AddUser( "admin", adminHA1, UserGroup::Admin );
     }
@@ -124,7 +124,6 @@ AppData* gData = NULL;
 // Forward declarations of functions included in this code module:
 LRESULT CALLBACK MainWndProc( HWND, UINT, WPARAM, LPARAM );
 INT_PTR CALLBACK AboutDlgProc( HWND, UINT, WPARAM, LPARAM );
-void CenterWindowTo( HWND hWnd, HWND hWndRef );
 void GetVideoDevices( );
 
 // Register class of the main window
@@ -264,20 +263,6 @@ int APIENTRY _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
     return ret;
 }
 
-// Center the specified window in the reference one
-void CenterWindowTo( HWND hWnd, HWND hWndRef )
-{
-    RECT refRect, wndRect;
-
-    GetWindowRect( hWndRef, &refRect );
-    GetWindowRect( hWnd, &wndRect );
-
-    SetWindowPos( hWnd, HWND_TOP,
-        refRect.left + ( ( refRect.right  - refRect.left ) - ( wndRect.right  - wndRect.left ) ) / 2,
-        refRect.top  + ( ( refRect.bottom - refRect.top  ) - ( wndRect.bottom - wndRect.top  ) ) / 2,
-        0, 0, SWP_NOSIZE );
-}
-
 // Convert specfied UTF8 string to wide character string
 static wstring Utf8to16( const string& utf8string )
 {
@@ -388,12 +373,18 @@ static bool StartVideoStreaming( )
         // allow camera configuration through simplified configurator object
         gData->cameraConfig = make_shared<XLocalVideoDeviceConfig>( gData->camera );
 
-        // configure web server
-        gData->server.SetPort( DEFAULT_PORT ).
+        // restore camera settings
+        // ...
+
+        // set JPEG quality
+        gData->video2web.SetJpegQuality( gData->appConfig->JpegQuality( ) );
+
+        // configure web server and handler
+        gData->server.SetPort( gData->appConfig->HttpPort( ) ).
             AddHandler( make_shared<XObjectConfigurationRequestHandler>( "/camera/config", gData->cameraConfig ), UserGroup::Admin ).
             AddHandler( make_shared<XObjectInformationRequestHandler>( "/camera/info", make_shared<XObjectInformationMap>( cameraInfo ) ) ).
             AddHandler( gData->video2web.CreateJpegHandler( "/camera/jpeg" ) ).
-            AddHandler( gData->video2web.CreateMjpegHandler( "/camera/mjpeg", DEFAULT_MJPEG_RATE ) );
+            AddHandler( gData->video2web.CreateMjpegHandler( "/camera/mjpeg", gData->appConfig->MjpegFrameRate( ) ) );
 
 #ifdef _DEBUG
         // load web content from files in debug builds
@@ -483,6 +474,10 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             DialogBox( gData->hInst, MAKEINTRESOURCE( IDD_ABOUTBOX ), hWnd, AboutDlgProc );
             break;
 
+        case IDM_SETTINGS:
+            DialogBoxParam( gData->hInst, MAKEINTRESOURCE( IDD_SETTINGS_BOX ), hWnd, SettingsDlgProc, (LPARAM) gData->appConfig.get( ) );
+            break;
+
         case IDM_EXIT:
             DestroyWindow( hWnd );
             break;
@@ -549,7 +544,8 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             {
                 TCHAR strStatusLinkText[256];
 
-                swprintf( strStatusLinkText, 255, TEXT( "<a href=\"http://localhost:%d/\">Streaming on port %d ...</a>" ), DEFAULT_PORT, DEFAULT_PORT );
+                swprintf( strStatusLinkText, 255, TEXT( "<a href=\"http://localhost:%d/\">Streaming on port %d ...</a>" ),
+                    gData->appConfig->HttpPort( ), gData->appConfig->HttpPort( ) );
                 SetWindowText( gData->hwndStatusLink, strStatusLinkText );
                 
                 startButtonText       = STR_STOP_STREAMING;
