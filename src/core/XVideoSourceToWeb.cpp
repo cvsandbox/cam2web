@@ -99,12 +99,10 @@ namespace Private
         string             VideoSourceErrorMessage;
         mutex              ImageGuard;
         mutex              BufferGuard;
-
-    private:
-        XJpegEncoder      JpegEncoder;
+        XJpegEncoder       JpegEncoder;
 
     public:
-        XVideoSourceToWebData( uint32_t jpegQuality ) :
+        XVideoSourceToWebData( uint16_t jpegQuality ) :
             NewImageAvailable( false ), VideoSourceError( false ), InternalError( XError::Success ),
             JpegBuffer( nullptr ), JpegBufferSize( 0 ), JpegSize( 0 ), VideoSourceListener( this ),
             CameraImage( ), VideoSourceErrorMessage( ), ImageGuard( ), BufferGuard( ),
@@ -132,7 +130,7 @@ namespace Private
     };
 }
 
-XVideoSourceToWeb::XVideoSourceToWeb( uint32_t jpegQuality ) :
+XVideoSourceToWeb::XVideoSourceToWeb( uint16_t jpegQuality ) :
     mData( new Private::XVideoSourceToWebData( jpegQuality ) )
 {
 }
@@ -158,6 +156,16 @@ shared_ptr<IWebRequestHandler> XVideoSourceToWeb::CreateJpegHandler( const strin
 shared_ptr<IWebRequestHandler> XVideoSourceToWeb::CreateMjpegHandler( const string& uri, uint32_t frameRate ) const
 {
     return make_shared<Private::MjpegRequestHandler>( uri, frameRate, mData );
+}
+
+// Get/Set JPEG quality (valid only if camera provides uncompressed images)
+uint16_t XVideoSourceToWeb::JpegQuality( ) const
+{
+    return mData->JpegEncoder.Quality( );
+}
+void XVideoSourceToWeb::SetJpegQuality( uint16_t quality )
+{
+    mData->JpegEncoder.SetQuality( quality );
 }
 
 namespace Private

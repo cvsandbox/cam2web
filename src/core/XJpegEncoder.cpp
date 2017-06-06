@@ -49,14 +49,14 @@ namespace Private
     class XJpegEncoderData
     {
     public:
-        uint32_t                    Quality;
+        uint16_t                    Quality;
         bool                        FasterCompression;
     private:
         struct jpeg_compress_struct cinfo;
         struct jpeg_error_mgr       jerr;
 
     public:
-        XJpegEncoderData( uint32_t quality, bool fasterCompression) :
+        XJpegEncoderData( uint16_t quality, bool fasterCompression) :
             Quality( quality ), FasterCompression( fasterCompression  )
         {
             if ( Quality > 100 )
@@ -81,7 +81,7 @@ namespace Private
     };
 }
 
-XJpegEncoder::XJpegEncoder( uint32_t quality, bool fasterCompression ) :
+XJpegEncoder::XJpegEncoder( uint16_t quality, bool fasterCompression ) :
     mData( new Private::XJpegEncoderData( quality, fasterCompression ) )
 {
 
@@ -93,13 +93,15 @@ XJpegEncoder::~XJpegEncoder( )
 }
 
 // Set/get compression quality, [0, 100]
-uint32_t XJpegEncoder::Quality( ) const
+uint16_t XJpegEncoder::Quality( ) const
 {
     return mData->Quality;
 }
-void XJpegEncoder::SetQuality( uint32_t quality )
+void XJpegEncoder::SetQuality( uint16_t quality )
 {
     mData->Quality = quality;
+    if ( mData->Quality > 100 ) mData->Quality = 100;
+    if ( mData->Quality < 1   ) mData->Quality = 1;
 }
 
 // Set/get faster compression (but less accurate) flag

@@ -36,7 +36,7 @@ namespace Private
 class XVideoSourceToWeb : private Uncopyable
 {
 public:
-    XVideoSourceToWeb( uint32_t jpegQuality = 85 );
+    XVideoSourceToWeb( uint16_t jpegQuality = 85 );
     ~XVideoSourceToWeb( );
     
     // Get video source listener, which could be fed to some video source
@@ -47,6 +47,10 @@ public:
 
     // Create web request handler to provide camera images as MJPEG stream
     std::shared_ptr<IWebRequestHandler> CreateMjpegHandler( const std::string& uri, uint32_t frameRate ) const;
+
+    // Get/Set JPEG quality (valid only if camera provides uncompressed images)
+    uint16_t JpegQuality( ) const;
+    void SetJpegQuality( uint16_t quality );
 
 private:
     Private::XVideoSourceToWebData* mData;

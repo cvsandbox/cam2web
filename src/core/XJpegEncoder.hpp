@@ -35,12 +35,12 @@ namespace Private
 class XJpegEncoder : private Uncopyable
 {
 public:
-    XJpegEncoder( uint32_t quality = 85, bool fasterCompression = false );
+    XJpegEncoder( uint16_t quality = 85, bool fasterCompression = false );
     ~XJpegEncoder( );
 
     // Set/get compression quality, [0, 100]
-    uint32_t Quality( ) const;
-    void SetQuality( uint32_t quality );
+    uint16_t Quality( ) const;
+    void SetQuality( uint16_t quality );
 
     // Set/get faster compression (but less accurate) flag
     bool FasterCompression( ) const;
