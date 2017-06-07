@@ -595,14 +595,43 @@ INT_PTR CALLBACK AboutDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
     switch ( message )
     {
     case WM_INITDIALOG:
-        CenterWindowTo( hDlg, GetParent( hDlg ) );
-        return (INT_PTR) TRUE;
+        {
+            HICON hIcon = (HICON) LoadImage( gData->hInst, MAKEINTRESOURCE( IDI_CAM2WEB ), IMAGE_ICON,
+                                             GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
+
+            if ( hIcon )
+            {
+                SendMessage( hDlg, WM_SETICON, ICON_SMALL, (LPARAM) hIcon );
+            }
+
+            CenterWindowTo( hDlg, GetParent( hDlg ) );
+
+            return (INT_PTR) TRUE;
+        }
 
     case WM_COMMAND:
         if ( ( LOWORD( wParam ) == IDOK ) || ( LOWORD( wParam ) == IDCANCEL ) )
         {
             EndDialog( hDlg, LOWORD( wParam ) );
             return (INT_PTR) TRUE;
+        }
+        break;
+
+    case WM_NOTIFY:
+        switch ( ( (LPNMHDR) lParam )->code )
+        {
+            case NM_CLICK:
+            case NM_RETURN:
+            {
+                PNMLINK pNMLink = (PNMLINK) lParam;
+                LITEM   item    = pNMLink->item;
+
+                ShellExecute( NULL, L"open", ( pNMLink->hdr.idFrom == IDC_LINK_EMAIL ) ?
+                    L"mailto:cvsandbox@gmail.com" : L"https://github.com/cvsandbox/cam2web", NULL, NULL, SW_SHOW );
+
+                return (INT_PTR) TRUE;
+            }
+            break;
         }
         break;
     }

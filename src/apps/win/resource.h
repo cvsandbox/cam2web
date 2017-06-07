@@ -20,6 +20,8 @@
 #define IDC_HTTP_PORT_EDIT      117
 #define IDC_HTTP_PORT_SPIN      118
 #define IDC_CUSTOM_WEB_EDIT     119
+#define IDC_LINK_HOME_PAGE      120
+#define IDC_LINK_EMAIL          121
 #ifndef IDC_STATIC
 #define IDC_STATIC              -1
 #endif
