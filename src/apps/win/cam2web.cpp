@@ -28,10 +28,12 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <shellapi.h>
+#include <shlobj.h>
 #include <tchar.h>
 #include <future>
 
 #include "resource.h"
+#include "Tools.hpp"
 #include "UiTools.hpp"
 #include "SettingsDialog.hpp"
 
@@ -39,6 +41,7 @@
 #include "XLocalVideoDeviceConfig.hpp"
 #include "XWebServer.hpp"
 #include "XVideoSourceToWeb.hpp"
+#include "XObjectConfigurationSerializer.hpp"
 #include "XObjectConfigurationRequestHandler.hpp"
 #include "XObjectInformationRequestHandler.hpp"
 #include "AppConfig.hpp"
@@ -77,6 +80,11 @@ using namespace std;
 
 #define WM_UPDATE_UI            (WM_USER + 1)
 
+// Forward declarations of functions included in this code module:
+LRESULT CALLBACK MainWndProc( HWND, UINT, WPARAM, LPARAM );
+INT_PTR CALLBACK AboutDlgProc( HWND, UINT, WPARAM, LPARAM );
+void GetVideoDevices( );
+
 // Place holder for all global variable the application needs
 class AppData
 {
@@ -102,14 +110,22 @@ public:
     XWebServer                      server;
     XVideoSourceToWeb               video2web;
 
-    bool streamingInProgress;
+    bool                            streamingInProgress;
+
+    string                          appFolder;
+    string                          appConfigFile;
+
+    XObjectConfigurationSerializer  appConfigSerializer;
+
 
     AppData( ) :
         hInst( NULL ), hwndMain( NULL ), hwndCamerasCombo( NULL ),
         hwndResolutionsCombo( NULL ), hwndStartButton( NULL ), hwndStatusLink( NULL ),
         devices( ), cameraCapabilities( ), camera( ), selectedDeviceName( ), selectedResolutuion( ),
         cameraConfig( ), appConfig( new AppConfig( ) ), server( ), video2web( ),
-        streamingInProgress( false )
+        streamingInProgress( false ),
+        appFolder( ".\\" ), appConfigFile( "cam2web.cfg" ),
+        appConfigSerializer( )
     {
         string userHA1  = XWebServer::CalculateDigestAuthHa1( "user",  appConfig->AuthDomain( ), "pass" );
         string adminHA1 = XWebServer::CalculateDigestAuthHa1( "admin", appConfig->AuthDomain( ), "password" );
@@ -117,14 +133,27 @@ public:
         server.SetAuthDomain( appConfig->AuthDomain( ) );
         server.AddUser( "user", userHA1, UserGroup::User );
         server.AddUser( "admin", adminHA1, UserGroup::Admin );
+
+        // find user' home folder to store settings
+        WCHAR homeFolder[MAX_PATH];
+
+        if ( SUCCEEDED( SHGetFolderPathW( NULL, CSIDL_PROFILE, NULL, 0, homeFolder ) ) )
+        {
+            appFolder = Utf16to8( homeFolder );
+            appFolder += "\\cam2web\\";
+        }
+
+        appConfigFile = appFolder + "app.cfg";
+
+        CreateDirectory( Utf8to16( appFolder ).c_str( ), nullptr );
+
+        appConfigSerializer = XObjectConfigurationSerializer( appConfigFile, appConfig );
+
+        // load application settings
+        appConfigSerializer.LoadConfiguration( );
     }
 };
 AppData* gData = NULL;
-
-// Forward declarations of functions included in this code module:
-LRESULT CALLBACK MainWndProc( HWND, UINT, WPARAM, LPARAM );
-INT_PTR CALLBACK AboutDlgProc( HWND, UINT, WPARAM, LPARAM );
-void GetVideoDevices( );
 
 // Register class of the main window
 ATOM MyRegisterClass( HINSTANCE hInstance )
@@ -259,28 +288,6 @@ int APIENTRY _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
     delete gData;
 
     _CrtMemDumpAllObjectsSince( &memStateAtStart );
-
-    return ret;
-}
-
-// Convert specfied UTF8 string to wide character string
-static wstring Utf8to16( const string& utf8string )
-{
-    wstring ret;
-
-    int required = MultiByteToWideChar( CP_UTF8, 0, utf8string.c_str( ), -1, nullptr, 0 );
-
-    if ( required > 0 )
-    {
-        wchar_t* utf16string = new wchar_t[required];
-
-        if ( MultiByteToWideChar( CP_UTF8, 0, utf8string.c_str( ), -1, utf16string, required ) > 0 )
-        {
-            ret = wstring( utf16string );
-        }
-
-        delete [] utf16string;
-    }
 
     return ret;
 }
@@ -475,7 +482,10 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             break;
 
         case IDM_SETTINGS:
-            DialogBoxParam( gData->hInst, MAKEINTRESOURCE( IDD_SETTINGS_BOX ), hWnd, SettingsDlgProc, (LPARAM) gData->appConfig.get( ) );
+            if ( DialogBoxParam( gData->hInst, MAKEINTRESOURCE( IDD_SETTINGS_BOX ), hWnd, SettingsDlgProc, (LPARAM) gData->appConfig.get( ) ) == IDOK )
+            {
+                gData->appConfigSerializer.SaveConfiguration( );
+            }
             break;
 
         case IDM_EXIT:

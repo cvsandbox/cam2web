@@ -140,6 +140,7 @@ del "$(ProjectDir)..\..\..\build\msvc\release\include\*.js"
     <ClInclude Include="..\..\core\XJpegEncoder.hpp" />
     <ClInclude Include="..\..\core\XManualResetEvent.hpp" />
     <ClInclude Include="..\..\core\XObjectConfigurationRequestHandler.hpp" />
+    <ClInclude Include="..\..\core\XObjectConfigurationSerializer.hpp" />
     <ClInclude Include="..\..\core\XObjectInformationRequestHandler.hpp" />
     <ClInclude Include="..\..\core\XSimpleJsonParser.hpp" />
     <ClInclude Include="..\..\core\XVideoSourceToWeb.hpp" />
@@ -147,6 +148,7 @@ del "$(ProjectDir)..\..\..\build\msvc\release\include\*.js"
     <ClInclude Include="AppConfig.hpp" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SettingsDialog.hpp" />
+    <ClInclude Include="Tools.hpp" />
     <ClInclude Include="UiTools.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -164,6 +166,7 @@ del "$(ProjectDir)..\..\..\build\msvc\release\include\*.js"
     <ClCompile Include="..\..\core\XJpegEncoder.cpp" />
     <ClCompile Include="..\..\core\XManualResetEvent.cpp" />
     <ClCompile Include="..\..\core\XObjectConfigurationRequestHandler.cpp" />
+    <ClCompile Include="..\..\core\XObjectConfigurationSerializer.cpp" />
     <ClCompile Include="..\..\core\XObjectInformationRequestHandler.cpp" />
     <ClCompile Include="..\..\core\XSimpleJsonParser.cpp" />
     <ClCompile Include="..\..\core\XVideoSourceToWeb.cpp" />
@@ -171,6 +174,7 @@ del "$(ProjectDir)..\..\..\build\msvc\release\include\*.js"
     <ClCompile Include="AppConfig.cpp" />
     <ClCompile Include="cam2web.cpp" />
     <ClCompile Include="SettingsDialog.cpp" />
+    <ClCompile Include="Tools.cpp" />
     <ClCompile Include="UiTools.cpp" />
   </ItemGroup>
   <ItemGroup>

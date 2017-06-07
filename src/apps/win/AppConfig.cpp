@@ -18,12 +18,22 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
+#include <list>
+
 #include "AppConfig.hpp"
 
 using namespace std;
 
 // Macro to make sure a value is in certain range
 #define XINRANGE(a, min, max) (((a)<(max))?(((a)>(min))?(a):(min)):(max))
+
+#define PROP_JPEG_QUALITY   "jpegQuality"
+#define PROP_MJPEG_RATE     "mjpegRate"
+#define PROP_HTTP_PORT      "httpPort"
+#define PROP_AUTH_DOMAIN    "authDomain"
+
+// List of supported properties
+const static list<string> SupportedProperties = { PROP_JPEG_QUALITY, PROP_MJPEG_RATE, PROP_HTTP_PORT, PROP_AUTH_DOMAIN };
 
 AppConfig::AppConfig( ) :
     jpegQuality( 85 ),
@@ -77,7 +87,51 @@ void AppConfig::SetAuthDomain( const string& domain )
 // Set property of the object
 XError AppConfig::SetProperty( const string& propertyName, const string& value )
 {
-    XError ret = XError::Success;
+    XError  ret = XError::Success;
+    int32_t intValue;
+    int     scanned = sscanf( value.c_str( ), "%d", &intValue );
+
+    if ( propertyName == PROP_JPEG_QUALITY )
+    {
+        if ( scanned != 1 )
+        {
+            ret = XError::InvalidPropertyValue;
+        }
+        else
+        {
+            jpegQuality = static_cast<uint16_t>( intValue );
+        }
+    }
+    else if ( propertyName == PROP_MJPEG_RATE )
+    {
+        if ( scanned != 1 )
+        {
+            ret = XError::InvalidPropertyValue;
+        }
+        else
+        {
+            mjpegFrameRate = static_cast<uint16_t>( intValue );
+        }
+    }
+    else if ( propertyName == PROP_HTTP_PORT )
+    {
+        if ( scanned != 1 )
+        {
+            ret = XError::InvalidPropertyValue;
+        }
+        else
+        {
+            httpPort = static_cast<uint16_t>( intValue );
+        }
+    }
+    else if ( propertyName == PROP_AUTH_DOMAIN )
+    {
+        authDomain = value;
+    }
+    else
+    {
+        ret = XError::UnknownProperty;
+    }
 
     return ret;
 }
@@ -85,16 +139,58 @@ XError AppConfig::SetProperty( const string& propertyName, const string& value )
 // Get property of the object
 XError AppConfig::GetProperty( const string& propertyName, string& value ) const
 {
-    XError ret = XError::Success;
+    XError  ret         = XError::Success;
+    int32_t intValue    = 0;
+    bool    numericProp = false;
+
+    if ( propertyName == PROP_JPEG_QUALITY )
+    {
+        intValue    = jpegQuality;
+        numericProp = true;
+    }
+    else if ( propertyName == PROP_MJPEG_RATE )
+    {
+        intValue    = mjpegFrameRate;
+        numericProp = true;
+    }
+    else if ( propertyName == PROP_HTTP_PORT )
+    {
+        intValue    = httpPort;
+        numericProp = true;
+    }
+    else if ( propertyName == PROP_AUTH_DOMAIN )
+    {
+        value = authDomain;
+    }
+    else
+    {
+        ret = XError::UnknownProperty;
+    }
+
+    if ( ( ret ) && ( numericProp ) )
+    {
+        char buffer[32];
+
+        sprintf( buffer, "%d", intValue );
+        value = buffer;
+    }
 
     return ret;
-
 }
 
 // Get all properties of the object
 map<string, string> AppConfig::GetAllProperties( ) const
 {
     map<string, string> properties;
+    string              value;
+
+    for ( auto property : SupportedProperties )
+    {
+        if ( GetProperty( property, value ) )
+        {
+            properties.insert( pair<string, string>( property, value ) );
+        }
+    }
 
     return properties;
 }

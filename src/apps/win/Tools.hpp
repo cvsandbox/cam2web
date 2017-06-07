@@ -18,17 +18,14 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
-#ifndef UI_TOOLS_HPP
-#define UI_TOOLS_HPP
+#ifndef TOOLS_HPP
+#define TOOLS_HPP
 
-#include <stdint.h>
+#include <string>
 
-// Center the given window relative to the reference window
-void CenterWindowTo( HWND hWnd, HWND hWndRef );
-
-// Initialize up/down control and its buddy control
-void InitUpDownControl( HWND hwndUpDown, HWND hwndBuddy, uint16_t min, uint16_t max, uint16_t value );
-// Ensure buddy control's volue is in the range of the specified up/down control
-void EnsureUpDownBuddyInRange( HWND hwndUpDown, HWND hwndBuddy );
+// Convert specfied UTF8 string to wide character string
+std::wstring Utf8to16( const std::string& utf8string );
+// Convert specfied wide character string to UTF8 string
+std::string Utf16to8( const std::wstring& utf16string );
 
 #endif // UI_TOOLS_HPP
