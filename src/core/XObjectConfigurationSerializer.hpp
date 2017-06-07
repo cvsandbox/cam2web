@@ -27,6 +27,7 @@
 class XObjectConfigurationSerializer
 {
 public:
+    XObjectConfigurationSerializer( );
     XObjectConfigurationSerializer( const std::string& fileName,
                                     const std::shared_ptr<IObjectConfigurator>& objectToConfigure );
 

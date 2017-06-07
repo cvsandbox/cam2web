@@ -22,6 +22,13 @@
 
 using namespace std;
 
+XObjectConfigurationSerializer::XObjectConfigurationSerializer( ) :
+    FileName( ),
+    ObjectToConfigure( )
+{
+
+}
+
 XObjectConfigurationSerializer::XObjectConfigurationSerializer( const std::string& fileName,
                                                                 const std::shared_ptr<IObjectConfigurator>& objectToConfigure ) :
     FileName( fileName ),
@@ -32,32 +39,40 @@ XObjectConfigurationSerializer::XObjectConfigurationSerializer( const std::strin
 // Save properties of the specified object into a file
 XError XObjectConfigurationSerializer::SaveConfiguration( ) const
 {
-    XError  ret  = XError::Success;
-    FILE*   file = fopen( FileName.c_str( ), "w" );
-    
-    if ( file == nullptr )
+    XError ret  = XError::Success;
+
+    if ( ( FileName.empty( ) ) || ( !ObjectToConfigure ) )
     {
-        ret = XError::IOError;
+        ret = XError::Failed;
     }
     else
     {
-        map<string, string> properties = ObjectToConfigure->GetAllProperties( );
-        bool                first      = true;
+        FILE* file = fopen( FileName.c_str( ), "w" );
 
-        // write a simple file, where property name and value go separate lines
-        for ( auto property : properties )
+        if ( file == nullptr )
         {
-            if ( !first )
+            ret = XError::IOError;
+        }
+        else
+        {
+            map<string, string> properties = ObjectToConfigure->GetAllProperties( );
+            bool                first = true;
+
+            // write a simple file, where property name and value go separate lines
+            for ( auto property : properties )
             {
-                fprintf( file, "\n" );
+                if ( !first )
+                {
+                    fprintf( file, "\n" );
+                }
+
+                fprintf( file, "%s\n%s\n", property.first.c_str( ), property.second.c_str( ) );
+
+                first = false;
             }
 
-            fprintf( file, "%s\n%s\n", property.first.c_str( ), property.second.c_str( ) );
-
-            first = false;
+            fclose( file );
         }
-
-        fclose( file );
     }
 
     return ret;
@@ -66,41 +81,50 @@ XError XObjectConfigurationSerializer::SaveConfiguration( ) const
 // Load properties of the specified object from a file
 XError XObjectConfigurationSerializer::LoadConfiguration( ) const
 {
-    XError  ret  = XError::Success;
-    FILE*   file = fopen( FileName.c_str( ), "r" );
+    XError ret  = XError::Success;
 
-    if ( file == nullptr )
+    if ( ( FileName.empty( ) ) || ( !ObjectToConfigure ) )
     {
-        ret = XError::IOError;
+        ret = XError::Failed;
     }
     else
     {
-        char   buffer[256];
-        string name;
-        string line;
-        bool   gotName = false;
+        FILE* file = fopen( FileName.c_str( ), "r" );
 
-        while ( fgets( buffer, sizeof( buffer ) - 1, file ) )
+        if ( file == nullptr )
         {
-            line = string( buffer );
+            ret = XError::IOError;
+        }
+        else
+        {
+            char   buffer[256];
+            string name;
+            string line;
+            bool   gotName = false;
 
-            while ( ( line.back( ) == ' ' )  || ( line.back( ) == '\t' ) ||
-                    ( line.back( ) == '\n' ) || ( line.back( ) == '\r' ) )
+            while ( fgets( buffer, sizeof( buffer ) - 1, file ) )
             {
-                line.pop_back( );
-            }
+                line = string( buffer );
 
-            if ( !line.empty( ) )
-            {
-                if ( !gotName )
+                while ( ( !line.empty( ) ) &&
+                        ( ( line.back( ) == ' ' )  || ( line.back( ) == '\t' ) ||
+                          ( line.back( ) == '\n' ) || ( line.back( ) == '\r' ) ) )
                 {
-                    name    = line;
-                    gotName = true;
+                    line.pop_back( );
                 }
-                else
+
+                if ( !line.empty( ) )
                 {
-                    ObjectToConfigure->SetProperty( name, line );
-                    gotName = false;
+                    if ( !gotName )
+                    {
+                        name    = line;
+                        gotName = true;
+                    }
+                    else
+                    {
+                        ObjectToConfigure->SetProperty( name, line );
+                        gotName = false;
+                    }
                 }
             }
         }
@@ -108,4 +132,3 @@ XError XObjectConfigurationSerializer::LoadConfiguration( ) const
 
     return ret;
 }
-
