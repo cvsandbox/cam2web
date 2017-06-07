@@ -157,7 +157,8 @@ XError XObjectConfigurationSerializer::LoadConfiguration( ) const
                     line.pop_back( );
                 }
 
-                if ( !line.empty( ) )
+                // allow blank lines between configuration options, but not between option and its value
+                if ( ( !line.empty( ) ) || ( gotName ) )
                 {
                     if ( !gotName )
                     {
