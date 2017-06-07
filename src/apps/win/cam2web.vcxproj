@@ -182,6 +182,7 @@ del "$(ProjectDir)..\..\..\build\msvc\release\include\*.js"
   </ItemGroup>
   <ItemGroup>
     <Image Include="cam2web.ico" />
+    <Image Include="settings.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

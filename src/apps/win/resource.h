@@ -11,6 +11,7 @@
 #define IDM_EXIT                105
 #define IDM_SETTINGS            111
 #define IDI_CAM2WEB             107
+#define IDI_SETTINGS            122
 #define IDC_CAM2WEB             109
 #define IDC_MYICON              2
 #define IDC_JPEG_Q_EDIT         113

@@ -45,21 +45,31 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
     switch ( message )
     {
     case WM_INITDIALOG:
-        appConfig = (AppConfig*) lParam;
-
-        CenterWindowTo( hDlg, GetParent( hDlg ) );
-
-        if ( appConfig != nullptr )
         {
-            InitUpDownControl( GetDlgItem( hDlg, IDC_JPEG_Q_SPIN ), GetDlgItem( hDlg, IDC_JPEG_Q_EDIT ), 1, 100, appConfig->JpegQuality( ) );
-            InitUpDownControl( GetDlgItem( hDlg, IDC_MJPEG_RATE_SPIN ), GetDlgItem( hDlg, IDC_MJPEG_RATE_EDIT ), 1, 30, appConfig->MjpegFrameRate( ) );
-            InitUpDownControl( GetDlgItem( hDlg, IDC_HTTP_PORT_SPIN ), GetDlgItem( hDlg, IDC_HTTP_PORT_EDIT ), 1, 65535, appConfig->HttpPort( ) );
+            HICON hIcon = (HICON) LoadImage( GetModuleHandle( NULL ), MAKEINTRESOURCE( IDI_SETTINGS ), IMAGE_ICON,
+                GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
 
-            wstring strWebContent = Utf8to16( appConfig->CustomWebContent( ) );
-            SetWindowText( GetDlgItem( hDlg, IDC_CUSTOM_WEB_EDIT ), strWebContent.c_str( ) );
+            if ( hIcon )
+            {
+                SendMessage( hDlg, WM_SETICON, ICON_SMALL, (LPARAM) hIcon );
+            }
+
+            appConfig = (AppConfig*) lParam;
+
+            CenterWindowTo( hDlg, GetParent( hDlg ) );
+
+            if ( appConfig != nullptr )
+            {
+                InitUpDownControl( GetDlgItem( hDlg, IDC_JPEG_Q_SPIN ), GetDlgItem( hDlg, IDC_JPEG_Q_EDIT ), 1, 100, appConfig->JpegQuality( ) );
+                InitUpDownControl( GetDlgItem( hDlg, IDC_MJPEG_RATE_SPIN ), GetDlgItem( hDlg, IDC_MJPEG_RATE_EDIT ), 1, 30, appConfig->MjpegFrameRate( ) );
+                InitUpDownControl( GetDlgItem( hDlg, IDC_HTTP_PORT_SPIN ), GetDlgItem( hDlg, IDC_HTTP_PORT_EDIT ), 1, 65535, appConfig->HttpPort( ) );
+
+                wstring strWebContent = Utf8to16( appConfig->CustomWebContent( ) );
+                SetWindowText( GetDlgItem( hDlg, IDC_CUSTOM_WEB_EDIT ), strWebContent.c_str( ) );
+            }
+
+            return (INT_PTR) TRUE;
         }
-
-        return (INT_PTR) TRUE;
 
     case WM_DESTROY:
         appConfig = nullptr;
