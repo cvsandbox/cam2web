@@ -433,6 +433,13 @@ static bool StartVideoStreaming( )
         }
         else
         {
+            wstring newWindowTitle = gData->szTitle;
+
+            newWindowTitle += L" :: ";
+            newWindowTitle += Utf8to16( gData->selectedDeviceName.Name( ) );
+
+            SetWindowText( gData->hwndMain, newWindowTitle.c_str( ) );
+
             ret = true;
         }
     }
@@ -451,6 +458,8 @@ static void StopVideoStreaming( )
 
     gData->server.Stop( );
     gData->server.ClearHandlers( );
+
+    SetWindowText( gData->hwndMain, gData->szTitle );
 }
 
 // Toggle video streaming state
