@@ -70,7 +70,7 @@ XError XObjectConfigurationSerializer::SaveConfiguration( ) const
             }
         }
 #else
-        fopen( FileName.c_str( ), "w" );
+        file = fopen( FileName.c_str( ), "w" );
 #endif
 
         if ( file == nullptr )
