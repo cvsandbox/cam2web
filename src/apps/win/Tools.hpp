@@ -28,4 +28,11 @@ std::wstring Utf8to16( const std::string& utf8string );
 // Convert specfied wide character string to UTF8 string
 std::string Utf16to8( const std::wstring& utf16string );
 
+// Trim spaces from the start of a string
+std::string& StringLTrimg( std::string& s );
+// Trim spaces from the end of a string
+std::string& StringRTrim( std::string& s );
+// Trim spaces from both ends of a string
+std::string& StringTrim( std::string& s );
+
 #endif // UI_TOOLS_HPP

@@ -31,15 +31,17 @@ using namespace std;
 #define PROP_MJPEG_RATE     "mjpegRate"
 #define PROP_HTTP_PORT      "httpPort"
 #define PROP_AUTH_DOMAIN    "authDomain"
+#define PROP_CUSTOM_WEB     "customWeb"
 
 // List of supported properties
-const static list<string> SupportedProperties = { PROP_JPEG_QUALITY, PROP_MJPEG_RATE, PROP_HTTP_PORT, PROP_AUTH_DOMAIN };
+const static list<string> SupportedProperties = { PROP_JPEG_QUALITY, PROP_MJPEG_RATE, PROP_HTTP_PORT, PROP_AUTH_DOMAIN, PROP_CUSTOM_WEB };
 
 AppConfig::AppConfig( ) :
     jpegQuality( 85 ),
     mjpegFrameRate( 30 ),
     httpPort( 8000 ),
-    authDomain( "cam2web" )
+    authDomain( "cam2web" ),
+    customWebContent( )
 {
 
 }
@@ -82,6 +84,16 @@ string AppConfig::AuthDomain( ) const
 void AppConfig::SetAuthDomain( const string& domain )
 {
     authDomain = domain;
+}
+
+// Get/Set path to the folder with custom web content
+string AppConfig::CustomWebContent( ) const
+{
+    return customWebContent;
+}
+void AppConfig::SetCustomWebContent( const string& path )
+{
+    customWebContent = path;
 }
 
 // Set property of the object
@@ -128,6 +140,10 @@ XError AppConfig::SetProperty( const string& propertyName, const string& value )
     {
         authDomain = value;
     }
+    else if ( propertyName == PROP_CUSTOM_WEB )
+    {
+        customWebContent = value;
+    }
     else
     {
         ret = XError::UnknownProperty;
@@ -161,6 +177,10 @@ XError AppConfig::GetProperty( const string& propertyName, string& value ) const
     else if ( propertyName == PROP_AUTH_DOMAIN )
     {
         value = authDomain;
+    }
+    else if ( propertyName == PROP_CUSTOM_WEB )
+    {
+        value = customWebContent;
     }
     else
     {

@@ -23,6 +23,9 @@
 
 #include <sdkddkver.h>
 #include <windows.h>
+#include <algorithm>
+#include <functional>
+#include <cctype>
 
 #include "Tools.hpp"
 
@@ -70,4 +73,26 @@ string Utf16to8( const wstring& utf16string )
     }
 
     return ret;
+}
+
+// Trim spaces from the start of a string
+string& StringLTrimg( string& s )
+{
+    s.erase( s.begin( ), std::find_if( s.begin( ), s.end( ),
+        std::not1( std::ptr_fun<int, int>( std::isspace ) ) ) );
+    return s;
+}
+
+// Trim spaces from the end of a string
+string& StringRTrim( string& s )
+{
+    s.erase( std::find_if( s.rbegin( ), s.rend( ),
+        std::not1( std::ptr_fun<int, int>( std::isspace ) ) ).base( ), s.end( ) );
+    return s;
+}
+
+// Trim spaces from both ends of a string
+string& StringTrim( string& s )
+{
+    return StringLTrimg( StringRTrim( s ) );
 }

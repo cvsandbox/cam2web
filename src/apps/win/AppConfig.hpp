@@ -45,6 +45,10 @@ public:
     std::string AuthDomain( ) const;
     void SetAuthDomain( const std::string& authDomain );
 
+    // Get/Set path to the folder with custom web content
+    std::string CustomWebContent( ) const;
+    void SetCustomWebContent( const std::string& path );
+
 public: // IObjectConfigurator interface
 
     virtual XError SetProperty( const std::string& propertyName, const std::string& value );
@@ -57,6 +61,7 @@ private:
     uint16_t    mjpegFrameRate;
     uint16_t    httpPort;
     std::string authDomain;
+    std::string customWebContent;
 };
 
 #endif // APP_CONFIG_HPP

@@ -393,21 +393,29 @@ static bool StartVideoStreaming( )
             AddHandler( gData->video2web.CreateJpegHandler( "/camera/jpeg" ) ).
             AddHandler( gData->video2web.CreateMjpegHandler( "/camera/mjpeg", gData->appConfig->MjpegFrameRate( ) ) );
 
+        // check if custom web content is available
+        if ( !gData->appConfig->CustomWebContent( ).empty( ) )
+        {
+            gData->server.SetDocumentRoot( gData->appConfig->CustomWebContent( ) );
+        }
+        else
+        {
 #ifdef _DEBUG
-        // load web content from files in debug builds
-        gData->server.SetDocumentRoot( "./web/" );
+            // load web content from files in debug builds
+            gData->server.SetDocumentRoot( "./web/" );
 #else
-        // web content is embeded in release builds to get single executable
-        gData->server.AddHandler( make_shared<XEmbeddedContentHandler>( "/", &web_index_html ) ).
-                      AddHandler( make_shared<XEmbeddedContentHandler>( "index.html", &web_index_html) ).
-                      AddHandler( make_shared<XEmbeddedContentHandler>( "styles.css", &web_styles_css ) ).
-                      AddHandler( make_shared<XEmbeddedContentHandler>( "camera.js", &web_camera_js ) ).
-                      AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.js", &web_cameraproperties_js ) ).
-                      AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.html", &web_cameraproperties_directshow_html ), UserGroup::Admin ).
-                      AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.js", &web_jquery_js ) ).
-                      AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.js", &web_jquery_mobile_js ) ).
-                      AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.css", &web_jquery_mobile_css ) );
+            // web content is embeded in release builds to get single executable
+            gData->server.AddHandler( make_shared<XEmbeddedContentHandler>( "/", &web_index_html ) ).
+                          AddHandler( make_shared<XEmbeddedContentHandler>( "index.html", &web_index_html) ).
+                          AddHandler( make_shared<XEmbeddedContentHandler>( "styles.css", &web_styles_css ) ).
+                          AddHandler( make_shared<XEmbeddedContentHandler>( "camera.js", &web_camera_js ) ).
+                          AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.js", &web_cameraproperties_js ) ).
+                          AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.html", &web_cameraproperties_directshow_html ), UserGroup::Admin ).
+                          AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.js", &web_jquery_js ) ).
+                          AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.js", &web_jquery_mobile_js ) ).
+                          AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.css", &web_jquery_mobile_css ) );
 #endif
+        }
 
         gData->camera->SetListener( gData->video2web.VideoSourceListener( ) );
 
