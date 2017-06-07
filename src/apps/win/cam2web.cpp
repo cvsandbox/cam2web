@@ -624,7 +624,6 @@ INT_PTR CALLBACK AboutDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
             case NM_RETURN:
             {
                 PNMLINK pNMLink = (PNMLINK) lParam;
-                LITEM   item    = pNMLink->item;
 
                 ShellExecute( NULL, L"open", ( pNMLink->hdr.idFrom == IDC_LINK_EMAIL ) ?
                     L"mailto:cvsandbox@gmail.com" : L"https://github.com/cvsandbox/cam2web", NULL, NULL, SW_SHOW );
