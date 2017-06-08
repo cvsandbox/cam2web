@@ -18,7 +18,7 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
-#include <list>
+#include <map>
 
 #include "AppConfig.hpp"
 
@@ -38,11 +38,22 @@ using namespace std;
 #define PROP_CAMERA_BPP     "cameraBpp"
 #define PROP_CAMERA_FPS     "cameraFps"
 
-// List of supported properties
-const static list<string> SupportedProperties =
+#define TYPE_INT (0)
+#define TYPE_STR (1)
+
+// List of supported properties and their type
+const static map<string, int> SupportedProperties =
 {
-    PROP_JPEG_QUALITY, PROP_MJPEG_RATE, PROP_HTTP_PORT, PROP_AUTH_DOMAIN, PROP_CUSTOM_WEB,
-    PROP_CAMERA_MONIKER, PROP_CAMERA_WIDTH, PROP_CAMERA_HEIGHT, PROP_CAMERA_BPP, PROP_CAMERA_FPS
+    { PROP_JPEG_QUALITY,   TYPE_INT },
+    { PROP_MJPEG_RATE,     TYPE_INT },
+    { PROP_HTTP_PORT,      TYPE_INT },
+    { PROP_AUTH_DOMAIN,    TYPE_STR },
+    { PROP_CUSTOM_WEB,     TYPE_STR },
+    { PROP_CAMERA_MONIKER, TYPE_STR },
+    { PROP_CAMERA_WIDTH,   TYPE_INT },
+    { PROP_CAMERA_HEIGHT,  TYPE_INT },
+    { PROP_CAMERA_BPP,     TYPE_INT },
+    { PROP_CAMERA_FPS,     TYPE_INT }
 };
 
 AppConfig::AppConfig( ) :
@@ -139,102 +150,69 @@ void AppConfig::SetLastVideoResolution( uint16_t width, uint16_t height, uint16_
 // Set property of the object
 XError AppConfig::SetProperty( const string& propertyName, const string& value )
 {
-    XError  ret = XError::Success;
-    int32_t intValue;
-    int     scanned = sscanf( value.c_str( ), "%d", &intValue );
+    XError                           ret = XError::Success;
+    map<string, int>::const_iterator itProperty = SupportedProperties.find( propertyName );
 
-    if ( propertyName == PROP_JPEG_QUALITY )
+    if ( itProperty == SupportedProperties.end( ) )
     {
-        if ( scanned != 1 )
-        {
-            ret = XError::InvalidPropertyValue;
-        }
-        else
-        {
-            jpegQuality = static_cast<uint16_t>( intValue );
-        }
-    }
-    else if ( propertyName == PROP_MJPEG_RATE )
-    {
-        if ( scanned != 1 )
-        {
-            ret = XError::InvalidPropertyValue;
-        }
-        else
-        {
-            mjpegFrameRate = static_cast<uint16_t>( intValue );
-        }
-    }
-    else if ( propertyName == PROP_HTTP_PORT )
-    {
-        if ( scanned != 1 )
-        {
-            ret = XError::InvalidPropertyValue;
-        }
-        else
-        {
-            httpPort = static_cast<uint16_t>( intValue );
-        }
-    }
-    else if ( propertyName == PROP_AUTH_DOMAIN )
-    {
-        authDomain = value;
-    }
-    else if ( propertyName == PROP_CUSTOM_WEB )
-    {
-        customWebContent = value;
-    }
-    else if ( propertyName == PROP_CAMERA_MONIKER )
-    {
-        cameraMoniker = value;
-    }
-    else if ( propertyName == PROP_CAMERA_WIDTH )
-    {
-        if ( scanned != 1 )
-        {
-            ret = XError::InvalidPropertyValue;
-        }
-        else
-        {
-            cameraWidth = static_cast<uint16_t>( intValue );
-        }
-    }
-    else if ( propertyName == PROP_CAMERA_HEIGHT )
-    {
-        if ( scanned != 1 )
-        {
-            ret = XError::InvalidPropertyValue;
-        }
-        else
-        {
-            cameraHeight = static_cast<uint16_t>( intValue );
-        }
-    }
-    else if ( propertyName == PROP_CAMERA_BPP )
-    {
-        if ( scanned != 1 )
-        {
-            ret = XError::InvalidPropertyValue;
-        }
-        else
-        {
-            cameraBpp = static_cast<uint16_t>( intValue );
-        }
-    }
-    else if ( propertyName == PROP_CAMERA_FPS )
-    {
-        if ( scanned != 1 )
-        {
-            ret = XError::InvalidPropertyValue;
-        }
-        else
-        {
-            cameraFps = static_cast<uint16_t>( intValue );
-        }
+        ret = XError::UnknownProperty;
     }
     else
     {
-        ret = XError::UnknownProperty;
+        int     type = itProperty->second;
+        int32_t intValue = 0;
+
+        if ( type == TYPE_INT )
+        {
+            if ( sscanf( value.c_str( ), "%d", &intValue ) != 1 )
+            {
+                ret = XError::InvalidPropertyValue;
+            }
+        }
+
+        if ( ret == XError::Success )
+        {
+            if ( propertyName == PROP_JPEG_QUALITY )
+            {
+                jpegQuality = static_cast<uint16_t>( intValue );
+            }
+            else if ( propertyName == PROP_MJPEG_RATE )
+            {
+                mjpegFrameRate = static_cast<uint16_t>( intValue );
+            }
+            else if ( propertyName == PROP_HTTP_PORT )
+            {
+                httpPort = static_cast<uint16_t>( intValue );
+            }
+            else if ( propertyName == PROP_AUTH_DOMAIN )
+            {
+                authDomain = value;
+            }
+            else if ( propertyName == PROP_CUSTOM_WEB )
+            {
+                customWebContent = value;
+            }
+            else if ( propertyName == PROP_CAMERA_MONIKER )
+            {
+                cameraMoniker = value;
+            }
+            else if ( propertyName == PROP_CAMERA_WIDTH )
+            {
+                cameraWidth = static_cast<uint16_t>( intValue );
+            }
+            else if ( propertyName == PROP_CAMERA_HEIGHT )
+            {
+                cameraHeight = static_cast<uint16_t>( intValue );
+            }
+            else if ( propertyName == PROP_CAMERA_BPP )
+            {
+                cameraBpp = static_cast<uint16_t>( intValue );
+            }
+            else if ( propertyName == PROP_CAMERA_FPS )
+            {
+                cameraFps = static_cast<uint16_t>( intValue );
+            }
+        }
     }
 
     return ret;
@@ -243,68 +221,66 @@ XError AppConfig::SetProperty( const string& propertyName, const string& value )
 // Get property of the object
 XError AppConfig::GetProperty( const string& propertyName, string& value ) const
 {
-    XError  ret         = XError::Success;
-    int32_t intValue    = 0;
-    bool    numericProp = false;
+    XError                           ret        = XError::Success;
+    map<string, int>::const_iterator itProperty = SupportedProperties.find( propertyName );
 
-    if ( propertyName == PROP_JPEG_QUALITY )
-    {
-        intValue    = jpegQuality;
-        numericProp = true;
-    }
-    else if ( propertyName == PROP_MJPEG_RATE )
-    {
-        intValue    = mjpegFrameRate;
-        numericProp = true;
-    }
-    else if ( propertyName == PROP_HTTP_PORT )
-    {
-        intValue    = httpPort;
-        numericProp = true;
-    }
-    else if ( propertyName == PROP_AUTH_DOMAIN )
-    {
-        value = authDomain;
-    }
-    else if ( propertyName == PROP_CUSTOM_WEB )
-    {
-        value = customWebContent;
-    }
-    else if ( propertyName == PROP_CAMERA_MONIKER )
-    {
-        value = cameraMoniker;
-    }
-    else if ( propertyName == PROP_CAMERA_WIDTH )
-    {
-        intValue    = cameraWidth;
-        numericProp = true;
-    }
-    else if ( propertyName == PROP_CAMERA_HEIGHT )
-    {
-        intValue    = cameraHeight;
-        numericProp = true;
-    }
-    else if ( propertyName == PROP_CAMERA_BPP )
-    {
-        intValue    = cameraBpp;
-        numericProp = true;
-    }
-    else if ( propertyName == PROP_CAMERA_FPS )
-    {
-        intValue    = cameraFps;
-        numericProp = true;
-    }
-    else
+    if ( itProperty == SupportedProperties.end( ) )
     {
         ret = XError::UnknownProperty;
     }
-
-    if ( ( ret ) && ( numericProp ) )
+    else
     {
-        char buffer[32];
+        int     type     = itProperty->second;
+        int32_t intValue = 0;
 
-        sprintf( buffer, "%d", intValue );
-        value = buffer;
+        if ( propertyName == PROP_JPEG_QUALITY )
+        {
+            intValue = jpegQuality;
+        }
+        else if ( propertyName == PROP_MJPEG_RATE )
+        {
+            intValue = mjpegFrameRate;
+        }
+        else if ( propertyName == PROP_HTTP_PORT )
+        {
+            intValue = httpPort;
+        }
+        else if ( propertyName == PROP_AUTH_DOMAIN )
+        {
+            value = authDomain;
+        }
+        else if ( propertyName == PROP_CUSTOM_WEB )
+        {
+            value = customWebContent;
+        }
+        else if ( propertyName == PROP_CAMERA_MONIKER )
+        {
+            value = cameraMoniker;
+        }
+        else if ( propertyName == PROP_CAMERA_WIDTH )
+        {
+            intValue = cameraWidth;
+        }
+        else if ( propertyName == PROP_CAMERA_HEIGHT )
+        {
+            intValue = cameraHeight;
+        }
+        else if ( propertyName == PROP_CAMERA_BPP )
+        {
+            intValue = cameraBpp;
+        }
+        else if ( propertyName == PROP_CAMERA_FPS )
+        {
+            intValue = cameraFps;
+        }
+
+        if ( type == TYPE_INT )
+        {
+            char buffer[32];
+
+            sprintf( buffer, "%d", intValue );
+            value = buffer;
+        }
     }
 
     return ret;
@@ -318,9 +294,9 @@ map<string, string> AppConfig::GetAllProperties( ) const
 
     for ( auto property : SupportedProperties )
     {
-        if ( GetProperty( property, value ) )
+        if ( GetProperty( property.first, value ) )
         {
-            properties.insert( pair<string, string>( property, value ) );
+            properties.insert( pair<string, string>( property.first, value ) );
         }
     }
 
