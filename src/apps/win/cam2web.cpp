@@ -81,6 +81,8 @@ using namespace std;
 
 #define WM_UPDATE_UI            (WM_USER + 1)
 
+#define TIMER_ID_EVENT          (0xB0B)
+
 // Forward declarations of functions included in this code module:
 LRESULT CALLBACK MainWndProc( HWND, UINT, WPARAM, LPARAM );
 INT_PTR CALLBACK AboutDlgProc( HWND, UINT, WPARAM, LPARAM );
@@ -117,7 +119,7 @@ public:
     string                          appConfigFile;
 
     XObjectConfigurationSerializer  appConfigSerializer;
-
+    XObjectConfigurationSerializer  cameraConfigSerializer;
 
     AppData( ) :
         hInst( NULL ), hwndMain( NULL ), hwndCamerasCombo( NULL ),
@@ -126,7 +128,7 @@ public:
         cameraConfig( ), appConfig( new AppConfig( ) ), server( ), video2web( ),
         streamingInProgress( false ),
         appFolder( ".\\" ), appConfigFile( "cam2web.cfg" ),
-        appConfigSerializer( )
+        appConfigSerializer( ), cameraConfigSerializer( )
     {
         string userHA1  = XWebServer::CalculateDigestAuthHa1( "user",  appConfig->AuthDomain( ), "pass" );
         string adminHA1 = XWebServer::CalculateDigestAuthHa1( "admin", appConfig->AuthDomain( ), "password" );
@@ -350,6 +352,7 @@ static void CreateDeviceAndGetResolutions( )
                     if ( ( areaDiff < minAreaDiff ) ||
                          ( ( areaDiff == minAreaDiff ) && ( closeMatchBpp < cap.BitCount( ) ) ) )
                     {
+                        minAreaDiff     = areaDiff;
                         closeMatchIndex = index;
                         closeMatchBpp   = cap.BitCount( );
                     }
@@ -363,7 +366,7 @@ static void CreateDeviceAndGetResolutions( )
     }
 }
 
-// Populate list list of available devices
+// Populate list of available devices
 void GetVideoDevices( )
 {
     gData->devices = XLocalVideoDevice::GetAvailableDevices( );
@@ -409,7 +412,8 @@ static bool StartVideoStreaming( )
 
     if ( gData->camera )
     {
-        int resolutionIndex = SendMessage( gData->hwndResolutionsCombo, (UINT) CB_GETCURSEL, 0, 0 );
+        string cameraMoniker   = gData->selectedDeviceName.Moniker( );
+        int    resolutionIndex = SendMessage( gData->hwndResolutionsCombo, (UINT) CB_GETCURSEL, 0, 0 );
 
         if ( ( resolutionIndex >= 0 ) && ( resolutionIndex < (int) gData->cameraCapabilities.size( ) ) )
         {
@@ -418,7 +422,7 @@ static bool StartVideoStreaming( )
         }
 
         // remember selected camera and resolution
-        gData->appConfig->SetCameraMoniker( gData->selectedDeviceName.Moniker( ) );
+        gData->appConfig->SetCameraMoniker( cameraMoniker );
         gData->appConfig->SetLastVideoResolution( static_cast<uint16_t>( gData->selectedResolutuion.Width( ) ),
                                                   static_cast<uint16_t>( gData->selectedResolutuion.Height( ) ),
                                                   static_cast<uint16_t>( gData->selectedResolutuion.BitCount( ) ),
@@ -439,8 +443,12 @@ static bool StartVideoStreaming( )
         // allow camera configuration through simplified configurator object
         gData->cameraConfig = make_shared<XLocalVideoDeviceConfig>( gData->camera );
 
+        // use MD5 of camera's moniker as file name to store camera's setting - just to avoid unfriendly characters which may happen in the moniker
+        string cameraSettingsFileName = gData->appFolder + GetMd5Hash( (const uint8_t*) cameraMoniker.c_str( ), cameraMoniker.length( ) ) + ".cfg";
+
         // restore camera settings
-        // ...
+        gData->cameraConfigSerializer = XObjectConfigurationSerializer( cameraSettingsFileName, gData->cameraConfig );
+        gData->cameraConfigSerializer.LoadConfiguration( );
 
         // set JPEG quality
         gData->video2web.SetJpegQuality( gData->appConfig->JpegQuality( ) );
@@ -498,6 +506,9 @@ static bool StartVideoStreaming( )
 
             SetWindowText( gData->hwndMain, newWindowTitle.c_str( ) );
 
+            // setup timer to save camera configuration from time to time
+            SetTimer( gData->hwndMain, TIMER_ID_EVENT, 60000, NULL );
+
             ret = true;
         }
     }
@@ -508,8 +519,14 @@ static bool StartVideoStreaming( )
 // Stop streaming of the current video source
 static void StopVideoStreaming( )
 {
+    KillTimer( gData->hwndMain, TIMER_ID_EVENT );
+
     if ( gData->camera )
     {
+        // save camera settings
+        gData->cameraConfigSerializer.SaveConfiguration( );
+        gData->cameraConfigSerializer = XObjectConfigurationSerializer( );
+
         gData->camera->SignalToStop( );
         gData->camera->WaitForStop( );
     }
@@ -646,6 +663,14 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             EnableWindow( gData->hwndResolutionsCombo, enableCameraSelection );
             EnableWindow( gData->hwndStartButton, TRUE );
             SetFocus( gData->hwndStartButton );
+        }
+        break;
+
+    case WM_TIMER:
+        if ( wParam == TIMER_ID_EVENT )
+        {
+            // save camera settings
+            gData->cameraConfigSerializer.SaveConfiguration( );
         }
         break;
 

@@ -22,6 +22,7 @@
 #define TOOLS_HPP
 
 #include <string>
+#include <stdint.h>
 
 // Convert specfied UTF8 string to wide character string
 std::wstring Utf8to16( const std::string& utf8string );
@@ -34,5 +35,8 @@ std::string& StringLTrimg( std::string& s );
 std::string& StringRTrim( std::string& s );
 // Trim spaces from both ends of a string
 std::string& StringTrim( std::string& s );
+
+// Calculate MD5 hash string for the given buffer
+std::string GetMd5Hash( const uint8_t* buffer, int bufferLength );
 
 #endif // UI_TOOLS_HPP

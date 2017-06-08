@@ -23,6 +23,7 @@
 
 #include <sdkddkver.h>
 #include <windows.h>
+#include <wincrypt.h>
 #include <algorithm>
 #include <functional>
 #include <cctype>
@@ -95,4 +96,55 @@ string& StringRTrim( string& s )
 string& StringTrim( string& s )
 {
     return StringLTrimg( StringRTrim( s ) );
+}
+
+// Calculate MD5 hash string for the given buffer
+string GetMd5Hash( const uint8_t* buffer, int bufferLength )
+{
+    HCRYPTPROV hCryptProv = NULL;
+    HCRYPTHASH hHash = NULL;
+    string     md5str;
+
+    if ( CryptAcquireContext( &hCryptProv, NULL, NULL, PROV_RSA_FULL, 0 ) )
+    {
+        if ( CryptCreateHash( hCryptProv, CALG_MD5, 0, 0, &hHash ) )
+        {
+            if ( CryptHashData( hHash, buffer, bufferLength, 0 ) )
+            {
+                DWORD dataLength;
+                DWORD hashSize;
+
+                dataLength = sizeof( hashSize );
+                if ( CryptGetHashParam( hHash, HP_HASHSIZE, (BYTE*) &hashSize, &dataLength, 0 ) )
+                {
+                    BYTE* hashValue = new BYTE[hashSize];
+
+                    dataLength = hashSize;
+                    if ( CryptGetHashParam( hHash, HP_HASHVAL, hashValue, &dataLength, 0 ) )
+                    {
+                        char hex[3];
+
+                        for ( DWORD i = 0; i < hashSize; i++ )
+                        {
+                            _itoa( hashValue[i], hex, 16 );
+                            md5str += hex;
+                        }
+                    }
+
+                    delete[] hashValue;
+                }
+            }
+        }
+    }
+
+    if ( hHash != NULL )
+    {
+        CryptDestroyHash( hHash );
+    }
+    if ( hCryptProv != NULL )
+    {
+        CryptReleaseContext( hCryptProv, 0 );
+    }
+
+    return md5str;
 }
