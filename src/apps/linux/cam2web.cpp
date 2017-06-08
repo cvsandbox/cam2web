@@ -40,6 +40,7 @@
     #include "index.html.h"
     #include "styles.css.h"
     #include "cam2web.png.h"
+    #include "cam2web_white.png.h"
     #include "camera.js.h"
     #include "cameraproperties.html.h"
     #include "cameraproperties.js.h"
@@ -393,6 +394,7 @@ int main( int argc, char* argv[] )
                AddHandler( make_shared<XEmbeddedContentHandler>( "index.html", &web_index_html ), viewersGroup ).
                AddHandler( make_shared<XEmbeddedContentHandler>( "styles.css", &web_styles_css ), viewersGroup ).
                AddHandler( make_shared<XEmbeddedContentHandler>( "cam2web.png", &web_cam2web_png ) ).
+               AddHandler( make_shared<XEmbeddedContentHandler>( "cam2web_white.png", &web_cam2web_white_png ) ).
                AddHandler( make_shared<XEmbeddedContentHandler>( "camera.js", &web_camera_js ), viewersGroup ).
                AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.js", &web_cameraproperties_js ), viewersGroup ).
                AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.html", &web_cameraproperties_v4l_html ), configGroup ).
