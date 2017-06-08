@@ -49,6 +49,14 @@ public:
     std::string CustomWebContent( ) const;
     void SetCustomWebContent( const std::string& path );
 
+    // Get/Set camera moniker string
+    std::string CameraMoniker( ) const;
+    void SetCameraMoniker( const std::string& moniker );
+
+    // Get/Set last used video resolution
+    void GetLastVideoResolution( uint16_t* width, uint16_t* height, uint16_t* bpp, uint16_t* fps );
+    void SetLastVideoResolution( uint16_t  width, uint16_t  height, uint16_t  bpp, uint16_t  fps );
+
 public: // IObjectConfigurator interface
 
     virtual XError SetProperty( const std::string& propertyName, const std::string& value );
@@ -62,6 +70,11 @@ private:
     uint16_t    httpPort;
     std::string authDomain;
     std::string customWebContent;
+    std::string cameraMoniker;
+    uint16_t    cameraWidth;
+    uint16_t    cameraHeight;
+    uint16_t    cameraBpp;
+    uint16_t    cameraFps;
 };
 
 #endif // APP_CONFIG_HPP

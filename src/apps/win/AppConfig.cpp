@@ -32,16 +32,30 @@ using namespace std;
 #define PROP_HTTP_PORT      "httpPort"
 #define PROP_AUTH_DOMAIN    "authDomain"
 #define PROP_CUSTOM_WEB     "customWeb"
+#define PROP_CAMERA_MONIKER "cameraMoniker"
+#define PROP_CAMERA_WIDTH   "cameraWidth"
+#define PROP_CAMERA_HEIGHT  "cameraHeight"
+#define PROP_CAMERA_BPP     "cameraBpp"
+#define PROP_CAMERA_FPS     "cameraFps"
 
 // List of supported properties
-const static list<string> SupportedProperties = { PROP_JPEG_QUALITY, PROP_MJPEG_RATE, PROP_HTTP_PORT, PROP_AUTH_DOMAIN, PROP_CUSTOM_WEB };
+const static list<string> SupportedProperties =
+{
+    PROP_JPEG_QUALITY, PROP_MJPEG_RATE, PROP_HTTP_PORT, PROP_AUTH_DOMAIN, PROP_CUSTOM_WEB,
+    PROP_CAMERA_MONIKER, PROP_CAMERA_WIDTH, PROP_CAMERA_HEIGHT, PROP_CAMERA_BPP, PROP_CAMERA_FPS
+};
 
 AppConfig::AppConfig( ) :
     jpegQuality( 85 ),
     mjpegFrameRate( 30 ),
     httpPort( 8000 ),
     authDomain( "cam2web" ),
-    customWebContent( )
+    customWebContent( ),
+    cameraMoniker( ),
+    cameraWidth( 0 ),
+    cameraHeight( 0 ),
+    cameraBpp( 0 ),
+    cameraFps( 0 )
 {
 
 }
@@ -96,6 +110,32 @@ void AppConfig::SetCustomWebContent( const string& path )
     customWebContent = path;
 }
 
+// Get/Set camera moniker string
+string AppConfig::CameraMoniker( ) const
+{
+    return cameraMoniker;
+}
+void AppConfig::SetCameraMoniker( const string& moniker )
+{
+    cameraMoniker = moniker;
+}
+
+// Get/Set last used video resolution
+void AppConfig::GetLastVideoResolution( uint16_t* width, uint16_t* height, uint16_t* bpp, uint16_t* fps )
+{
+    if ( width  != nullptr ) *width  = cameraWidth;
+    if ( height != nullptr ) *height = cameraHeight;
+    if ( bpp    != nullptr ) *bpp    = cameraBpp;
+    if ( fps    != nullptr ) *fps    = cameraFps;
+}
+void AppConfig::SetLastVideoResolution( uint16_t width, uint16_t height, uint16_t bpp, uint16_t fps )
+{
+    cameraWidth  = width;
+    cameraHeight = height;
+    cameraBpp    = bpp;
+    cameraFps    = fps;
+}
+
 // Set property of the object
 XError AppConfig::SetProperty( const string& propertyName, const string& value )
 {
@@ -144,6 +184,54 @@ XError AppConfig::SetProperty( const string& propertyName, const string& value )
     {
         customWebContent = value;
     }
+    else if ( propertyName == PROP_CAMERA_MONIKER )
+    {
+        cameraMoniker = value;
+    }
+    else if ( propertyName == PROP_CAMERA_WIDTH )
+    {
+        if ( scanned != 1 )
+        {
+            ret = XError::InvalidPropertyValue;
+        }
+        else
+        {
+            cameraWidth = static_cast<uint16_t>( intValue );
+        }
+    }
+    else if ( propertyName == PROP_CAMERA_HEIGHT )
+    {
+        if ( scanned != 1 )
+        {
+            ret = XError::InvalidPropertyValue;
+        }
+        else
+        {
+            cameraHeight = static_cast<uint16_t>( intValue );
+        }
+    }
+    else if ( propertyName == PROP_CAMERA_BPP )
+    {
+        if ( scanned != 1 )
+        {
+            ret = XError::InvalidPropertyValue;
+        }
+        else
+        {
+            cameraBpp = static_cast<uint16_t>( intValue );
+        }
+    }
+    else if ( propertyName == PROP_CAMERA_FPS )
+    {
+        if ( scanned != 1 )
+        {
+            ret = XError::InvalidPropertyValue;
+        }
+        else
+        {
+            cameraFps = static_cast<uint16_t>( intValue );
+        }
+    }
     else
     {
         ret = XError::UnknownProperty;
@@ -181,6 +269,30 @@ XError AppConfig::GetProperty( const string& propertyName, string& value ) const
     else if ( propertyName == PROP_CUSTOM_WEB )
     {
         value = customWebContent;
+    }
+    else if ( propertyName == PROP_CAMERA_MONIKER )
+    {
+        value = cameraMoniker;
+    }
+    else if ( propertyName == PROP_CAMERA_WIDTH )
+    {
+        intValue    = cameraWidth;
+        numericProp = true;
+    }
+    else if ( propertyName == PROP_CAMERA_HEIGHT )
+    {
+        intValue    = cameraHeight;
+        numericProp = true;
+    }
+    else if ( propertyName == PROP_CAMERA_BPP )
+    {
+        intValue    = cameraBpp;
+        numericProp = true;
+    }
+    else if ( propertyName == PROP_CAMERA_FPS )
+    {
+        intValue    = cameraFps;
+        numericProp = true;
     }
     else
     {

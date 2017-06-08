@@ -302,12 +302,33 @@ static void CreateDeviceAndGetResolutions( )
 
     if ( ( cameraIndex >= 0 ) && ( cameraIndex < (int) gData->devices.size( ) ) )
     {
+        uint16_t width = 0, height = 0, bpp = 0, fps = 0;
+
         gData->selectedDeviceName = gData->devices[cameraIndex];
         gData->camera = XLocalVideoDevice::Create( gData->selectedDeviceName.Moniker( ) );
+
+        // get resolution last used
+        gData->appConfig->GetLastVideoResolution( &width, &height, &bpp, &fps );
+
+        // if no preference was made yet, try something default
+        if ( width == 0 )
+        {
+            width  = 640;
+            height = 480;
+            bpp    = 24;
+            fps    = 30;
+        }
 
         if ( gData->camera )
         {
             TCHAR strResolution[256];
+            bool  foundExactMatch = false;
+            int   exactMatchIndex = 0;
+            int   closeMatchIndex = 0;
+            int   closeMatchBpp   = 0;
+            int   index           = 0;
+            int   minAreaDiff     = 1000000;
+            int   areaDiff;
 
             gData->cameraCapabilities = gData->camera->GetCapabilities( );
 
@@ -316,10 +337,29 @@ static void CreateDeviceAndGetResolutions( )
                 swprintf( strResolution, 255, TEXT( "%d x %d, %d bpp, %d fps" ), cap.Width( ), cap.Height( ), cap.BitCount( ), cap.MaximumFrameRate( ) );
 
                 SendMessage( gData->hwndResolutionsCombo, CB_ADDSTRING, 0, (LPARAM) strResolution );
-            }
-        }
 
-        SendMessage( gData->hwndResolutionsCombo, CB_SETCURSEL, 0, 0 );
+                if ( ( width == cap.Width( ) ) && ( height == cap.Height( ) ) && ( bpp == cap.BitCount( ) ) && ( fps == cap.MaximumFrameRate( ) ) )
+                {
+                    exactMatchIndex = index;
+                    foundExactMatch = true;
+                }
+                else
+                {
+                    areaDiff = abs( width * height - cap.Width( ) * cap.Height( ) );
+
+                    if ( ( areaDiff < minAreaDiff ) ||
+                         ( ( areaDiff == minAreaDiff ) && ( closeMatchBpp < cap.BitCount( ) ) ) )
+                    {
+                        closeMatchIndex = index;
+                        closeMatchBpp   = cap.BitCount( );
+                    }
+                }
+
+                index++;
+            }
+
+            SendMessage( gData->hwndResolutionsCombo, CB_SETCURSEL, ( foundExactMatch ) ? exactMatchIndex : closeMatchIndex, 0 );
+        }
     }
 }
 
@@ -338,16 +378,26 @@ void GetVideoDevices( )
     }
     else
     {
-        TCHAR deviceName[256];
+        const string lastUsedCameraMoniker = gData->appConfig->CameraMoniker( );
+        TCHAR        deviceName[256];
+        int          indexToSelect = 0;
+        int          index = 0;
 
         for ( auto device : gData->devices )
         {
             _tcsncpy( deviceName, Utf8to16( device.Name( ) ).c_str( ), 255 );
 
             SendMessage( gData->hwndCamerasCombo, CB_ADDSTRING, 0, (LPARAM) deviceName );
+
+            if ( device.Moniker( ) == lastUsedCameraMoniker )
+            {
+                indexToSelect = index;
+            }
+
+            index++;
         }
 
-        SendMessage( gData->hwndCamerasCombo, CB_SETCURSEL, 0, 0 );
+        SendMessage( gData->hwndCamerasCombo, CB_SETCURSEL, indexToSelect, 0 );
         CreateDeviceAndGetResolutions( );
     }
 }
@@ -366,6 +416,14 @@ static bool StartVideoStreaming( )
             gData->selectedResolutuion = gData->cameraCapabilities[resolutionIndex];
             gData->camera->SetResolution( gData->selectedResolutuion );
         }
+
+        // remember selected camera and resolution
+        gData->appConfig->SetCameraMoniker( gData->selectedDeviceName.Moniker( ) );
+        gData->appConfig->SetLastVideoResolution( static_cast<uint16_t>( gData->selectedResolutuion.Width( ) ),
+                                                  static_cast<uint16_t>( gData->selectedResolutuion.Height( ) ),
+                                                  static_cast<uint16_t>( gData->selectedResolutuion.BitCount( ) ),
+                                                  static_cast<uint16_t>( gData->selectedResolutuion.MaximumFrameRate( ) ) );
+        gData->appConfigSerializer.SaveConfiguration( );
 
         // prepare some read-only informational properties of the camera
         PropertyMap cameraInfo;
