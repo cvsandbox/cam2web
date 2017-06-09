@@ -36,6 +36,7 @@
 #include "Tools.hpp"
 #include "UiTools.hpp"
 #include "SettingsDialog.hpp"
+#include "AccessRightsDialog.hpp"
 
 #include "XLocalVideoDevice.hpp"
 #include "XLocalVideoDeviceConfig.hpp"
@@ -579,6 +580,13 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
         case IDM_SETTINGS:
             if ( DialogBoxParam( gData->hInst, MAKEINTRESOURCE( IDD_SETTINGS_BOX ), hWnd, SettingsDlgProc, (LPARAM) gData->appConfig.get( ) ) == IDOK )
+            {
+                gData->appConfigSerializer.SaveConfiguration( );
+            }
+            break;
+
+        case IDM_ACCESS_RIGHTS:
+            if ( DialogBoxParam( gData->hInst, MAKEINTRESOURCE( IDD_ACCESS_RIGHTS_BOX ), hWnd, AccessRightsDialogProc, (LPARAM) gData->appConfig.get( ) ) == IDOK )
             {
                 gData->appConfigSerializer.SaveConfiguration( );
             }

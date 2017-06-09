@@ -147,6 +147,7 @@ del "$(ProjectDir)..\..\..\build\msvc\release\include\*.js"
     <ClInclude Include="..\..\core\XSimpleJsonParser.hpp" />
     <ClInclude Include="..\..\core\XVideoSourceToWeb.hpp" />
     <ClInclude Include="..\..\core\XWebServer.hpp" />
+    <ClInclude Include="AccessRightsDialog.hpp" />
     <ClInclude Include="AppConfig.hpp" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SettingsDialog.hpp" />
@@ -173,6 +174,7 @@ del "$(ProjectDir)..\..\..\build\msvc\release\include\*.js"
     <ClCompile Include="..\..\core\XSimpleJsonParser.cpp" />
     <ClCompile Include="..\..\core\XVideoSourceToWeb.cpp" />
     <ClCompile Include="..\..\core\XWebServer.cpp" />
+    <ClCompile Include="AccessRightsDialog.cpp" />
     <ClCompile Include="AppConfig.cpp" />
     <ClCompile Include="cam2web.cpp" />
     <ClCompile Include="SettingsDialog.cpp" />
@@ -183,8 +185,10 @@ del "$(ProjectDir)..\..\..\build\msvc\release\include\*.js"
     <ResourceCompile Include="cam2web.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="admin.ico" />
     <Image Include="cam2web.ico" />
     <Image Include="settings.ico" />
+    <Image Include="user.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

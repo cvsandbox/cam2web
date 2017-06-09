@@ -102,6 +102,9 @@
     <ClInclude Include="Tools.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AccessRightsDialog.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cam2web.cpp">
@@ -167,6 +170,9 @@
     <ClCompile Include="Tools.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="AccessRightsDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="cam2web.rc">
@@ -178,6 +184,12 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="settings.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="admin.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="user.ico">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

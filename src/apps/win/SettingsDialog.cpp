@@ -36,8 +36,6 @@ using namespace std;
 // Message handler for Settings dialog box
 INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
-    UNREFERENCED_PARAMETER( lParam );
-
     static AppConfig* appConfig = nullptr;
     int               wmId;
     int               wmEvent;
