@@ -568,6 +568,16 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
     switch ( message )
     {
+    case WM_CREATE:
+        {
+            HMENU hMainMenu = GetMenu( hWnd );
+
+            SetMenuItemIcon( hMainMenu, IDM_SETTINGS, IDI_SETTINGS );
+            SetMenuItemIcon( hMainMenu, IDM_ACCESS_RIGHTS, IDI_ACCESS );
+            SetMenuItemIcon( hMainMenu, IDM_ABOUT, IDI_ABOUT );
+        }
+        break;
+
     case WM_COMMAND:
         wmId    = LOWORD( wParam );
         wmEvent = HIWORD( wParam );
@@ -694,14 +704,14 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 // Message handler for About dialog box
 INT_PTR CALLBACK AboutDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
-    UNREFERENCED_PARAMETER( lParam );
+    static HICON hIcon = NULL;
 
     switch ( message )
     {
     case WM_INITDIALOG:
         {
-            HICON hIcon = (HICON) LoadImage( gData->hInst, MAKEINTRESOURCE( IDI_CAM2WEB ), IMAGE_ICON,
-                                             GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
+            hIcon = (HICON) LoadImage( gData->hInst, MAKEINTRESOURCE( IDI_ABOUT ), IMAGE_ICON,
+                                       GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
 
             if ( hIcon )
             {
@@ -712,6 +722,13 @@ INT_PTR CALLBACK AboutDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 
             return (INT_PTR) TRUE;
         }
+
+    case WM_DESTROY:
+        if ( hIcon )
+        {
+            DestroyIcon( hIcon );
+        }
+        break;
 
     case WM_COMMAND:
         if ( ( LOWORD( wParam ) == IDOK ) || ( LOWORD( wParam ) == IDCANCEL ) )

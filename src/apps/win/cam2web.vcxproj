@@ -185,8 +185,12 @@ del "$(ProjectDir)..\..\..\build\msvc\release\include\*.js"
     <ResourceCompile Include="cam2web.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="about.ico" />
+    <Image Include="access.ico" />
     <Image Include="admin.ico" />
     <Image Include="cam2web.ico" />
+    <Image Include="family.ico" />
+    <Image Include="password.ico" />
     <Image Include="settings.ico" />
     <Image Include="user.ico" />
   </ItemGroup>

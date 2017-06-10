@@ -78,3 +78,38 @@ void EnsureUpDownBuddyInRange( HWND hwndUpDown, HWND hwndBuddy )
     int len = GetWindowTextLength( hwndBuddy );
     SendMessage( hwndBuddy, EM_SETSEL, len, len );
 }
+
+// Set icon for the the given command of menu
+void SetMenuItemIcon( HMENU hMenu, UINT menuCommand, UINT idIcon )
+{
+    ICONINFO iconinfo;
+    HICON    hIcon = (HICON) LoadImage( GetModuleHandle( NULL ), MAKEINTRESOURCEW( idIcon ), IMAGE_ICON,
+                                        GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
+
+    if ( hIcon )
+    {
+        HDC     hDC     =  GetDC( NULL );
+        HDC     hMemDC  = CreateCompatibleDC( hDC );
+        HBITMAP hMemBmp = CreateCompatibleBitmap( hDC, 16, 16 );
+        HGDIOBJ hOrgBmp = SelectObject( hMemDC, hMemBmp );
+        HBRUSH  hBrush  = CreateSolidBrush( GetSysColor( COLOR_MENU ) );
+        RECT    rc;
+
+        rc.top    = rc.left  = 0;
+        rc.bottom = rc.right = 16;
+
+        // draw the bitmap for menu item
+        FillRect( hMemDC, &rc, hBrush );
+        DrawIconEx( hMemDC, 0, 0, hIcon, 16, 16, 0, NULL, DI_NORMAL );
+
+        // release GDI objects
+        SelectObject( hMemDC, hOrgBmp );
+        DeleteDC( hMemDC );
+        ReleaseDC( NULL, hDC );
+        DeleteObject( hBrush );
+        DestroyIcon( hIcon );
+
+        // finally set the bitmap for the menu item
+        SetMenuItemBitmaps( hMenu, menuCommand, MF_BITMAP | MF_BYCOMMAND, hMemBmp, hMemBmp );
+    }
+}

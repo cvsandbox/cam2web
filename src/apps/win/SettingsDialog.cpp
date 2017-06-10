@@ -37,6 +37,7 @@ using namespace std;
 INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
     static AppConfig* appConfig = nullptr;
+    static HICON      hIcon     = NULL;
     int               wmId;
     int               wmEvent;
 
@@ -44,8 +45,8 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
     {
     case WM_INITDIALOG:
         {
-            HICON hIcon = (HICON) LoadImage( GetModuleHandle( NULL ), MAKEINTRESOURCE( IDI_SETTINGS ), IMAGE_ICON,
-                GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
+            hIcon = (HICON) LoadImage( GetModuleHandle( NULL ), MAKEINTRESOURCE( IDI_SETTINGS ), IMAGE_ICON,
+                                       GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
 
             if ( hIcon )
             {
@@ -71,6 +72,12 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
 
     case WM_DESTROY:
         appConfig = nullptr;
+
+        if ( hIcon )
+        {
+            DestroyIcon( hIcon );
+        }
+
         return (INT_PTR) TRUE;
 
     case WM_COMMAND:

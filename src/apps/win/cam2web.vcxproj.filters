@@ -192,5 +192,17 @@
     <Image Include="user.ico">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="about.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="access.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="family.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="password.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

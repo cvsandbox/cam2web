@@ -31,4 +31,7 @@ void InitUpDownControl( HWND hwndUpDown, HWND hwndBuddy, uint16_t min, uint16_t 
 // Ensure buddy control's volue is in the range of the specified up/down control
 void EnsureUpDownBuddyInRange( HWND hwndUpDown, HWND hwndBuddy );
 
+// Set icon for the the given command of menu
+void SetMenuItemIcon( HMENU hMenu, UINT menuCommand, UINT idIcon );
+
 #endif // UI_TOOLS_HPP

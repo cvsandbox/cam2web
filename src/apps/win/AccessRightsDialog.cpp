@@ -104,6 +104,7 @@ static void AddUserToListView( HWND hwndListView, const WCHAR* szName, UserGroup
 INT_PTR CALLBACK AccessRightsDialogProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
     static AppConfig* appConfig = nullptr;
+    static HICON      hIcon     = NULL;
     int               wmId;
     int               wmEvent;
 
@@ -116,6 +117,15 @@ INT_PTR CALLBACK AccessRightsDialogProc( HWND hDlg, UINT message, WPARAM wParam,
             HWND hwndUsersList          = GetDlgItem( hDlg, IDC_USERS_LIST_VIEW );
 
             appConfig = (AppConfig*) lParam;
+
+            hIcon = (HICON) LoadImage( GetModuleHandle( NULL ), MAKEINTRESOURCE( IDI_ACCESS  ), IMAGE_ICON,
+                                       GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
+
+            if ( hIcon )
+            {
+                SendMessage( hDlg, WM_SETICON, ICON_SMALL, (LPARAM) hIcon );
+            }
+
 
             CenterWindowTo( hDlg, GetParent( hDlg ) );
             InitUsersListView( hwndUsersList );
@@ -144,6 +154,12 @@ INT_PTR CALLBACK AccessRightsDialogProc( HWND hDlg, UINT message, WPARAM wParam,
 
     case WM_DESTROY:
         appConfig = nullptr;
+
+        if ( hIcon )
+        {
+            DestroyIcon( hIcon );
+        }
+
         return (INT_PTR) TRUE;
 
     case WM_COMMAND:
