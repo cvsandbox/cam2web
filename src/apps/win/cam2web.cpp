@@ -255,6 +255,7 @@ int APIENTRY _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 
 #ifdef _DEBUG
     _CrtMemState memStateAtStart;
+    //_CrtSetBreakAlloc( 649 );
 #endif
 
     _CrtMemCheckpoint( &memStateAtStart );

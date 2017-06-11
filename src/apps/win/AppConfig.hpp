@@ -41,6 +41,14 @@ public:
     uint16_t HttpPort( ) const;
     void SetHttpPort( uint16_t port );
 
+    // Get/Set viewers group ID
+    uint16_t ViewersGroup( );
+    void SetViewersGroup( uint16_t groupId );
+
+    // Get/Set configurators group ID
+    uint16_t ConfiguratorsGroup( );
+    void SetConfiguratorsGroup( uint16_t groupId );
+
     // Get/Set HTTP digest auth domain
     std::string AuthDomain( ) const;
     void SetAuthDomain( const std::string& authDomain );
@@ -68,6 +76,8 @@ private:
     uint16_t    jpegQuality;
     uint16_t    mjpegFrameRate;
     uint16_t    httpPort;
+    uint16_t    viewersGroup;
+    uint16_t    configuratorsGroup;
     std::string authDomain;
     std::string customWebContent;
     std::string cameraMoniker;

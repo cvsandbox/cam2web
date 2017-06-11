@@ -18,24 +18,22 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
-#ifndef UI_TOOLS_HPP
-#define UI_TOOLS_HPP
+#ifndef EDIT_USER_DIALOG_HPP
+#define EDIT_USER_DIALOG_HPP
 
 #include <string>
-#include <stdint.h>
+#include <vector>
 
-// Center the given window relative to the reference window
-void CenterWindowTo( HWND hWnd, HWND hWndRef );
+typedef struct
+{
+    std::string Name;
+    std::string Password;
+    bool        IsAdmin;
 
-// Initialize up/down control and its buddy control
-void InitUpDownControl( HWND hwndUpDown, HWND hwndBuddy, uint16_t min, uint16_t max, uint16_t value );
-// Ensure buddy control's volue is in the range of the specified up/down control
-void EnsureUpDownBuddyInRange( HWND hwndUpDown, HWND hwndBuddy );
+    std::vector<std::string> ExistingUserNames;
+}
+UserInfo;
 
-// Set icon for the the given command of menu
-void SetMenuItemIcon( HMENU hMenu, UINT menuCommand, UINT idIcon );
+INT_PTR CALLBACK EditUserDialogProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam );
 
-// Get window's text as UTF8 string
-std::string GetWindowString( HWND hwnd, bool trimIt );
-
-#endif // UI_TOOLS_HPP
+#endif // EDIT_USER_DIALOG_HPP

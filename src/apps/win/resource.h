@@ -3,13 +3,14 @@
 // Used by cam2web.rc
 //
 
-#define ID_MAX                  135
+#define ID_MAX                  143
 
 #define IDS_APP_TITLE           103
 
 #define IDD_ABOUTBOX            103
 #define IDD_SETTINGS_BOX        112
 #define IDD_ACCESS_RIGHTS_BOX   124
+#define IDD_EDIT_USER_BOX       139
 #define IDM_ABOUT               104
 #define IDM_EXIT                105
 #define IDM_SETTINGS            111
@@ -38,6 +39,13 @@
 #define IDC_VIEWERS_COMBO       127
 #define IDC_CONFIGURATORS_COMBO 128
 #define IDC_USERS_LIST_VIEW     129
+#define IDC_ADD_USER_BUTTON     136
+#define IDC_EDIT_USER_BUTTON    137
+#define IDC_DELETE_USER_BUTTON  138
+#define IDC_USER_NAME_EDIT      140
+#define IDC_USER_ROLE_COMBO     141
+#define IDC_PASSWORD_EDIT       142
+#define IDC_RE_PASSWORD_EDIT    143
 #ifndef IDC_STATIC
 #define IDC_STATIC              -1
 #endif

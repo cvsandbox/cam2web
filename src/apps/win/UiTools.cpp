@@ -28,6 +28,9 @@
 #include <tchar.h>
 
 #include "UiTools.hpp"
+#include "Tools.hpp"
+
+using namespace std;
 
 // Center the given window relative to the reference window
 void CenterWindowTo( HWND hWnd, HWND hWndRef )
@@ -82,9 +85,8 @@ void EnsureUpDownBuddyInRange( HWND hwndUpDown, HWND hwndBuddy )
 // Set icon for the the given command of menu
 void SetMenuItemIcon( HMENU hMenu, UINT menuCommand, UINT idIcon )
 {
-    ICONINFO iconinfo;
-    HICON    hIcon = (HICON) LoadImage( GetModuleHandle( NULL ), MAKEINTRESOURCEW( idIcon ), IMAGE_ICON,
-                                        GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
+    HICON   hIcon = (HICON) LoadImage( GetModuleHandle( NULL ), MAKEINTRESOURCEW( idIcon ), IMAGE_ICON,
+                                       GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
 
     if ( hIcon )
     {
@@ -112,4 +114,25 @@ void SetMenuItemIcon( HMENU hMenu, UINT menuCommand, UINT idIcon )
         // finally set the bitmap for the menu item
         SetMenuItemBitmaps( hMenu, menuCommand, MF_BITMAP | MF_BYCOMMAND, hMemBmp, hMemBmp );
     }
+}
+
+// Get window's text as UTF8 string
+string GetWindowString( HWND hwnd, bool trimIt )
+{
+    string strText;
+    int    textLength = GetWindowTextLength( hwnd ) + 1;
+    WCHAR* text       = new WCHAR[textLength];
+
+    GetWindowText( hwnd, text, textLength );
+
+    strText = Utf16to8( text );
+
+    if ( trimIt )
+    {
+        StringTrim( strText );
+    }
+
+    delete [] text;
+
+    return strText;
 }

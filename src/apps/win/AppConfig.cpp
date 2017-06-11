@@ -30,6 +30,8 @@ using namespace std;
 #define PROP_JPEG_QUALITY   "jpegQuality"
 #define PROP_MJPEG_RATE     "mjpegRate"
 #define PROP_HTTP_PORT      "httpPort"
+#define PROP_VIEWERS        "viewers"
+#define PROP_CONFIGURATORS  "configurators"
 #define PROP_AUTH_DOMAIN    "authDomain"
 #define PROP_CUSTOM_WEB     "customWeb"
 #define PROP_CAMERA_MONIKER "cameraMoniker"
@@ -47,6 +49,8 @@ const static map<string, int> SupportedProperties =
     { PROP_JPEG_QUALITY,   TYPE_INT },
     { PROP_MJPEG_RATE,     TYPE_INT },
     { PROP_HTTP_PORT,      TYPE_INT },
+    { PROP_VIEWERS,        TYPE_INT },
+    { PROP_CONFIGURATORS,  TYPE_INT },
     { PROP_AUTH_DOMAIN,    TYPE_STR },
     { PROP_CUSTOM_WEB,     TYPE_STR },
     { PROP_CAMERA_MONIKER, TYPE_STR },
@@ -60,6 +64,8 @@ AppConfig::AppConfig( ) :
     jpegQuality( 85 ),
     mjpegFrameRate( 30 ),
     httpPort( 8000 ),
+    viewersGroup( 0 ),
+    configuratorsGroup( 0 ),
     authDomain( "cam2web" ),
     customWebContent( ),
     cameraMoniker( ),
@@ -99,6 +105,26 @@ uint16_t AppConfig::HttpPort( ) const
 void AppConfig::SetHttpPort( uint16_t port )
 {
     httpPort = XINRANGE( port, 1, 65535 );
+}
+
+// Get/Set viewers group ID
+uint16_t AppConfig::ViewersGroup( )
+{
+    return viewersGroup;
+}
+void AppConfig::SetViewersGroup( uint16_t groupId )
+{
+    viewersGroup = groupId;
+}
+
+// Get/Set configurators group ID
+uint16_t AppConfig::ConfiguratorsGroup( )
+{
+    return configuratorsGroup;
+}
+void AppConfig::SetConfiguratorsGroup( uint16_t groupId )
+{
+    configuratorsGroup = groupId;
 }
 
 // Get/Set HTTP digest auth domain
@@ -184,6 +210,14 @@ XError AppConfig::SetProperty( const string& propertyName, const string& value )
             {
                 httpPort = static_cast<uint16_t>( intValue );
             }
+            else if ( propertyName == PROP_VIEWERS )
+            {
+                viewersGroup = static_cast<uint16_t>( intValue );
+            }
+            else if ( propertyName == PROP_CONFIGURATORS )
+            {
+                configuratorsGroup = static_cast<uint16_t>( intValue );
+            }
             else if ( propertyName == PROP_AUTH_DOMAIN )
             {
                 authDomain = value;
@@ -244,6 +278,14 @@ XError AppConfig::GetProperty( const string& propertyName, string& value ) const
         else if ( propertyName == PROP_HTTP_PORT )
         {
             intValue = httpPort;
+        }
+        else if ( propertyName == PROP_VIEWERS )
+        {
+            intValue = viewersGroup;
+        }
+        else if ( propertyName == PROP_CONFIGURATORS )
+        {
+            intValue = configuratorsGroup;
         }
         else if ( propertyName == PROP_AUTH_DOMAIN )
         {
