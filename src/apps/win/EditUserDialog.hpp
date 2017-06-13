@@ -29,6 +29,7 @@ typedef struct
     std::string Name;
     std::string Password;
     bool        IsAdmin;
+    bool        PasswordChanged;
 
     std::vector<std::string> ExistingUserNames;
 }

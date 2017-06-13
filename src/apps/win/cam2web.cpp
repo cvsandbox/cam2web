@@ -156,6 +156,7 @@ public:
 
         // load application settings
         appConfigSerializer.LoadConfiguration( );
+        appConfig->SetUsersFileName( appFolder + "users.txt" );
     }
 };
 AppData* gData = NULL;
@@ -255,7 +256,7 @@ int APIENTRY _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 
 #ifdef _DEBUG
     _CrtMemState memStateAtStart;
-    //_CrtSetBreakAlloc( 649 );
+    //_CrtSetBreakAlloc( 653 );
 #endif
 
     _CrtMemCheckpoint( &memStateAtStart );

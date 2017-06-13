@@ -62,8 +62,12 @@ public:
     void SetCameraMoniker( const std::string& moniker );
 
     // Get/Set last used video resolution
-    void GetLastVideoResolution( uint16_t* width, uint16_t* height, uint16_t* bpp, uint16_t* fps );
+    void GetLastVideoResolution( uint16_t* width, uint16_t* height, uint16_t* bpp, uint16_t* fps ) const;
     void SetLastVideoResolution( uint16_t  width, uint16_t  height, uint16_t  bpp, uint16_t  fps );
+
+    // Get/Set file name to store users' list in
+    std::string UsersFileName( ) const;
+    void SetUsersFileName( const std::string& fileName );
 
 public: // IObjectConfigurator interface
 
@@ -85,6 +89,8 @@ private:
     uint16_t    cameraHeight;
     uint16_t    cameraBpp;
     uint16_t    cameraFps;
+
+    std::string usersFileName;
 };
 
 #endif // APP_CONFIG_HPP

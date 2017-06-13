@@ -72,7 +72,8 @@ AppConfig::AppConfig( ) :
     cameraWidth( 0 ),
     cameraHeight( 0 ),
     cameraBpp( 0 ),
-    cameraFps( 0 )
+    cameraFps( 0 ),
+    usersFileName( "users.txt" )
 {
 
 }
@@ -158,7 +159,7 @@ void AppConfig::SetCameraMoniker( const string& moniker )
 }
 
 // Get/Set last used video resolution
-void AppConfig::GetLastVideoResolution( uint16_t* width, uint16_t* height, uint16_t* bpp, uint16_t* fps )
+void AppConfig::GetLastVideoResolution( uint16_t* width, uint16_t* height, uint16_t* bpp, uint16_t* fps ) const
 {
     if ( width  != nullptr ) *width  = cameraWidth;
     if ( height != nullptr ) *height = cameraHeight;
@@ -171,6 +172,16 @@ void AppConfig::SetLastVideoResolution( uint16_t width, uint16_t height, uint16_
     cameraHeight = height;
     cameraBpp    = bpp;
     cameraFps    = fps;
+}
+
+// Get/Set file name to store users' list in
+string AppConfig::UsersFileName( ) const
+{
+    return usersFileName;
+}
+void AppConfig::SetUsersFileName( const string& fileName )
+{
+    usersFileName = fileName;
 }
 
 // Set property of the object

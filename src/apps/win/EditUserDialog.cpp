@@ -31,7 +31,6 @@
 
 using namespace std;
 
-
 #define STR_ERROR   TEXT( "Error" )
 
 
@@ -94,6 +93,8 @@ INT_PTR CALLBACK EditUserDialogProc( HWND hDlg, UINT message, WPARAM wParam, LPA
                     // disable OK button, since user name/password are all empty
                     EnableWindow( GetDlgItem( hDlg, IDOK ), FALSE );
                 }
+
+                pUserInfo->PasswordChanged = false;
             }
         }
         return (INT_PTR) TRUE;
@@ -163,6 +164,11 @@ INT_PTR CALLBACK EditUserDialogProc( HWND hDlg, UINT message, WPARAM wParam, LPA
                 bool   isEmpty   = ( userName.empty( ) || password1.empty( ) || password2.empty( ) );
 
                 EnableWindow( GetDlgItem( hDlg, IDOK ), ( isEmpty ) ? FALSE : TRUE );
+
+                if ( ( pUserInfo != nullptr ) && ( ( wmId == IDC_PASSWORD_EDIT ) || ( wmId == IDC_RE_PASSWORD_EDIT ) ) )
+                {
+                    pUserInfo->PasswordChanged = true;
+                }
 
                 return (INT_PTR) TRUE;
             }
