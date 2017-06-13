@@ -27,6 +27,10 @@
 
 #include <mongoose.h>
 
+#ifdef WIN32
+    #include <windows.h>
+#endif
+
 using namespace std;
 
 namespace Private
@@ -285,6 +289,7 @@ namespace Private
         void AddUser( const string& name, const string& digestHa1, UserGroup group );
         void RemoveUser( const string& name );
         uint32_t LoadUsersFromFile( const string& fileName );
+        void ClearUsers( );
 
         UserGroup CheckDigestAuth( struct http_message* msg );
 
@@ -430,9 +435,15 @@ void XWebServer::RemoveUser( const string& name )
 }
 
 // Load users from file having "htdigest" format
-uint32_t XWebServer::LoadUsersFromFile( const std::string& fileName )
+uint32_t XWebServer::LoadUsersFromFile( const string& fileName )
 {
     return mData->LoadUsersFromFile( fileName );
+}
+
+// Clear the list of users who can access the web server
+void XWebServer::ClearUsers( )
+{
+    return mData->ClearUsers( );
 }
 
 // Calculate HA1 as defined by Digest authentication algorithm, MD5(user:domain:pass).
@@ -616,7 +627,27 @@ void XWebServerData::RemoveUser( const string& name )
 uint32_t XWebServerData::LoadUsersFromFile( const string& fileName )
 {
     uint32_t userCounter = 0;
-    FILE*    file        = fopen( fileName.c_str( ), "r" );
+    FILE*    file        = nullptr;
+
+#ifdef WIN32
+    {
+        int charsRequired = MultiByteToWideChar( CP_UTF8, 0, fileName.c_str( ), -1, NULL, 0 );
+
+        if ( charsRequired > 0 )
+        {
+            WCHAR* filenameUtf16 = (WCHAR*) malloc( sizeof( WCHAR ) * charsRequired );
+
+            if ( MultiByteToWideChar( CP_UTF8, 0, fileName.c_str( ), -1, filenameUtf16, charsRequired ) > 0 )
+            {
+                file = _wfopen( filenameUtf16, L"r" );
+            }
+
+            free( filenameUtf16 );
+        }
+    }
+#else
+    file = fopen( fileName.c_str( ), "r" );
+#endif
 
     if ( file )
     {
@@ -629,11 +660,12 @@ uint32_t XWebServerData::LoadUsersFromFile( const string& fileName )
 
         while ( fgets( buff, 256, file ) != nullptr )
         {
-            string userName;
-            string userDomain;
-            string digestHa1;
-            char*  realmPtr  = strchr( buff, ':' );
-            char*  digestPtr = nullptr;
+            string    userName;
+            string    userDomain;
+            string    digestHa1;
+            UserGroup group     = UserGroup::Anyone;
+            char*     realmPtr  = strchr( buff, ':' );
+            char*     digestPtr = nullptr;
 
             if ( realmPtr != nullptr )
             {
@@ -652,6 +684,26 @@ uint32_t XWebServerData::LoadUsersFromFile( const string& fileName )
                     {
                         digestHa1.pop_back( );
                     }
+
+                    // original htdigest format has only user_name:domain:ha1, but we'll handle slightly modified
+                    // version, where an extra value may come - user group id
+                    size_t delIndex = digestHa1.find( ':' );
+
+                    if ( delIndex != string::npos )
+                    {
+                        int groupId;
+
+                        if ( sscanf( digestHa1.c_str( ) + delIndex + 1, "%d", &groupId ) == 1 )
+                        {
+                            if ( ( groupId > 0 ) && ( groupId <= 3 ) )
+                            {
+                                group = static_cast<UserGroup>( groupId );
+                            }
+                        }
+
+                        digestHa1 = digestHa1.substr( 0, delIndex );
+                    }
+
                 }
             }
 
@@ -660,7 +712,7 @@ uint32_t XWebServerData::LoadUsersFromFile( const string& fileName )
             {
                 if ( userDomain == AuthDomain )
                 {
-                    AddUser( userName, digestHa1, ( userName == "admin" ) ? UserGroup::Admin : UserGroup::User );
+                    AddUser( userName, digestHa1, ( group != UserGroup::Anyone ) ? group : ( ( userName == "admin" ) ? UserGroup::Admin : UserGroup::User ) );
                     userCounter++;
                 }
             }
@@ -670,6 +722,14 @@ uint32_t XWebServerData::LoadUsersFromFile( const string& fileName )
     }
 
     return userCounter;
+}
+
+// Discard all users
+void XWebServerData::ClearUsers( )
+{
+    lock_guard<recursive_mutex> lock( DataSync );
+
+    Users.clear( );
 }
 
 // Thread to poll web events

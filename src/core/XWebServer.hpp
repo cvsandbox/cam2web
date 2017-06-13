@@ -184,6 +184,9 @@ public:
     // Load users from file having "htdigest" format (returns number of loaded users)
     uint32_t LoadUsersFromFile( const std::string& fileName );
 
+    // Clear the list of users who can access the web server
+    void ClearUsers( );
+
 public:
     // Calculate HA1 as defined by Digest authentication algorithm, MD5(user:domain:pass).
     static std::string CalculateDigestAuthHa1( const std::string& user, const std::string& domain, const std::string& pass );

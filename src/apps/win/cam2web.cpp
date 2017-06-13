@@ -132,13 +132,6 @@ public:
         appFolder( ".\\" ), appConfigFile( "cam2web.cfg" ),
         appConfigSerializer( ), cameraConfigSerializer( )
     {
-        string userHA1  = XWebServer::CalculateDigestAuthHa1( "user",  appConfig->AuthDomain( ), "pass" );
-        string adminHA1 = XWebServer::CalculateDigestAuthHa1( "admin", appConfig->AuthDomain( ), "password" );
-
-        server.SetAuthDomain( appConfig->AuthDomain( ) );
-        server.AddUser( "user", userHA1, UserGroup::User );
-        server.AddUser( "admin", adminHA1, UserGroup::Admin );
-
         // find user' home folder to store settings
         WCHAR homeFolder[MAX_PATH];
 
@@ -416,8 +409,10 @@ static bool StartVideoStreaming( )
 
     if ( gData->camera )
     {
-        string cameraMoniker   = gData->selectedDeviceName.Moniker( );
-        int    resolutionIndex = SendMessage( gData->hwndResolutionsCombo, (UINT) CB_GETCURSEL, 0, 0 );
+        string    cameraMoniker   = gData->selectedDeviceName.Moniker( );
+        int       resolutionIndex = SendMessage( gData->hwndResolutionsCombo, (UINT) CB_GETCURSEL, 0, 0 );
+        UserGroup viewersGroup    = static_cast<UserGroup>( gData->appConfig->ViewersGroup( ) );
+        UserGroup configGroup     = static_cast<UserGroup>( gData->appConfig->ConfiguratorsGroup( ) );
 
         if ( ( resolutionIndex >= 0 ) && ( resolutionIndex < (int) gData->cameraCapabilities.size( ) ) )
         {
@@ -457,12 +452,16 @@ static bool StartVideoStreaming( )
         // set JPEG quality
         gData->video2web.SetJpegQuality( gData->appConfig->JpegQuality( ) );
 
+        // set authentication domain and load users' list
+        gData->server.SetAuthDomain( gData->appConfig->AuthDomain( ) );
+        gData->server.LoadUsersFromFile( gData->appConfig->UsersFileName( ) );
+
         // configure web server and handler
         gData->server.SetPort( gData->appConfig->HttpPort( ) ).
-            AddHandler( make_shared<XObjectConfigurationRequestHandler>( "/camera/config", gData->cameraConfig ), UserGroup::Admin ).
-            AddHandler( make_shared<XObjectInformationRequestHandler>( "/camera/info", make_shared<XObjectInformationMap>( cameraInfo ) ) ).
-            AddHandler( gData->video2web.CreateJpegHandler( "/camera/jpeg" ) ).
-            AddHandler( gData->video2web.CreateMjpegHandler( "/camera/mjpeg", gData->appConfig->MjpegFrameRate( ) ) );
+                      AddHandler( make_shared<XObjectConfigurationRequestHandler>( "/camera/config", gData->cameraConfig ), configGroup ).
+                      AddHandler( make_shared<XObjectInformationRequestHandler>( "/camera/info", make_shared<XObjectInformationMap>( cameraInfo ) ), viewersGroup ).
+                      AddHandler( gData->video2web.CreateJpegHandler( "/camera/jpeg" ), viewersGroup ).
+                      AddHandler( gData->video2web.CreateMjpegHandler( "/camera/mjpeg", gData->appConfig->MjpegFrameRate( ) ), viewersGroup );
 
         // check if custom web content is available
         if ( !gData->appConfig->CustomWebContent( ).empty( ) )
@@ -476,17 +475,17 @@ static bool StartVideoStreaming( )
             gData->server.SetDocumentRoot( "./web/" );
 #else
             // web content is embeded in release builds to get single executable
-            gData->server.AddHandler( make_shared<XEmbeddedContentHandler>( "/", &web_index_html ) ).
-                          AddHandler( make_shared<XEmbeddedContentHandler>( "index.html", &web_index_html) ).
-                          AddHandler( make_shared<XEmbeddedContentHandler>( "styles.css", &web_styles_css ) ).
+            gData->server.AddHandler( make_shared<XEmbeddedContentHandler>( "/", &web_index_html ), viewersGroup ).
+                          AddHandler( make_shared<XEmbeddedContentHandler>( "index.html", &web_index_html ), viewersGroup ).
+                          AddHandler( make_shared<XEmbeddedContentHandler>( "styles.css", &web_styles_css ), viewersGroup ).
                           AddHandler( make_shared<XEmbeddedContentHandler>( "cam2web.png", &web_cam2web_png ) ).
                           AddHandler( make_shared<XEmbeddedContentHandler>( "cam2web_white.png", &web_cam2web_white_png ) ).
-                          AddHandler( make_shared<XEmbeddedContentHandler>( "camera.js", &web_camera_js ) ).
-                          AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.js", &web_cameraproperties_js ) ).
-                          AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.html", &web_cameraproperties_directshow_html ), UserGroup::Admin ).
-                          AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.js", &web_jquery_js ) ).
-                          AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.js", &web_jquery_mobile_js ) ).
-                          AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.css", &web_jquery_mobile_css ) );
+                          AddHandler( make_shared<XEmbeddedContentHandler>( "camera.js", &web_camera_js ), viewersGroup ).
+                          AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.js", &web_cameraproperties_js ), viewersGroup ).
+                          AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.html", &web_cameraproperties_directshow_html ), configGroup ).
+                          AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.js", &web_jquery_js ), viewersGroup ).
+                          AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.js", &web_jquery_mobile_js ), viewersGroup ).
+                          AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.css", &web_jquery_mobile_css ), viewersGroup );
 #endif
         }
 
@@ -538,6 +537,7 @@ static void StopVideoStreaming( )
 
     gData->server.Stop( );
     gData->server.ClearHandlers( );
+    gData->server.ClearUsers( );
 
     SetWindowText( gData->hwndMain, gData->szTitle );
 }
