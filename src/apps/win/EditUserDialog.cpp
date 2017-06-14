@@ -33,7 +33,6 @@ using namespace std;
 
 #define STR_ERROR   TEXT( "Error" )
 
-
 // Message handler for Add/Edit User dialog box
 INT_PTR CALLBACK EditUserDialogProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
@@ -173,6 +172,8 @@ INT_PTR CALLBACK EditUserDialogProc( HWND hDlg, UINT message, WPARAM wParam, LPA
                 return (INT_PTR) TRUE;
             }
         }
+
+        break;
     }
 
     return (INT_PTR) FALSE;

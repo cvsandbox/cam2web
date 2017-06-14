@@ -28,8 +28,8 @@
 #include <algorithm>
 
 #include "resource.h"
-#include "SettingsDialog.hpp"
 #include "EditUserDialog.hpp"
+#include "EditAuthDomainDialog.hpp"
 #include "Tools.hpp"
 #include "UiTools.hpp"
 #include "AppConfig.hpp"
@@ -407,6 +407,28 @@ INT_PTR CALLBACK AccessRightsDialogProc( HWND hDlg, UINT message, WPARAM wParam,
             }
             return (INT_PTR) TRUE;
         }
+        else if ( wmId == IDC_CHANGE_DOMAIN_BUTTON )
+        {
+            HWND  hwndAuthDomainEdit = GetDlgItem( hDlg, IDC_AUTH_DOMAIN_EDIT );
+            char  strAuthDomain[128];
+
+            strcpy( strAuthDomain, data->AuthDomain.c_str( ) );
+
+            if ( DialogBoxParam( GetModuleHandle( NULL ), MAKEINTRESOURCE( IDD_EDIT_REALM_BOX ), hDlg, EditAuthDomainDialogProc, (LPARAM) strAuthDomain ) == IDOK )
+            {
+                if ( data->AuthDomain != strAuthDomain )
+                {
+                    data->AuthDomain = strAuthDomain;
+
+                    SetWindowText( GetDlgItem( hDlg, IDC_AUTH_DOMAIN_EDIT ), Utf8to16( data->AuthDomain ).c_str( ) );
+                    ShowUsersForDomain( GetDlgItem( hDlg, IDC_USERS_LIST_VIEW ), data->Users, data->AuthDomain );
+                    data->ChangesDetected = true;
+                }
+            }
+
+            SetFocus( hwndAuthDomainEdit );
+            return (INT_PTR) TRUE;
+        }
         else if ( ( wmId == IDC_ADD_USER_BUTTON ) || ( wmId == IDC_EDIT_USER_BUTTON ) || ( wmId == IDC_DELETE_USER_BUTTON ) )
         {
             HWND           hwndUsersList = GetDlgItem( hDlg, IDC_USERS_LIST_VIEW );
@@ -414,7 +436,10 @@ INT_PTR CALLBACK AccessRightsDialogProc( HWND hDlg, UINT message, WPARAM wParam,
 
             for ( UsersMap::const_iterator it = data->Users.begin( ); it != data->Users.end( ); ++it )
             {
-                existingUserNames.push_back( it->second.Name );
+                if ( it->second.Domain == data->AuthDomain )
+                {
+                    existingUserNames.push_back( it->second.Name );
+                }
             }
 
             if ( wmId == IDC_ADD_USER_BUTTON )

@@ -149,6 +149,7 @@ del "$(ProjectDir)..\..\..\build\msvc\release\include\*.js"
     <ClInclude Include="..\..\core\XWebServer.hpp" />
     <ClInclude Include="AccessRightsDialog.hpp" />
     <ClInclude Include="AppConfig.hpp" />
+    <ClInclude Include="EditAuthDomainDialog.hpp" />
     <ClInclude Include="EditUserDialog.hpp" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SettingsDialog.hpp" />
@@ -178,6 +179,7 @@ del "$(ProjectDir)..\..\..\build\msvc\release\include\*.js"
     <ClCompile Include="AccessRightsDialog.cpp" />
     <ClCompile Include="AppConfig.cpp" />
     <ClCompile Include="cam2web.cpp" />
+    <ClCompile Include="EditAuthDomainDialog.cpp" />
     <ClCompile Include="EditUserDialog.cpp" />
     <ClCompile Include="SettingsDialog.cpp" />
     <ClCompile Include="Tools.cpp" />

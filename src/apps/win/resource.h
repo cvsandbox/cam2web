@@ -3,7 +3,7 @@
 // Used by cam2web.rc
 //
 
-#define ID_MAX                  143
+#define ID_MAX                  144
 
 #define IDS_APP_TITLE           103
 
@@ -11,6 +11,7 @@
 #define IDD_SETTINGS_BOX        112
 #define IDD_ACCESS_RIGHTS_BOX   124
 #define IDD_EDIT_USER_BOX       139
+#define IDD_EDIT_REALM_BOX      144
 #define IDM_ABOUT               104
 #define IDM_EXIT                105
 #define IDM_SETTINGS            111
