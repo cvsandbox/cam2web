@@ -127,7 +127,7 @@ void SetDefaultSettings( )
 }
 
 // Parse command line and override default settings
-bool ParsetCommandLine( int argc, char* argv[] )
+bool ParseCommandLine( int argc, char* argv[] )
 {
     static const uint32_t SupportedWidth[]  = { 320, 480, 640, 800, 1120 };
     static const uint32_t SupportedHeight[] = { 240, 360, 480, 600, 840 };
@@ -323,7 +323,7 @@ int main( int argc, char* argv[] )
 
     SetDefaultSettings( );
 
-    if ( !ParsetCommandLine( argc, argv ) )
+    if ( !ParseCommandLine( argc, argv ) )
     {
         return -1;
     }
