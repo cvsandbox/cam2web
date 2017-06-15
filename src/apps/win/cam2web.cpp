@@ -98,6 +98,9 @@ public:
     TCHAR       szWindowClass[MAX_LOADSTRING];      // the main window class name
     HINSTANCE   hInst;                              // current instance
 
+    bool        autoStartStreaming;
+    bool        minimizeWindowOnStart;
+
     HWND        hwndMain;
     HWND        hwndCamerasCombo;
     HWND        hwndResolutionsCombo;
@@ -125,6 +128,7 @@ public:
 
     AppData( ) :
         hInst( NULL ), hwndMain( NULL ), hwndCamerasCombo( NULL ),
+        autoStartStreaming( false ), minimizeWindowOnStart( false ),
         hwndResolutionsCombo( NULL ), hwndStartButton( NULL ), hwndStatusLink( NULL ),
         devices( ), cameraCapabilities( ), camera( ), selectedDeviceName( ), selectedResolutuion( ),
         cameraConfig( ), appConfig( new AppConfig( ) ), server( ), video2web( ),
@@ -145,17 +149,95 @@ public:
 
         CreateDirectory( Utf8to16( appFolder ).c_str( ), nullptr );
 
-        appConfigSerializer = XObjectConfigurationSerializer( appConfigFile, appConfig );
-
-        // load application settings
-        appConfigSerializer.LoadConfiguration( );
         appConfig->SetUsersFileName( appFolder + "users.txt" );
     }
 };
 AppData* gData = NULL;
 
+// Parse command line and override default settings
+static bool ParseCommandLine( int argc, WCHAR* argv[], AppData* appData )
+{
+    int  i;
+
+    for ( i = 0; i < argc; i++ )
+    {
+        wstring key;
+        wstring value;
+        WCHAR*  ptrDelimiter = wcschr( argv[i], L':' );
+
+        if ( argv[i][0] != '/' )
+            break;
+
+        if ( ptrDelimiter == nullptr )
+        {
+            key = wstring( argv[i] + 1 );
+        }
+        else
+        {
+            key   = wstring( argv[i] + 1, ptrDelimiter - argv[i] - 1 );
+            value = wstring( ptrDelimiter + 1 );
+
+            if ( value.empty( ) )
+            {
+                // delimiter is there, but no value - bogus
+                break;
+            }
+        }
+
+        if ( key == L"fcfg" )
+        {
+            if ( !value.empty( ) )
+            {
+                string fileName = Utf16to8( value );
+
+                // if the specified configuration file does not include any slashes, then assume it is home folder
+                if ( ( fileName.find( '/' ) != string::npos ) || ( fileName.find( '\\' ) != string::npos ) )
+                {
+                    appData->appConfigFile = fileName;
+                }
+                else
+                {
+                    appData->appConfigFile = appData->appFolder + fileName;
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+        else if ( key == L"start" )
+        {
+            if ( value.empty( ) )
+            {
+                appData->autoStartStreaming = true;
+            }
+            else
+            {
+                break;
+            }
+        }
+        else if ( key == L"minimize" )
+        {
+            if ( value.empty( ) )
+            {
+                appData->minimizeWindowOnStart = true;
+            }
+            else
+            {
+                break;
+            }
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    return ( i == argc );
+}
+
 // Register class of the main window
-ATOM MyRegisterClass( HINSTANCE hInstance )
+static ATOM MyRegisterClass( HINSTANCE hInstance )
 {
     WNDCLASSEX wcex;
 
@@ -185,7 +267,7 @@ static BOOL __stdcall SetWindowFont( HWND hwnd, LPARAM lParam )
 }
 
 // Create main window of the application
-BOOL CreateMainWindow( HINSTANCE hInstance, int nCmdShow )
+static BOOL CreateMainWindow( HINSTANCE hInstance, int nCmdShow )
 {
     INITCOMMONCONTROLSEX initControls = { sizeof( INITCOMMONCONTROLSEX ), ICC_LINK_CLASS };
 
@@ -231,9 +313,6 @@ BOOL CreateMainWindow( HINSTANCE hInstance, int nCmdShow )
     SendMessage( hwndMain, WM_SETFONT, (WPARAM) hFont, TRUE );
     EnumChildWindows( hwndMain, SetWindowFont, (LPARAM) hFont );
 
-    // ----
-    GetVideoDevices( );
-
     CenterWindowTo( hwndMain, GetDesktopWindow( ) );
     ShowWindow( hwndMain, nCmdShow );
     UpdateWindow( hwndMain );
@@ -263,13 +342,48 @@ int APIENTRY _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
     LoadString( hInstance, IDS_APP_TITLE, gData->szTitle, MAX_LOADSTRING );
     LoadString( hInstance, IDC_CAM2WEB, gData->szWindowClass, MAX_LOADSTRING );
 
+    if ( ( lpCmdLine != nullptr ) && ( lpCmdLine[0] != L'\0' ) )
+    {
+        int     argc;
+        LPWSTR* argv = CommandLineToArgvW( lpCmdLine, &argc );
+
+        if ( ( argv != nullptr ) && ( argc > 0 ) )
+        {
+            if ( !ParseCommandLine( argc, argv, gData ) )
+            {
+                MessageBox( NULL, L"An unknown command line option is provided.\n\n"
+                                  L"Available command line options:\n\n"
+                                  L"/fcfg:<name>\n"
+                                  L"\tName of the file to store application's configuration.\n\n"
+                                  L"/start\n"
+                                  L"\tAuto-start camera streaming on application start.\n\n"
+                                  L"/minimize\n"
+                                  L"\tMinimize application's window on start.\n",
+                            gData->szTitle, MB_OK | MB_ICONINFORMATION );
+            }
+        }
+    }
+
+    // load application settings
+    gData->appConfigSerializer = XObjectConfigurationSerializer( gData->appConfigFile, gData->appConfig );
+    gData->appConfigSerializer.LoadConfiguration( );
+
     MyRegisterClass( hInstance );
 
     // create main window of the application
-    if ( CreateMainWindow( hInstance, nCmdShow ) )
+    if ( CreateMainWindow( hInstance, ( gData->minimizeWindowOnStart ) ? SW_MINIMIZE : nCmdShow ) )
     {
         HACCEL hAccelTable = LoadAccelerators( hInstance, MAKEINTRESOURCE( IDC_CAM2WEB ) );
         MSG    msg;
+
+        // get the list of video devices
+        GetVideoDevices( );
+
+        // check if streaming should start automatically
+        if ( gData->autoStartStreaming )
+        {
+            PostMessage( gData->hwndMain, WM_COMMAND, MAKELONG( IDC_BUTTON_START, BN_CLICKED ), 0 );
+        }
 
         // main message loop
         while ( GetMessage( &msg, NULL, 0, 0 ) )
@@ -493,11 +607,11 @@ static bool StartVideoStreaming( )
 
         if ( !gData->camera->Start( ) )
         {
-            MessageBox( gData->hwndMain, TEXT( "Failed starting video source" ), STR_ERROR, MB_OK | MB_ICONERROR );
+            MessageBox( gData->hwndMain, TEXT( "Failed starting video source." ), STR_ERROR, MB_OK | MB_ICONERROR );
         }
         else if ( !gData->server.Start( ) )
         {
-            MessageBox( gData->hwndMain, TEXT( "Failed starting web server" ), STR_ERROR, MB_OK | MB_ICONERROR );
+            MessageBox( gData->hwndMain, TEXT( "Failed starting web server." ), STR_ERROR, MB_OK | MB_ICONERROR );
             gData->camera->SignalToStop( );
             gData->camera->WaitForStop( );
         }
