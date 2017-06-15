@@ -47,6 +47,8 @@ INT_PTR CALLBACK EditAuthDomainDialogProc( HWND hDlg, UINT message, WPARAM wPara
         {
             HWND hwndAuthDomainEdit = GetDlgItem( hDlg, IDC_AUTH_DOMAIN_EDIT );
 
+            CenterWindowTo( hDlg, GetParent( hDlg ) );
+
             hIcon = (HICON) LoadImage( GetModuleHandle( NULL ), MAKEINTRESOURCE( IDI_PASSWORD ), IMAGE_ICON,
                                        GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
 
