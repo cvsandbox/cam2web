@@ -65,6 +65,10 @@ public:
     void GetLastVideoResolution( uint16_t* width, uint16_t* height, uint16_t* bpp, uint16_t* fps ) const;
     void SetLastVideoResolution( uint16_t  width, uint16_t  height, uint16_t  bpp, uint16_t  fps );
 
+    // Get/Set the flag inidicating that application should minimize to system tray
+    bool MinimizeToSystemTray( ) const;
+    void SetMinimizeToSystemTray( bool enabled );
+
     // Get/Set file name to store users' list in
     std::string UsersFileName( ) const;
     void SetUsersFileName( const std::string& fileName );
@@ -89,6 +93,7 @@ private:
     uint16_t    cameraHeight;
     uint16_t    cameraBpp;
     uint16_t    cameraFps;
+    bool        minimizeToSystemTray;
 
     std::string usersFileName;
 };

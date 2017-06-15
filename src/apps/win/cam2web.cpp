@@ -76,12 +76,14 @@ using namespace std;
 #define IDC_COMBO_RESOLUTIONS   (504)
 #define IDC_BUTTON_START        (505)
 #define IDC_LINK_STATUS         (506)
+#define IDC_SYS_TRAY_ID         (508)
 
 #define STR_ERROR               TEXT( "Error" )
 #define STR_START_STREAMING     TEXT( "&Start streaming" )
 #define STR_STOP_STREAMING      TEXT( "&Stop streaming" )
 
 #define WM_UPDATE_UI            (WM_USER + 1)
+#define WM_SYS_TRAY_NOTIFY      (WM_USER + 2)
 
 #define TIMER_ID_EVENT          (0xB0B)
 
@@ -106,6 +108,7 @@ public:
     HWND        hwndResolutionsCombo;
     HWND        hwndStartButton;
     HWND        hwndStatusLink;
+    HICON       hiconTrayIcon;
 
     vector<XDeviceName>             devices;
     vector<XDeviceCapabilities>     cameraCapabilities;
@@ -129,7 +132,7 @@ public:
     AppData( ) :
         hInst( NULL ), hwndMain( NULL ), hwndCamerasCombo( NULL ),
         autoStartStreaming( false ), minimizeWindowOnStart( false ),
-        hwndResolutionsCombo( NULL ), hwndStartButton( NULL ), hwndStatusLink( NULL ),
+        hwndResolutionsCombo( NULL ), hwndStartButton( NULL ), hwndStatusLink( NULL ), hiconTrayIcon( NULL ),
         devices( ), cameraCapabilities( ), camera( ), selectedDeviceName( ), selectedResolutuion( ),
         cameraConfig( ), appConfig( new AppConfig( ) ), server( ), video2web( ),
         streamingInProgress( false ),
@@ -677,6 +680,63 @@ static void ToggleStreaming( )
     PostMessage( gData->hwndMain, WM_UPDATE_UI, 0, 0 );
 }
 
+// Minimize window to system tray
+void MinimizeToTray( HWND hwnd )
+{
+    NOTIFYICONDATA notifyData = { };
+
+    if ( gData->hiconTrayIcon == NULL )
+    {
+        gData->hiconTrayIcon = (HICON) LoadImage( GetModuleHandle( NULL ), MAKEINTRESOURCE( IDI_CAM2WEB ), IMAGE_ICON,
+                                                  GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
+    }
+
+    notifyData.cbSize           = sizeof( notifyData );
+    notifyData.hWnd             = hwnd;
+    notifyData.uID              = IDC_SYS_TRAY_ID;
+    notifyData.uFlags           = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+    notifyData.uCallbackMessage = WM_SYS_TRAY_NOTIFY;
+    notifyData.hIcon            = gData->hiconTrayIcon;
+
+    GetWindowText( hwnd, notifyData.szTip, sizeof( notifyData.szTip ) / sizeof( WCHAR ) );
+    Shell_NotifyIcon( NIM_ADD, &notifyData );
+
+    // hide the window
+    ShowWindow( hwnd, SW_HIDE );
+}
+
+// Update tool tip text for the sys tray icon
+void UpdateTrayTip( HWND hwnd, const WCHAR* szTip )
+{
+    NOTIFYICONDATA notifyData = { };
+
+    notifyData.cbSize = sizeof( notifyData );
+    notifyData.hWnd   = hwnd;
+    notifyData.uID    = IDC_SYS_TRAY_ID;
+    notifyData.uFlags = NIF_TIP;
+
+    wcsncpy( notifyData.szTip, szTip, sizeof( notifyData.szTip ) / sizeof( WCHAR ) );
+
+    Shell_NotifyIcon( NIM_MODIFY, &notifyData );
+}
+
+// Restor window from system tray
+void RestoreFromTray( HWND hwnd )
+{
+    NOTIFYICONDATA notifyData = { };
+
+    notifyData.cbSize = sizeof( notifyData );
+    notifyData.hWnd   = hwnd;
+    notifyData.uID    = IDC_SYS_TRAY_ID;
+
+    Shell_NotifyIcon( NIM_DELETE, &notifyData );
+
+    // restore window back to normal size
+    ShowWindow( hwnd, SW_RESTORE );
+    SetActiveWindow( hwnd );
+    SetForegroundWindow( hwnd );
+}
+
 // Main window's message handler
 LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
@@ -809,6 +869,29 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             gData->cameraConfigSerializer.SaveConfiguration( );
         }
         break;
+
+    case WM_SIZE:
+
+        if ( wParam == SIZE_MINIMIZED )
+        {
+            if ( gData->appConfig->MinimizeToSystemTray( ) )
+            {
+                MinimizeToTray( hWnd );
+            }
+        }
+        break;
+
+    case WM_SYS_TRAY_NOTIFY:
+
+        if ( LOWORD( lParam ) == WM_LBUTTONUP )
+        {
+            RestoreFromTray( hWnd );
+        }
+        break;
+
+    case WM_SETTEXT:
+        UpdateTrayTip( hWnd, (WCHAR*) lParam );
+        return DefWindowProc( hWnd, message, wParam, lParam );
 
     default:
         return DefWindowProc( hWnd, message, wParam, lParam );

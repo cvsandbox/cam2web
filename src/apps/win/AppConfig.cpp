@@ -39,6 +39,7 @@ using namespace std;
 #define PROP_CAMERA_HEIGHT  "cameraHeight"
 #define PROP_CAMERA_BPP     "cameraBpp"
 #define PROP_CAMERA_FPS     "cameraFps"
+#define PROP_MIN_TO_TRAY    "minToTray"
 
 #define TYPE_INT (0)
 #define TYPE_STR (1)
@@ -57,7 +58,8 @@ const static map<string, int> SupportedProperties =
     { PROP_CAMERA_WIDTH,   TYPE_INT },
     { PROP_CAMERA_HEIGHT,  TYPE_INT },
     { PROP_CAMERA_BPP,     TYPE_INT },
-    { PROP_CAMERA_FPS,     TYPE_INT }
+    { PROP_CAMERA_FPS,     TYPE_INT },
+    { PROP_MIN_TO_TRAY,    TYPE_INT }
 };
 
 AppConfig::AppConfig( ) :
@@ -73,6 +75,7 @@ AppConfig::AppConfig( ) :
     cameraHeight( 0 ),
     cameraBpp( 0 ),
     cameraFps( 0 ),
+    minimizeToSystemTray( false ),
     usersFileName( "users.txt" )
 {
 
@@ -174,6 +177,16 @@ void AppConfig::SetLastVideoResolution( uint16_t width, uint16_t height, uint16_
     cameraFps    = fps;
 }
 
+// Get/Set the flag inidicating that application should minimize to system tray
+bool AppConfig::MinimizeToSystemTray( ) const
+{
+    return minimizeToSystemTray;
+}
+void AppConfig::SetMinimizeToSystemTray( bool enabled )
+{
+    minimizeToSystemTray = enabled;
+}
+
 // Get/Set file name to store users' list in
 string AppConfig::UsersFileName( ) const
 {
@@ -257,6 +270,10 @@ XError AppConfig::SetProperty( const string& propertyName, const string& value )
             {
                 cameraFps = static_cast<uint16_t>( intValue );
             }
+            else if ( propertyName == PROP_MIN_TO_TRAY )
+            {
+                minimizeToSystemTray = ( intValue != 0 );
+            }
         }
     }
 
@@ -325,6 +342,10 @@ XError AppConfig::GetProperty( const string& propertyName, string& value ) const
         else if ( propertyName == PROP_CAMERA_FPS )
         {
             intValue = cameraFps;
+        }
+        else if ( propertyName == PROP_MIN_TO_TRAY )
+        {
+            intValue = ( minimizeToSystemTray ) ? 1 : 0;
         }
 
         if ( type == TYPE_INT )

@@ -65,6 +65,8 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
 
                 wstring strWebContent = Utf8to16( appConfig->CustomWebContent( ) );
                 SetWindowText( GetDlgItem( hDlg, IDC_CUSTOM_WEB_EDIT ), strWebContent.c_str( ) );
+
+                SendMessage( GetDlgItem( hDlg, IDC_SYS_TRAY_CHECK ), BM_SETCHECK, ( appConfig->MinimizeToSystemTray( ) ) ? BST_CHECKED : BST_UNCHECKED, 0 );
             }
 
             return (INT_PTR) TRUE;
@@ -93,6 +95,7 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
                     appConfig->SetJpegQuality( (uint16_t) SendMessage( GetDlgItem( hDlg, IDC_JPEG_Q_SPIN ), UDM_GETPOS32, 0, 0 ) );
                     appConfig->SetMjpegFrameRate( (uint16_t) SendMessage( GetDlgItem( hDlg, IDC_MJPEG_RATE_SPIN ), UDM_GETPOS32, 0, 0 ) );
                     appConfig->SetHttpPort( (uint16_t) SendMessage( GetDlgItem( hDlg, IDC_HTTP_PORT_SPIN ), UDM_GETPOS32, 0, 0 ) );
+                    appConfig->SetMinimizeToSystemTray( SendMessage( GetDlgItem( hDlg, IDC_SYS_TRAY_CHECK ), BM_GETCHECK, 0, 0 ) == BST_CHECKED );
 
                     HWND   hwndWebContentEdit = GetDlgItem( hDlg, IDC_CUSTOM_WEB_EDIT );
                     int    len                = GetWindowTextLength( hwndWebContentEdit ) + 1;
