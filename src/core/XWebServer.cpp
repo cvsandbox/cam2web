@@ -761,7 +761,7 @@ static bool check_nonce( const char* nonce )
 {
     unsigned long now = (unsigned long) mg_time( );
     unsigned long val = (unsigned long) strtoul( nonce, NULL, 16 );
-    return ( now > val ) && ( now - val < 3600 );
+    return ( now >= val ) && ( now - val < 3600 );
 }
 
 // Check digest authentication and resolve group of the incoming user
