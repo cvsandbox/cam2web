@@ -70,20 +70,20 @@ using namespace std;
 
 #define MAX_LOADSTRING          (100)
 
-#define IDC_STATIC_CAMERAS      (501)
-#define IDC_COMBO_CAMERAS       (502)
-#define IDC_STATIC_RESOLUTIONS  (503)
-#define IDC_COMBO_RESOLUTIONS   (504)
-#define IDC_BUTTON_START        (505)
-#define IDC_LINK_STATUS         (506)
-#define IDC_SYS_TRAY_ID         (508)
+#define IDC_COMBO_CAMERAS       (501)
+#define IDC_COMBO_RESOLUTIONS   (502)
+#define IDC_BUTTON_START        (503)
+#define IDC_LINK_STATUS         (504)
+#define IDC_STATIC_ERROR_MSG    (505)
+#define IDC_SYS_TRAY_ID         (506)
 
 #define STR_ERROR               TEXT( "Error" )
 #define STR_START_STREAMING     TEXT( "&Start streaming" )
 #define STR_STOP_STREAMING      TEXT( "&Stop streaming" )
 
 #define WM_UPDATE_UI            (WM_USER + 1)
-#define WM_SYS_TRAY_NOTIFY      (WM_USER + 2)
+#define WM_UPDATE_ERROR         (WM_USER + 2)
+#define WM_SYS_TRAY_NOTIFY      (WM_USER + 3)
 
 #define TIMER_ID_EVENT          (0xB0B)
 
@@ -92,7 +92,17 @@ LRESULT CALLBACK MainWndProc( HWND, UINT, WPARAM, LPARAM );
 INT_PTR CALLBACK AboutDlgProc( HWND, UINT, WPARAM, LPARAM );
 void GetVideoDevices( );
 
-// Place holder for all global variable the application needs
+// Listener for camera errors
+class CameraErrorListener : public IVideoSourceListener
+{
+public:
+    // New video frame notification
+    virtual void OnNewImage( const shared_ptr<const XImage>& image );
+    // Video source error notification
+    virtual void OnError( const string& errorMessage, bool fatal );
+};
+
+// Place holder for all global variables the application needs
 class AppData
 {
 public:
@@ -108,6 +118,7 @@ public:
     HWND        hwndResolutionsCombo;
     HWND        hwndStartButton;
     HWND        hwndStatusLink;
+    HWND        hwndErrorMessage;
     HICON       hiconTrayIcon;
 
     vector<XDeviceName>             devices;
@@ -129,15 +140,21 @@ public:
     XObjectConfigurationSerializer  appConfigSerializer;
     XObjectConfigurationSerializer  cameraConfigSerializer;
 
+    string                          lastVideoSourceError;
+
+    XVideoSourceListenerChain       listenerChain;
+    CameraErrorListener             cameraErrorListener;
+
     AppData( ) :
         hInst( NULL ), hwndMain( NULL ), hwndCamerasCombo( NULL ),
         autoStartStreaming( false ), minimizeWindowOnStart( false ),
-        hwndResolutionsCombo( NULL ), hwndStartButton( NULL ), hwndStatusLink( NULL ), hiconTrayIcon( NULL ),
+        hwndResolutionsCombo( NULL ), hwndStartButton( NULL ), hwndStatusLink( NULL ), hwndErrorMessage( NULL ), hiconTrayIcon( NULL ),
         devices( ), cameraCapabilities( ), camera( ), selectedDeviceName( ), selectedResolutuion( ),
         cameraConfig( ), appConfig( new AppConfig( ) ), server( ), video2web( ),
         streamingInProgress( false ),
         appFolder( ".\\" ), appConfigFile( "cam2web.cfg" ),
-        appConfigSerializer( ), cameraConfigSerializer( )
+        appConfigSerializer( ), cameraConfigSerializer( ), lastVideoSourceError( ),
+        listenerChain( ), cameraErrorListener( )
     {
         // find user' home folder to store settings
         WCHAR homeFolder[MAX_PATH];
@@ -156,6 +173,23 @@ public:
     }
 };
 AppData* gData = NULL;
+
+// New video frame notification - clear error
+void CameraErrorListener::OnNewImage( const shared_ptr<const XImage>& /* image */ )
+{
+    if ( !gData->lastVideoSourceError.empty( ) )
+    {
+        gData->lastVideoSourceError.clear( );
+        PostMessage( gData->hwndMain, WM_UPDATE_ERROR, 0, 0 );
+    }
+};
+
+// Video source error notification
+void CameraErrorListener::OnError( const string& errorMessage, bool fatal )
+{
+    gData->lastVideoSourceError = ( ( fatal ) ? "Fatal: " : "" ) + errorMessage;
+    PostMessage( gData->hwndMain, WM_UPDATE_ERROR, 0, 0 );
+}
 
 // Parse command line and override default settings
 static bool ParseCommandLine( int argc, WCHAR* argv[], AppData* appData )
@@ -277,7 +311,7 @@ static BOOL CreateMainWindow( HINSTANCE hInstance, int nCmdShow )
     InitCommonControlsEx( &initControls );
 
     HWND hwndMain = CreateWindow( gData->szWindowClass, gData->szTitle, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
-        CW_USEDEFAULT, CW_USEDEFAULT, 300, 200, NULL, NULL, hInstance, NULL );
+        CW_USEDEFAULT, CW_USEDEFAULT, 300, 220, NULL, NULL, hInstance, NULL );
     if ( hwndMain == NULL )
     {
         return FALSE;
@@ -285,30 +319,37 @@ static BOOL CreateMainWindow( HINSTANCE hInstance, int nCmdShow )
 
     gData->hwndMain = hwndMain;
 
+    ResizeWindowToClientSize( hwndMain, 300, 155 );
+
     // cameras' combo and label
     HWND hWindLabel = CreateWindow( WC_STATIC, TEXT( "&Camera:" ), WS_CHILD | WS_VISIBLE | WS_GROUP,
-        10, 14, 60, 20, hwndMain, (HMENU) IDC_STATIC_CAMERAS, hInstance, NULL );
+        10, 14, 70, 20, hwndMain, (HMENU) IDC_STATIC, hInstance, NULL );
 
     gData->hwndCamerasCombo = CreateWindow( WC_COMBOBOX, TEXT( "" ),
         CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VSCROLL | WS_VISIBLE | WS_TABSTOP,
-        70, 10, 200, 100, hwndMain, (HMENU) IDC_COMBO_CAMERAS, hInstance, NULL );
+        80, 10, 210, 100, hwndMain, (HMENU) IDC_COMBO_CAMERAS, hInstance, NULL );
 
     // resolutions' combo and label
     hWindLabel = CreateWindow( WC_STATIC, TEXT( "&Resolution:" ), WS_CHILD | WS_VISIBLE,
-        10, 39, 60, 20, hwndMain, (HMENU) IDC_STATIC_RESOLUTIONS, hInstance, NULL );
+        10, 39, 70, 20, hwndMain, (HMENU) IDC_STATIC, hInstance, NULL );
 
     gData->hwndResolutionsCombo = CreateWindow( WC_COMBOBOX, TEXT( "" ),
         CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VSCROLL | WS_VISIBLE | WS_TABSTOP,
-        70, 35, 200, 150, hwndMain, (HMENU) IDC_COMBO_RESOLUTIONS, hInstance, NULL );
+        80, 35, 210, 150, hwndMain, (HMENU) IDC_COMBO_RESOLUTIONS, hInstance, NULL );
 
-    // streaming start/stop button and link
+    // streaming start/stop button
     gData->hwndStartButton = CreateWindow( WC_BUTTON, STR_START_STREAMING,
         WS_CHILD | WS_OVERLAPPED | WS_VISIBLE | WS_TABSTOP,
-        10, 70, 260, 40, hwndMain, (HMENU) IDC_BUTTON_START, hInstance, NULL );
+        10, 70, 280, 40, hwndMain, (HMENU) IDC_BUTTON_START, hInstance, NULL );
 
+    // HTTP link to open camera in local browser
     gData->hwndStatusLink = CreateWindowEx( 0, WC_LINK, TEXT( "" ),
         WS_CHILD | WS_TABSTOP,
-        10, 120, 260, 20, hwndMain, (HMENU) IDC_LINK_STATUS, hInstance, NULL );
+        10, 120, 280, 20, hwndMain, (HMENU) IDC_LINK_STATUS, hInstance, NULL );
+
+    // error label
+    gData->hwndErrorMessage = CreateWindow( WC_STATIC, TEXT( "" ), WS_CHILD,
+        0, 140, 300, 15, hwndMain, (HMENU) IDC_STATIC_ERROR_MSG, hInstance, NULL );
 
     // set default font for the window and its childrent
     HGDIOBJ hFont = GetStockObject( DEFAULT_GUI_FONT );
@@ -606,7 +647,11 @@ static bool StartVideoStreaming( )
 #endif
         }
 
-        gData->camera->SetListener( gData->video2web.VideoSourceListener( ) );
+        gData->listenerChain.Clear( );
+        gData->listenerChain.Add( gData->video2web.VideoSourceListener( ) );
+        gData->listenerChain.Add( &gData->cameraErrorListener );
+
+        gData->camera->SetListener( &gData->listenerChain );
 
         if ( !gData->camera->Start( ) )
         {
@@ -656,6 +701,8 @@ static void StopVideoStreaming( )
     gData->server.ClearHandlers( );
     gData->server.ClearUsers( );
 
+    gData->lastVideoSourceError.clear( );
+
     SetWindowText( gData->hwndMain, gData->szTitle );
 }
 
@@ -678,6 +725,7 @@ static void ToggleStreaming( )
 
     // update UI controls
     PostMessage( gData->hwndMain, WM_UPDATE_UI, 0, 0 );
+    PostMessage( gData->hwndMain, WM_UPDATE_ERROR, 0, 0 );
 }
 
 // Minimize window to system tray
@@ -740,6 +788,8 @@ void RestoreFromTray( HWND hwnd )
 // Main window's message handler
 LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
+    static HBRUSH errorLabelBrush = CreateSolidBrush( RGB( 255, 230, 230 ) );
+
     int wmId, wmEvent;
 
     switch ( message )
@@ -845,9 +895,9 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
                 TCHAR strStatusLinkText[256];
 
                 swprintf( strStatusLinkText, 255, TEXT( "<a href=\"http://localhost:%d/\">Streaming on port %d ...</a>" ),
-                    gData->appConfig->HttpPort( ), gData->appConfig->HttpPort( ) );
+                          gData->appConfig->HttpPort( ), gData->appConfig->HttpPort( ) );
                 SetWindowText( gData->hwndStatusLink, strStatusLinkText );
-                
+
                 startButtonText       = STR_STOP_STREAMING;
                 enableCameraSelection = FALSE;
                 showStatusLink        = SW_SHOW;
@@ -859,6 +909,18 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             EnableWindow( gData->hwndResolutionsCombo, enableCameraSelection );
             EnableWindow( gData->hwndStartButton, TRUE );
             SetFocus( gData->hwndStartButton );
+        }
+        break;
+
+    case WM_UPDATE_ERROR:
+        if ( gData->lastVideoSourceError.empty( ) )
+        {
+            ShowWindow( gData->hwndErrorMessage, SW_HIDE );
+        }
+        else
+        {
+            SetWindowTextA( gData->hwndErrorMessage, gData->lastVideoSourceError.c_str( ) );
+            ShowWindow( gData->hwndErrorMessage, SW_SHOW );
         }
         break;
 
@@ -892,6 +954,22 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
     case WM_SETTEXT:
         UpdateTrayTip( hWnd, (WCHAR*) lParam );
         return DefWindowProc( hWnd, message, wParam, lParam );
+
+    case WM_CTLCOLORSTATIC:
+        if ( gData->hwndErrorMessage == (HWND) lParam )
+        {
+            HDC hdcStatic = (HDC) wParam;
+
+            SetTextColor( hdcStatic, RGB( 255, 0, 0 ) );
+            SetBkColor( hdcStatic, RGB( 255, 230, 230 ) );
+
+            return (INT_PTR) errorLabelBrush;
+        }
+        else
+        {
+            return DefWindowProc( hWnd, message, wParam, lParam );
+        }
+        break;
 
     default:
         return DefWindowProc( hWnd, message, wParam, lParam );

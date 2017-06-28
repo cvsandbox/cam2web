@@ -41,9 +41,24 @@ void CenterWindowTo( HWND hWnd, HWND hWndRef )
     GetWindowRect( hWnd, &wndRect );
 
     SetWindowPos( hWnd, HWND_TOP,
-        refRect.left + ( ( refRect.right - refRect.left ) - ( wndRect.right - wndRect.left ) ) / 2,
-        refRect.top + ( ( refRect.bottom - refRect.top ) - ( wndRect.bottom - wndRect.top ) ) / 2,
-        0, 0, SWP_NOSIZE );
+                  refRect.left + ( ( refRect.right  - refRect.left ) - ( wndRect.right  - wndRect.left ) ) / 2,
+                  refRect.top  + ( ( refRect.bottom - refRect.top  ) - ( wndRect.bottom - wndRect.top  ) ) / 2,
+                  0, 0, SWP_NOSIZE );
+}
+
+// Resize window so it has client rectangle of the specified size
+void ResizeWindowToClientSize( HWND hWnd, LONG width, LONG height )
+{
+    RECT rcClient, rcWind;
+    LONG dx, dy;
+
+    GetClientRect( hWnd, &rcClient );
+    GetWindowRect( hWnd, &rcWind );
+
+    dx = ( rcWind.right  - rcWind.left ) - rcClient.right;
+    dy = ( rcWind.bottom - rcWind.top  ) - rcClient.bottom;
+
+    MoveWindow( hWnd, rcWind.left, rcWind.top, width + dx, height + dy, TRUE );
 }
 
 // Initialize up/down control and its buddy control
