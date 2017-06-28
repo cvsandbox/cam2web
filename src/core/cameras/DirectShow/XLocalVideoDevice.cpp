@@ -28,7 +28,6 @@
 // Include DirectShow relate headers
 #include <dshow.h>
 #include <Dvdmedia.h>
-#include <Vidcap.h>
 // Include qedit.h to get ISampleGrabberCB declaration
 #include <qedit.h>
 
