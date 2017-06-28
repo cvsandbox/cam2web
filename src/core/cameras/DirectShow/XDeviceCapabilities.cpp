@@ -21,17 +21,17 @@
 #include "XDeviceCapabilities.hpp"
 
 XDeviceCapabilities::XDeviceCapabilities( ) :
-	mWidth( 0 ), mHeight( 0 ), mBits( 0 ), mAvgFps( 0 ), mMaxFps( 0 )
+    mWidth( 0 ), mHeight( 0 ), mBits( 0 ), mAvgFps( 0 ), mMaxFps( 0 )
 {
 }
 
 XDeviceCapabilities::XDeviceCapabilities( int width, int height, int bits, int avgFps, int maxFps ) :
-	mWidth( width ), mHeight( height ), mBits( bits ), mAvgFps( avgFps ), mMaxFps( maxFps )
+    mWidth( width ), mHeight( height ), mBits( bits ), mAvgFps( avgFps ), mMaxFps( maxFps )
 {
 }
 
 // Check if two capabilities are equal or not (width/height/bpp)
 bool XDeviceCapabilities::operator==( const XDeviceCapabilities& rhs ) const
 {
-	return ( ( mWidth == rhs.mWidth ) && ( mHeight == rhs.mHeight ) && ( mBits == rhs.mBits ) );
+    return ( ( mWidth == rhs.mWidth ) && ( mHeight == rhs.mHeight ) && ( mBits == rhs.mBits ) && ( mMaxFps == rhs.mMaxFps ) );
 }
