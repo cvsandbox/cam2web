@@ -552,6 +552,12 @@ void XLocalVideoDeviceData::WaitForStop( )
 bool XLocalVideoDeviceData::IsRunning( )
 {
     lock_guard<recursive_mutex> lock( Sync );
+
+    if ( ( !Running ) && ( BackgroundThread.joinable( ) ) )
+    {
+        BackgroundThread.join( );
+    }
+
     return Running;
 }
 

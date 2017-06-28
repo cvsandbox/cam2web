@@ -262,6 +262,12 @@ void XV4LCameraData::WaitForStop( )
 bool XV4LCameraData::IsRunning( )
 {
     lock_guard<recursive_mutex> lock( Sync );
+    
+    if ( ( !Running ) && ( ControlThread.joinable( ) ) )
+    {
+        ControlThread.join( );
+    }
+    
     return Running;
 }
 
