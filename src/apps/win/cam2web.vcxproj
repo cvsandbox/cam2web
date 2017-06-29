@@ -5,9 +5,17 @@
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Release|Win32">
       <Configuration>Release</Configuration>
       <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -22,7 +30,20 @@
     <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v120</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
@@ -35,7 +56,13 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -44,9 +71,19 @@
     <LocalDebuggerWorkingDirectory>$(ProjectDir)..\..\..\build\msvc\debug\bin\</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <LocalDebuggerWorkingDirectory>$(ProjectDir)..\..\..\build\msvc\debug\bin\64\</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <LocalDebuggerWorkingDirectory>$(ProjectDir)..\..\..\build\msvc\release\bin\</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <LocalDebuggerWorkingDirectory>$(ProjectDir)..\..\..\build\msvc\release\bin\64\</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -79,6 +116,37 @@ xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.css" "$(ProjectDir)..\..\..\b
       </Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../../core;../../core/Cameras/DirectShow;../../../externals/DirectShow;../../../externals/libjpeg-turbo/include;../../../externals/mongoose;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>../../../externals/libjpeg-turbo/lib-win/64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>jpeg-static.lib;Comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>xcopy /Y "$(TargetPath)" "$(ProjectDir)..\..\..\build\msvc\debug\bin\64\"
+xcopy /Y "$(ProjectDir)..\..\web\*.*" "$(ProjectDir)..\..\..\build\msvc\debug\bin\64\web\"
+del "$(ProjectDir)..\..\..\build\msvc\debug\bin\64\web\cameraproperties.html"
+ren "$(ProjectDir)..\..\..\build\msvc\debug\bin\64\web\cameraproperties_directshow.html" cameraproperties.html
+xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.js" "$(ProjectDir)..\..\..\build\msvc\debug\bin\64\web\"
+xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.css" "$(ProjectDir)..\..\..\build\msvc\debug\bin\64\web\"
+
+</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
@@ -102,6 +170,54 @@ xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.css" "$(ProjectDir)..\..\..\b
     </Link>
     <PostBuildEvent>
       <Command>xcopy /Y "$(TargetPath)" "$(ProjectDir)..\..\..\build\msvc\release\bin\"</Command>
+    </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>xcopy /Y "$(ProjectDir)..\..\web\*.*" "$(ProjectDir)..\..\..\build\msvc\release\include\"
+xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.js" "$(ProjectDir)..\..\..\build\msvc\release\include\"
+xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.css" "$(ProjectDir)..\..\..\build\msvc\release\include\"
+
+"$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\index.html" -o "$(ProjectDir)..\..\..\build\msvc\release\include\index.html.h"
+"$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\styles.css" -o "$(ProjectDir)..\..\..\build\msvc\release\include\styles.css.h"
+"$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\cam2web.png" -o "$(ProjectDir)..\..\..\build\msvc\release\include\cam2web.png.h"
+"$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\cam2web_white.png" -o "$(ProjectDir)..\..\..\build\msvc\release\include\cam2web_white.png.h"
+"$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\cameraproperties_directshow.html" -o "$(ProjectDir)..\..\..\build\msvc\release\include\cameraproperties.html.h"
+"$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\camera.js" -o "$(ProjectDir)..\..\..\build\msvc\release\include\camera.js.h"
+"$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\cameraproperties.js" -o "$(ProjectDir)..\..\..\build\msvc\release\include\cameraproperties.js.h"
+
+"$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\jquery.js" -o "$(ProjectDir)..\..\..\build\msvc\release\include\jquery.js.h"
+"$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\jquery.mobile.js" -o "$(ProjectDir)..\..\..\build\msvc\release\include\jquery.mobile.js.h"
+"$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\jquery.mobile.css" -o "$(ProjectDir)..\..\..\build\msvc\release\include\jquery.mobile.css.h"
+
+del "$(ProjectDir)..\..\..\build\msvc\release\include\*.html"
+del "$(ProjectDir)..\..\..\build\msvc\release\include\*.css"
+del "$(ProjectDir)..\..\..\build\msvc\release\include\*.js"
+</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>../../core;../../core/Cameras/DirectShow;../../../externals/DirectShow;../../../externals/libjpeg-turbo/include;../../../externals/mongoose;../../../build/msvc/release/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>../../../externals/libjpeg-turbo/lib-win/64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>jpeg-static.lib;Comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <IgnoreAllDefaultLibraries>
+      </IgnoreAllDefaultLibraries>
+    </Link>
+    <PostBuildEvent>
+      <Command>xcopy /Y "$(TargetPath)" "$(ProjectDir)..\..\..\build\msvc\release\bin\64\"</Command>
     </PostBuildEvent>
     <PreBuildEvent>
       <Command>xcopy /Y "$(ProjectDir)..\..\web\*.*" "$(ProjectDir)..\..\..\build\msvc\release\include\"
@@ -159,7 +275,9 @@ del "$(ProjectDir)..\..\..\build\msvc\release\include\*.js"
   <ItemGroup>
     <ClCompile Include="..\..\..\externals\mongoose\mongoose.c">
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Level3</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Level2</WarningLevel>
       <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Level3</WarningLevel>
+      <WarningLevel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Level2</WarningLevel>
     </ClCompile>
     <ClCompile Include="..\..\core\cameras\DirectShow\XDeviceCapabilities.cpp" />
     <ClCompile Include="..\..\core\cameras\DirectShow\XDeviceName.cpp" />

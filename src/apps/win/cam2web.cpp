@@ -453,7 +453,7 @@ int APIENTRY _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
 // Create video source object for the selected device and get its available resolutions
 static void CreateDeviceAndGetResolutions( )
 {
-    int cameraIndex = SendMessage( gData->hwndCamerasCombo, (UINT) CB_GETCURSEL, 0, 0 );
+    int cameraIndex = static_cast<int>( SendMessage( gData->hwndCamerasCombo, (UINT) CB_GETCURSEL, 0, 0 ) );
 
     SendMessage( gData->hwndResolutionsCombo, CB_RESETCONTENT, 0, 0 );
 
@@ -568,7 +568,7 @@ static bool StartVideoStreaming( )
     if ( gData->camera )
     {
         string    cameraMoniker   = gData->selectedDeviceName.Moniker( );
-        int       resolutionIndex = SendMessage( gData->hwndResolutionsCombo, (UINT) CB_GETCURSEL, 0, 0 );
+        int       resolutionIndex = static_cast<int>( SendMessage( gData->hwndResolutionsCombo, (UINT) CB_GETCURSEL, 0, 0 ) );
         UserGroup viewersGroup    = static_cast<UserGroup>( gData->appConfig->ViewersGroup( ) );
         UserGroup configGroup     = static_cast<UserGroup>( gData->appConfig->ConfiguratorsGroup( ) );
 
@@ -601,7 +601,7 @@ static bool StartVideoStreaming( )
         gData->cameraConfig = make_shared<XLocalVideoDeviceConfig>( gData->camera );
 
         // use MD5 of camera's moniker as file name to store camera's setting - just to avoid unfriendly characters which may happen in the moniker
-        string cameraSettingsFileName = gData->appFolder + GetMd5Hash( (const uint8_t*) cameraMoniker.c_str( ), cameraMoniker.length( ) ) + ".cfg";
+        string cameraSettingsFileName = gData->appFolder + GetMd5Hash( (const uint8_t*) cameraMoniker.c_str( ), static_cast<int>( cameraMoniker.length( ) ) ) + ".cfg";
 
         // restore camera settings
         gData->cameraConfigSerializer = XObjectConfigurationSerializer( cameraSettingsFileName, gData->cameraConfig );

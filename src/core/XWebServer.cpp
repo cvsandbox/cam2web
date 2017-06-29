@@ -144,7 +144,7 @@ namespace Private
         // Send the specified buffer into response
         void Send( const uint8_t* buffer, size_t length )
         {
-            mg_send( mConnection, buffer, length );
+            mg_send( mConnection, buffer, static_cast<int>( length ) );
         }
 
         // Print formatted response
