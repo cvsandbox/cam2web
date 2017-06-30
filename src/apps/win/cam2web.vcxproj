@@ -146,6 +146,9 @@ xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.css" "$(ProjectDir)..\..\..\b
       <Command>
       </Command>
     </PreBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -241,6 +244,9 @@ del "$(ProjectDir)..\..\..\build\msvc\release\include\*.css"
 del "$(ProjectDir)..\..\..\build\msvc\release\include\*.js"
 </Command>
     </PreBuildEvent>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\core\cameras\DirectShow\XDeviceCapabilities.hpp" />
