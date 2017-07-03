@@ -451,8 +451,8 @@ string XWebServer::CalculateDigestAuthHa1( const string& user, const string& dom
 {
     char ha1[33];
 
-    cs_md5( ha1, user.c_str( ), user.length( ), ":", 1,
-                 domain.c_str( ), domain.length( ), ":", 1,
+    cs_md5( ha1, user.c_str( ), user.length( ), ":", static_cast<size_t>( 1 ),
+                 domain.c_str( ), domain.length( ), ":", static_cast<size_t>( 1 ),
                  pass.c_str( ), pass.length( ), nullptr );
 
     return string( ha1 );
@@ -796,17 +796,25 @@ UserGroup XWebServerData::CheckDigestAuth( struct http_message* msg )
                 char ha2[33];
 
                 // HA2 = MD5( method:digestURI )
-                cs_md5( ha2, msg->method.p, msg->method.len, ":", 1,
-                             msg->uri.p, msg->uri.len + ( msg->query_string.len ? msg->query_string.len + 1 : 0 ), NULL );
-                
+                cs_md5( ha2, msg->method.p, static_cast<size_t>( msg->method.len ),
+                             ":", static_cast<size_t>( 1 ),
+                             msg->uri.p, static_cast<size_t>( msg->uri.len + ( msg->query_string.len ? msg->query_string.len + 1 : 0 ) ),
+                             nullptr );
+
                 // response = MD5( HA1:nonce:nonceCount:cnonce:qop:HA2 )
                 cs_md5( expected_response, 
-                        itUser->second.first.c_str( ), itUser->second.first.length( ), ":", 1, // HA1 of the user
-                        nonce, strlen( nonce ), ":", 1,
-                        nc, strlen( nc ), ":", 1,
-                        cnonce, strlen( cnonce ), ":", 1,
-                        qop, strlen( qop ), ":", 1,
-                        ha2, 32, NULL );
+                        itUser->second.first.c_str( ), itUser->second.first.length( ), // HA1 of the user
+                        ":", static_cast<size_t>( 1 ),
+                        nonce, strlen( nonce ),
+                        ":", static_cast<size_t>( 1 ),
+                        nc, strlen( nc ),
+                        ":", static_cast<size_t>( 1 ),
+                        cnonce, strlen( cnonce ),
+                        ":", static_cast<size_t>( 1 ),
+                        qop, strlen( qop ),
+                        ":", static_cast<size_t>( 1 ),
+                        ha2, static_cast<size_t>( 32 ),
+                        nullptr );
 
                 if ( strcmp( response, expected_response ) == 0 )
                 {
