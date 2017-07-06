@@ -24,6 +24,7 @@
 #include <sdkddkver.h>
 #include <windows.h>
 #include <wincrypt.h>
+#include <iphlpapi.h>
 #include <algorithm>
 #include <functional>
 #include <cctype>
@@ -131,7 +132,7 @@ string GetMd5Hash( const uint8_t* buffer, int bufferLength )
                         }
                     }
 
-                    delete[] hashValue;
+                    delete [] hashValue;
                 }
             }
         }
@@ -147,4 +148,56 @@ string GetMd5Hash( const uint8_t* buffer, int bufferLength )
     }
 
     return md5str;
+}
+
+// Get local IP address as string (if a single valid IP found). Returns empty string if fails to resolve.
+string GetLocalIpAddress( )
+{
+    PIP_ADAPTER_INFO pAdapterInfo = (IP_ADAPTER_INFO *) malloc( sizeof( IP_ADAPTER_INFO ) );
+    PIP_ADAPTER_INFO pAdapter     = nullptr;
+    ULONG            ulOutBufLen  = sizeof( IP_ADAPTER_INFO );
+    string           localIp;
+
+    if ( pAdapterInfo != nullptr )
+    {
+        if ( GetAdaptersInfo( pAdapterInfo, &ulOutBufLen ) == ERROR_BUFFER_OVERFLOW )
+        {
+            free( pAdapterInfo );
+            pAdapterInfo = (IP_ADAPTER_INFO *) malloc( ulOutBufLen );
+        }
+    }
+
+    if ( pAdapterInfo != nullptr )
+    {
+        if ( GetAdaptersInfo( pAdapterInfo, &ulOutBufLen ) == NO_ERROR )
+        {
+            pAdapter = pAdapterInfo;
+
+            while ( pAdapter )
+            {
+                if ( ( strcmp( pAdapter->IpAddressList.IpAddress.String, "0.0.0.0" ) != 0 ) &&
+                     ( strcmp( pAdapter->GatewayList.IpAddress.String, "0.0.0.0" ) != 0 ) &&
+                     ( pAdapter->IpAddressList.Next == nullptr ) &&
+                     ( pAdapter->GatewayList.Next == nullptr ) )
+                {
+                    if ( localIp.empty( ) )
+                    {
+                        localIp = string( pAdapter->IpAddressList.IpAddress.String );
+                    }
+                    else
+                    {
+                        // if there is more than one valid IP, assume we've failed
+                        localIp.clear( );
+                        break;
+                    }
+                }
+
+                pAdapter = pAdapter->Next;
+            }
+        }
+
+        free( pAdapterInfo );
+    }
+
+    return localIp;
 }

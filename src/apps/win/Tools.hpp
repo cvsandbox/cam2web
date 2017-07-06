@@ -39,4 +39,7 @@ std::string& StringTrim( std::string& s );
 // Calculate MD5 hash string for the given buffer
 std::string GetMd5Hash( const uint8_t* buffer, int bufferLength );
 
+// Get local IP address as string (if a single valid IP found). Returns empty string if fails to resolve.
+std::string GetLocalIpAddress( );
+
 #endif // UI_TOOLS_HPP

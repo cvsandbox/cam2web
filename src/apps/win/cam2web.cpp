@@ -905,10 +905,22 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             // update UI to reflect current streaming status
             if ( gData->streamingInProgress )
             {
-                TCHAR strStatusLinkText[256];
+                WCHAR  strStatusLinkText[256];
+                WCHAR  strPortNumber[16] = L"";
+                string localIp = GetLocalIpAddress( );
 
-                swprintf( strStatusLinkText, 255, TEXT( "<a href=\"http://localhost:%d/\">Streaming on port %d ...</a>" ),
-                          gData->appConfig->HttpPort( ), gData->appConfig->HttpPort( ) );
+                if ( localIp.empty( ) )
+                {
+                    localIp = "localhost";
+                }
+
+                if ( gData->appConfig->HttpPort( ) != 80 )
+                {
+                    swprintf( strPortNumber, 15, L":%d", gData->appConfig->HttpPort( ) );
+                }
+
+                swprintf( strStatusLinkText, 255, L"<a href=\"http://%s%s/\">Streaming on port %d ...</a>",
+                          Utf8to16( localIp ).c_str( ), strPortNumber, gData->appConfig->HttpPort( ) );
                 SetWindowText( gData->hwndStatusLink, strStatusLinkText );
 
                 startButtonText       = STR_STOP_STREAMING;
