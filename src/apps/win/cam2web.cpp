@@ -87,6 +87,11 @@ using namespace std;
 
 #define TIMER_ID_EVENT          (0xB0B)
 
+// Information provided on version request
+#define STR_INFO_PRODUCT        "cam2web"
+#define STR_INFO_VERSION        "1.0.0"
+#define STR_INFO_PLATFORM       "Windows"
+
 // Forward declarations of functions included in this code module:
 LRESULT CALLBACK MainWndProc( HWND, UINT, WPARAM, LPARAM );
 INT_PTR CALLBACK AboutDlgProc( HWND, UINT, WPARAM, LPARAM );
@@ -586,6 +591,13 @@ static bool StartVideoStreaming( )
                                                   static_cast<uint16_t>( gData->selectedResolutuion.MaximumFrameRate( ) ) );
         gData->appConfigSerializer.SaveConfiguration( );
 
+        // some read-only information about the version
+        PropertyMap versionInfo;
+
+        versionInfo.insert( PropertyMap::value_type( "product", STR_INFO_PRODUCT ) );
+        versionInfo.insert( PropertyMap::value_type( "version", STR_INFO_VERSION ) );
+        versionInfo.insert( PropertyMap::value_type( "platform", STR_INFO_PLATFORM ) );
+
         // prepare some read-only informational properties of the camera
         PropertyMap cameraInfo;
         char        strVideoSize[32];
@@ -616,6 +628,7 @@ static bool StartVideoStreaming( )
 
         // configure web server and handler
         gData->server.SetPort( gData->appConfig->HttpPort( ) ).
+                      AddHandler( make_shared<XObjectInformationRequestHandler>( "/version", make_shared<XObjectInformationMap>( versionInfo ) ) ).
                       AddHandler( make_shared<XObjectConfigurationRequestHandler>( "/camera/config", gData->cameraConfig ), configGroup ).
                       AddHandler( make_shared<XObjectInformationRequestHandler>( "/camera/info", make_shared<XObjectInformationMap>( cameraInfo ) ), viewersGroup ).
                       AddHandler( gData->video2web.CreateJpegHandler( "/camera/jpeg" ), viewersGroup ).
