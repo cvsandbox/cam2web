@@ -51,6 +51,11 @@
 
 using namespace std;
 
+// Information provided on version request
+#define STR_INFO_PRODUCT        "cam2web"
+#define STR_INFO_VERSION        "1.0.0"
+#define STR_INFO_PLATFORM       "Linux"
+
 XManualResetEvent ExitEvent;
 
 // Different application settings
@@ -341,6 +346,13 @@ int main( int argc, char* argv[] )
     shared_ptr<IObjectConfigurator>  xcameraConfig = make_shared<XV4LCameraConfig>( xcamera );
     XObjectConfigurationSerializer   serializer( Settings.CameraConfigFileName, xcameraConfig );
 
+    // some read-only information about the version
+    PropertyMap versionInfo;
+
+    versionInfo.insert( PropertyMap::value_type( "product", STR_INFO_PRODUCT ) );
+    versionInfo.insert( PropertyMap::value_type( "version", STR_INFO_VERSION ) );
+    versionInfo.insert( PropertyMap::value_type( "platform", STR_INFO_PLATFORM ) );
+
     // prepare some read-only informational properties of the camera
     PropertyMap cameraInfo;
     char        strVideoSize[32];
@@ -376,7 +388,8 @@ int main( int argc, char* argv[] )
     serializer.LoadConfiguration( );
 
     // add web handlers
-    server.AddHandler( make_shared<XObjectConfigurationRequestHandler>( "/camera/config", xcameraConfig ), configGroup ).
+    server.AddHandler( make_shared<XObjectInformationRequestHandler>( "/version", make_shared<XObjectInformationMap>( versionInfo ) ) ).
+           AddHandler( make_shared<XObjectConfigurationRequestHandler>( "/camera/config", xcameraConfig ), configGroup ).
            AddHandler( make_shared<XObjectInformationRequestHandler>( "/camera/info", make_shared<XObjectInformationMap>( cameraInfo ) ), viewersGroup ).
            AddHandler( video2web.CreateJpegHandler( "/camera/jpeg" ), viewersGroup ).
            AddHandler( video2web.CreateMjpegHandler( "/camera/mjpeg", Settings.FrameRate ), viewersGroup );
