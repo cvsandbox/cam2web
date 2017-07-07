@@ -73,6 +73,11 @@ public:
     std::string UsersFileName( ) const;
     void SetUsersFileName( const std::string& fileName );
 
+    // Get/Set main window's position
+    int32_t MainWindowX( ) const;
+    int32_t MainWindowY( ) const;
+    void SetMainWindowXY( int32_t x, int32_t y );
+
 public: // IObjectConfigurator interface
 
     virtual XError SetProperty( const std::string& propertyName, const std::string& value );
@@ -94,6 +99,8 @@ private:
     uint16_t    cameraBpp;
     uint16_t    cameraFps;
     bool        minimizeToSystemTray;
+    int32_t     mainWindowX;
+    int32_t     mainWindowY;
 
     std::string usersFileName;
 };

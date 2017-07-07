@@ -44,6 +44,8 @@ void CenterWindowTo( HWND hWnd, HWND hWndRef )
                   refRect.left + ( ( refRect.right  - refRect.left ) - ( wndRect.right  - wndRect.left ) ) / 2,
                   refRect.top  + ( ( refRect.bottom - refRect.top  ) - ( wndRect.bottom - wndRect.top  ) ) / 2,
                   0, 0, SWP_NOSIZE );
+
+    EnsureWindowVisible( hWnd );
 }
 
 // Resize window so it has client rectangle of the specified size
@@ -59,6 +61,51 @@ void ResizeWindowToClientSize( HWND hWnd, LONG width, LONG height )
     dy = ( rcWind.bottom - rcWind.top  ) - rcClient.bottom;
 
     MoveWindow( hWnd, rcWind.left, rcWind.top, width + dx, height + dy, TRUE );
+}
+
+// Make sure the specified window is within desktop area
+void EnsureWindowVisible( HWND hWnd )
+{
+    RECT workAreaRect, wndRect;
+    LONG newX, newY, wndWidth, wndHeight;
+
+    GetWindowRect( hWnd, &wndRect );
+    SystemParametersInfo( SPI_GETWORKAREA, 0, &workAreaRect, 0 );
+
+    wndWidth  = wndRect.right  - wndRect.left;
+    wndHeight = wndRect.bottom - wndRect.top;
+
+    // if target window is larger than desktop, then it will get the top-left corner
+    if ( ( wndWidth  < workAreaRect.right  - workAreaRect.left ) &&
+         ( wndHeight < workAreaRect.bottom - workAreaRect.top  ) )
+    {
+        newX = wndRect.left;
+        newY = wndRect.top;
+
+        if ( newX < workAreaRect.left )
+        {
+            newX = workAreaRect.left;
+        }
+        if ( newY < workAreaRect.top )
+        {
+            newY = workAreaRect.top;
+        }
+        if ( newX + wndWidth > workAreaRect.right )
+        {
+            newX = workAreaRect.right - wndWidth;
+        }
+        if ( newY + wndHeight > workAreaRect.bottom )
+        {
+            newY = workAreaRect.bottom - wndHeight;
+        }
+    }
+    else
+    {
+        newX = workAreaRect.left;
+        newY = workAreaRect.top;
+    }
+
+    SetWindowPos( hWnd, HWND_TOP, newX, newY, 0, 0, SWP_NOSIZE );
 }
 
 // Initialize up/down control and its buddy control

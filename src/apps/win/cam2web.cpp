@@ -362,7 +362,17 @@ static BOOL CreateMainWindow( HINSTANCE hInstance, int nCmdShow )
     SendMessage( hwndMain, WM_SETFONT, (WPARAM) hFont, TRUE );
     EnumChildWindows( hwndMain, SetWindowFont, (LPARAM) hFont );
 
-    CenterWindowTo( hwndMain, GetDesktopWindow( ) );
+    // restore main window's position or center it
+    if ( ( gData->appConfig->MainWindowX( ) == 0x0FFFFFFF ) || ( gData->appConfig->MainWindowY( ) == 0x0FFFFFFF ) )
+    {
+        CenterWindowTo( hwndMain, GetDesktopWindow( ) );
+    }
+    else
+    {
+        SetWindowPos( hwndMain, HWND_TOP, gData->appConfig->MainWindowX( ), gData->appConfig->MainWindowY( ), 0, 0, SWP_NOSIZE );
+        EnsureWindowVisible( hwndMain );
+    }
+
     ShowWindow( hwndMain, nCmdShow );
     UpdateWindow( hwndMain );
 
@@ -875,6 +885,18 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         {
             StopVideoStreaming( );
         }
+
+        // save main window's position
+        {
+            WINDOWPLACEMENT wndPlace = { 0 };
+
+            GetWindowPlacement( hWnd, &wndPlace );
+
+            gData->appConfig->SetMainWindowXY( wndPlace.rcNormalPosition.left, wndPlace.rcNormalPosition.top );
+
+            gData->appConfigSerializer.SaveConfiguration( );
+        }
+
         PostQuitMessage( 0 );
         break;
 

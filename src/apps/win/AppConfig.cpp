@@ -40,6 +40,8 @@ using namespace std;
 #define PROP_CAMERA_BPP     "cameraBpp"
 #define PROP_CAMERA_FPS     "cameraFps"
 #define PROP_MIN_TO_TRAY    "minToTray"
+#define PROP_MAIN_WIN_X     "mainWinX"
+#define PROP_MAIN_WIN_Y     "mainWinY"
 
 #define TYPE_INT (0)
 #define TYPE_STR (1)
@@ -59,7 +61,9 @@ const static map<string, int> SupportedProperties =
     { PROP_CAMERA_HEIGHT,  TYPE_INT },
     { PROP_CAMERA_BPP,     TYPE_INT },
     { PROP_CAMERA_FPS,     TYPE_INT },
-    { PROP_MIN_TO_TRAY,    TYPE_INT }
+    { PROP_MIN_TO_TRAY,    TYPE_INT },
+    { PROP_MAIN_WIN_X,     TYPE_INT },
+    { PROP_MAIN_WIN_Y,     TYPE_INT }
 };
 
 AppConfig::AppConfig( ) :
@@ -76,6 +80,7 @@ AppConfig::AppConfig( ) :
     cameraBpp( 0 ),
     cameraFps( 0 ),
     minimizeToSystemTray( false ),
+    mainWindowX( 0x0FFFFFFF ), mainWindowY( 0x0FFFFFFF ),
     usersFileName( "users.txt" )
 {
 
@@ -187,6 +192,21 @@ void AppConfig::SetMinimizeToSystemTray( bool enabled )
     minimizeToSystemTray = enabled;
 }
 
+// Get/Set main window's position
+int32_t AppConfig::MainWindowX( ) const
+{
+    return mainWindowX;
+}
+int32_t AppConfig::MainWindowY( ) const
+{
+    return mainWindowY;
+}
+void AppConfig::SetMainWindowXY( int32_t x, int32_t y )
+{
+    mainWindowX = x;
+    mainWindowY = y;
+}
+
 // Get/Set file name to store users' list in
 string AppConfig::UsersFileName( ) const
 {
@@ -274,6 +294,14 @@ XError AppConfig::SetProperty( const string& propertyName, const string& value )
             {
                 minimizeToSystemTray = ( intValue != 0 );
             }
+            else if ( propertyName == PROP_MAIN_WIN_X )
+            {
+                mainWindowX = intValue;
+            }
+            else if ( propertyName == PROP_MAIN_WIN_Y )
+            {
+                mainWindowY = intValue;
+            }
         }
     }
 
@@ -346,6 +374,14 @@ XError AppConfig::GetProperty( const string& propertyName, string& value ) const
         else if ( propertyName == PROP_MIN_TO_TRAY )
         {
             intValue = ( minimizeToSystemTray ) ? 1 : 0;
+        }
+        else if ( propertyName == PROP_MAIN_WIN_X )
+        {
+            intValue = mainWindowX;
+        }
+        else if ( propertyName == PROP_MAIN_WIN_Y )
+        {
+            intValue = mainWindowY;
         }
 
         if ( type == TYPE_INT )

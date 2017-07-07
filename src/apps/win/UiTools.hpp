@@ -28,6 +28,8 @@
 void CenterWindowTo( HWND hWnd, HWND hWndRef );
 // Resize window so it has client rectangle of the specified size
 void ResizeWindowToClientSize( HWND hWnd, LONG width, LONG height );
+// Make sure the specified window is within desktop area
+void EnsureWindowVisible( HWND hWnd );
 
 // Initialize up/down control and its buddy control
 void InitUpDownControl( HWND hwndUpDown, HWND hwndBuddy, uint16_t min, uint16_t max, uint16_t value );
