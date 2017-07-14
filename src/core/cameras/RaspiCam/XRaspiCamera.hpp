@@ -184,6 +184,11 @@ public: // Different settings of the video source (can be changed at run time)
     ImageEffect GetImageEffect( ) const;
     bool SetImageEffect( ImageEffect effect );
 
+    // Get/Set text annotation
+    std::string TextAnnotation( ) const;
+    bool SetTextTextAnnotation( const std::string& text, bool blackBackground = true );
+    bool ClearTextTextAnnotation( );
+
 private:
     Private::XRaspiCameraData* mData;
 };
