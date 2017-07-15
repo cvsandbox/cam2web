@@ -59,7 +59,7 @@ enum class ExposureMode
     VeryLong,
     FixedFps,
     AntiShake,
-    FireWorks
+    Fireworks
 };
 
 enum class ExposureMeteringMode

@@ -71,7 +71,7 @@ const static map<string, ExposureMode> SupportedExposureModes =
     { "VeryLong",     ExposureMode::VeryLong     },
     { "FixedFps",     ExposureMode::FixedFps     },
     { "AntiShake",    ExposureMode::AntiShake    },
-    { "FireWorks",    ExposureMode::FireWorks    }
+    { "Fireworks",    ExposureMode::Fireworks    }
 };
 
 const static map<string, ExposureMeteringMode> SupportedExposureMeteringModes =
