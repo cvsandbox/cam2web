@@ -160,6 +160,7 @@ xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.css" "$(ProjectDir)..\..\..\b
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile />
       <AdditionalIncludeDirectories>../../core;../../core/Cameras/DirectShow;../../../externals/DirectShow;../../../externals/libjpeg-turbo/include;../../../externals/mongoose;../../../build/msvc/release/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -208,6 +209,7 @@ del "$(ProjectDir)..\..\..\build\msvc\release\include\*.js"
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>../../core;../../core/Cameras/DirectShow;../../../externals/DirectShow;../../../externals/libjpeg-turbo/include;../../../externals/mongoose;../../../build/msvc/release/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
