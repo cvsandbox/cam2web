@@ -79,7 +79,9 @@ namespace Private
         ExposureMode            CameraExposureMode;
         ExposureMeteringMode    CameraExposureMeteringMode;
         ImageEffect             CameraImageEffect;
-        
+        string                  TextAnnotation;
+        bool                    TextBlackBackground;
+
     public:
         XRaspiCameraData( ) :
             Sync( ), ConfigSync( ), ControlThread( ), NeedToStop( ), Listener( nullptr ), Running( false ),
@@ -91,7 +93,8 @@ namespace Private
             Sharpness( 0 ), Contrast( 0 ), Brightness( 50 ), Saturation( 0 ),
             WhiteBalanceMode( AwbMode::Auto ), CameraExposureMode( ExposureMode::Auto ),
             CameraExposureMeteringMode( ExposureMeteringMode::Average ),
-            CameraImageEffect( ImageEffect::None )
+            CameraImageEffect( ImageEffect::None ),
+            TextAnnotation( ), TextBlackBackground( true )
         {
         }
                 
@@ -122,6 +125,7 @@ namespace Private
         bool SetExposureMode( ExposureMode mode );
         bool SetExposureMeteringMode( ExposureMeteringMode mode );
         bool SetImageEffect( ImageEffect effect );
+        bool SetTextTextAnnotation( const string& text, bool blackBackground );
         
         static void ControlThreadHanlder( XRaspiCameraData* me );
         static void CameraControlCallback( MMAL_PORT_T* port, MMAL_BUFFER_HEADER_T* buffer );
@@ -328,6 +332,20 @@ ImageEffect XRaspiCamera::GetImageEffect( ) const
 bool XRaspiCamera::SetImageEffect( ImageEffect effect )
 {
     return mData->SetImageEffect( effect );
+}
+
+// Get/Set text annotation
+string XRaspiCamera::TextAnnotation( ) const
+{
+    return mData->TextAnnotation;
+}
+bool XRaspiCamera::SetTextTextAnnotation( const string& text, bool blackBackground )
+{
+    return mData->SetTextTextAnnotation( text, blackBackground );
+}
+bool XRaspiCamera::ClearTextTextAnnotation( )
+{
+    return mData->SetTextTextAnnotation( string( ), true );
 }
 
 namespace Private
@@ -663,7 +681,8 @@ bool XRaspiCameraData::Init( )
              ( !SetWhiteBalanceMode( WhiteBalanceMode ) ) ||
              ( !SetExposureMode( CameraExposureMode ) ) || 
              ( !SetExposureMeteringMode( CameraExposureMeteringMode ) ) ||
-             ( !SetImageEffect( CameraImageEffect ) ) )
+             ( !SetImageEffect( CameraImageEffect ) ) ||
+             ( !SetTextTextAnnotation( TextAnnotation, TextBlackBackground ) ) )
         {
             NotifyError( "Failed applying camera configuration" );
         }
@@ -1053,7 +1072,38 @@ bool XRaspiCameraData::SetImageEffect( ImageEffect effect )
     
     return ret;
 }
-    
+
+// Add text annotation to camera's images
+bool XRaspiCameraData::SetTextTextAnnotation( const string& text, bool blackBackground )
+{
+    lock_guard<recursive_mutex> lock( ConfigSync );
+    bool                        ret = true;
+
+    TextAnnotation      = text;
+    TextBlackBackground = blackBackground;
+
+    if ( Camera != nullptr )
+    {
+        MMAL_PARAMETER_CAMERA_ANNOTATE_V2_T param = { { MMAL_PARAMETER_ANNOTATE, sizeof( param ) } };
+
+        param.enable                = ( text.empty( ) ) ? 0 : 1;
+        param.show_shutter          = 0;
+        param.show_analog_gain      = 0;
+        param.show_lens             = 0;
+        param.show_caf              = 0;
+        param.show_motion           = 0;
+        param.show_frame_num        = 0;
+        param.black_text_background = ( blackBackground ) ? 1 : 0;
+
+        strncpy( param.text, text.c_str( ), MMAL_CAMERA_ANNOTATE_MAX_TEXT_LEN_V2 - 1 );
+        param.text[MMAL_CAMERA_ANNOTATE_MAX_TEXT_LEN_V2 - 1] = 0;
+
+        ret = ( mmal_port_parameter_set( Camera->control, &param.hdr ) == MMAL_SUCCESS );
+    }
+
+    return ret;
+}
+
 // Background control thread - does not do much other than init, clean-up and wait in between
 void XRaspiCameraData::ControlThreadHanlder( XRaspiCameraData* me )
 {    
