@@ -506,7 +506,7 @@ static void CreateDeviceAndGetResolutions( )
 
             for ( auto cap : gData->cameraCapabilities )
             {
-                swprintf( strResolution, 255, TEXT( "%d x %d, %d bpp, %d fps" ), cap.Width( ), cap.Height( ), cap.BitCount( ), cap.MaximumFrameRate( ) );
+                swprintf( strResolution, 255, TEXT( "%d x %d, %d bpp, %d fps" ), cap.Width( ), cap.Height( ), cap.BitCount( ), cap.AverageFrameRate( ) );
 
                 SendMessage( gData->hwndResolutionsCombo, CB_ADDSTRING, 0, (LPARAM) strResolution );
 
