@@ -8,7 +8,7 @@ If building in debug configuration however, the web2h is not required – all we
 Microsoft Visual Studio solution files are provided for both web2h and cam2web applications (Express 2013 can be used, for example). First build **src/tools/web2h/make/msvc/web2h.sln** and then **src/apps/win/cam2web.sln**. On success, it will produce **build/msvc/[configuration]/bin** folder, which contains applications’ executables.
 
 ## Building on Linux and Raspberry Pi
-Makefiles for GNU make are provided for both web2h and cam2web. Running bellow commands from the project’s root folder, will produce the required executables.
+Makefiles for GNU make are provided for both web2h and cam2web. Running bellow commands from the project’s root folder, will produce the required executables in **build/gcc/release/bin**.
 ```Bash
 pushd .
 cd src/tools/web2h/make/gcc/
