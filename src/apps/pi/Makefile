@@ -101,6 +101,8 @@ $(OUT): $(OBJ)
 	$(COMPILER) -o $@ $(OBJ) $(LDFLAGS)
 
 build: $(OUT)
+	mkdir -p $(OUT_BIN)
+	cp $(OUT) $(OUT_BIN)
 
 clean:
 	rm $(OBJ) $(OUT)
