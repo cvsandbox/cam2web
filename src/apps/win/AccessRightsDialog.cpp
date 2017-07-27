@@ -159,12 +159,20 @@ static void UpdateUserInListView( HWND hwndListView, const string& userName, Use
         {
             LVITEM  lvI;
 
+            lvI.mask     = LVIF_IMAGE;
+            lvI.iItem    = i;
+            lvI.iSubItem = 0;
+            lvI.iImage   = ( userGroup == UserGroup::Admin ) ? 1 : 0;
+
+            ListView_SetItem( hwndListView, &lvI );
+
             lvI.mask     = LVIF_TEXT;
             lvI.iItem    = i;
             lvI.iSubItem = 1;
             lvI.pszText  = ( userGroup == UserGroup::Admin ) ? L"Admin" : L"User";
 
             ListView_SetItem( hwndListView, &lvI );
+
             break;
         }
     }
