@@ -12,3 +12,4 @@ The cam2web application supports HTTP digest authentication and allows to config
 
 * [Building the source code](Building.md)
 * [Running the application](Running.md)
+* [Accessing camera from other applications (WEB API)](WebAPI.md)
