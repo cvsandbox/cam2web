@@ -539,6 +539,8 @@ static void CreateDeviceAndGetResolutions( )
 // Populate list of available devices
 void GetVideoDevices( )
 {
+    int indexToSelect = 0;
+
     gData->devices = XLocalVideoDevice::GetAvailableDevices( );
 
     if ( gData->devices.empty( ) )
@@ -553,7 +555,6 @@ void GetVideoDevices( )
     {
         const string lastUsedCameraMoniker = gData->appConfig->CameraMoniker( );
         TCHAR        deviceName[256];
-        int          indexToSelect = 0;
         int          index = 0;
 
         for ( auto device : gData->devices )
@@ -569,10 +570,10 @@ void GetVideoDevices( )
 
             index++;
         }
-
-        SendMessage( gData->hwndCamerasCombo, CB_SETCURSEL, indexToSelect, 0 );
-        CreateDeviceAndGetResolutions( );
     }
+
+    SendMessage( gData->hwndCamerasCombo, CB_SETCURSEL, indexToSelect, 0 );
+    CreateDeviceAndGetResolutions( );
 }
 
 // Start streaming of the selected video source
