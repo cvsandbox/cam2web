@@ -1,0 +1,16 @@
+cam2web 1.0.0 release notes
+-------------------------------------------
+30.07.2017.
+
+* The first public release of the application.
+
+  cam2web is an application, which allows streaming a camera to web as MJPEG stream.
+  It supports number of platforms and cameras' APIs, like Windows - cameras supporting
+  DirectShow API (different USB cameras, laptops' cameras, etc.); Linux - cameras supporting
+  V4L2 API; Raspberry Pi - MMAL API to access Raspbery Pi's camera module.
+
+  Project page:
+  http://www.cvsandbox.com/tools/cam2web/
+  
+  GitHub page:
+  https://github.com/cvsandbox/cam2web
