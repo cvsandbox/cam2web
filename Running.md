@@ -28,5 +28,5 @@ Both Linux and Raspberry Pi versions are implemented as command line application
 
 Same as with Windows version, once the camera is streamed, it is accessible on http://ip:port/ URL.
 
-Unlike Windows version, the Linux/Pi version does not provide means for editing users’ list who can access camera. Instead, the [Appache htdigest](https://httpd.apache.org/docs/2.4/programs/htdigest.html) tool is used to manage users’ file, which name can then be specified as one of the cam2web’s command line options. This creates a limitation though – only one user with administrator role can be created, which is **admin**. All other names get user role.
+Unlike Windows version, the Linux/Pi version does not provide means for editing users’ list who can access camera. Instead, the [Apache htdigest](https://httpd.apache.org/docs/2.4/programs/htdigest.html) tool is used to manage users’ file, which name can then be specified as one of the cam2web’s command line options. This creates a limitation though – only one user with administrator role can be created, which is **admin**. All other names get user role.
 
