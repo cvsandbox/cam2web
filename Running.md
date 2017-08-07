@@ -19,7 +19,7 @@ The "Access rights" window allows to configure who can view the camera and chang
 **Note**: changing any application’s settings requires restarting camera streaming.
 
 The Windows version of cam2web also provides few command line options:
-* /start – Automatically start camera steaming on application start.
+* /start – Automatically start camera streaming on application start.
 * /minimize – Minimize application’s window on its start.
 * /fcfg:file_name – Name of configuration file to store application’s settings. By default, the application stores all settings (including last run camera/resolution) in app.cfg stored in cam2web folder within user’s home directory. However, the name of configuration file can be set different, so several instances of the application could run, having different settings and streaming different cameras.
 
