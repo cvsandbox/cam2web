@@ -149,9 +149,18 @@ namespace Private
         shared_ptr<XImage>     mImage;
         int                    mWidth;
         int                    mHeight;
+        bool                   mSSSE3supported;
 
     public:
-        SampleGrabber( XLocalVideoDeviceData* parent ) : mParent( parent ), mWidth( 0 ), mHeight( 0 ) { }
+        SampleGrabber( XLocalVideoDeviceData* parent ) : mParent( parent ), mWidth( 0 ), mHeight( 0 )
+        {
+            int CPUInfo[4];
+
+            __cpuid( CPUInfo, 1 );
+
+            mSSSE3supported = ( ( CPUInfo[2] & ( 1 << 9 ) ) != 0 );
+        }
+
         virtual ~SampleGrabber( ) { };
 
         // Set size of video frames provided by Sample Grabber
@@ -209,16 +218,79 @@ namespace Private
                 int      srcStride = bufferLen / mHeight;
                 uint8_t* dst       = mImage->Data( ) + dstStride * ( mHeight - 1 );
 
-                for ( int y = 0; y < mHeight; y++ )
+                if ( BlueIndex == 0 )
                 {
-                    uint8_t* dstRow = dst     - y * dstStride;
-                    uint8_t* srcRow = pBuffer + y * srcStride;
+                    int toCopy = mWidth * 3;
 
-                    for ( int x = 0; x < mWidth; x++, dstRow += 3, srcRow += 3 )
+                    for ( int y = 0; y < mHeight; y++ )
                     {
-                        dstRow[BlueIndex]  = srcRow[0];
-                        dstRow[GreenIndex] = srcRow[1];
-                        dstRow[RedIndex]   = srcRow[2];
+                        memcpy( dst - y * dstStride, pBuffer + y * srcStride, toCopy );
+                    }
+                }
+                else
+                {
+                    if ( !mSSSE3supported )
+                    {
+                        for ( int y = 0; y < mHeight; y++ )
+                        {
+                            uint8_t* dstRow = dst - y * dstStride;
+                            uint8_t* srcRow = pBuffer + y * srcStride;
+
+                            for ( int x = 0; x < mWidth; x++, dstRow += 3, srcRow += 3 )
+                            {
+                                dstRow[BlueIndex]  = srcRow[0];
+                                dstRow[GreenIndex] = srcRow[1];
+                                dstRow[RedIndex]   = srcRow[2];
+                            }
+                        }
+                    }
+                    else
+                    {
+                        int packs = mWidth / 16;
+                        int rem   = mWidth % 16;
+
+                        __m128i swapIndeces_0      = _mm_set_epi8( -1, 12, 13, 14,  9, 10, 11,  6,  7,  8,  3,  4,  5,  0,  1,  2 );
+                        __m128i swapIndeces_1      = _mm_set_epi8( 15, -1, 11, 12, 13,  8,  9, 10,  5,  6,  7,  2,  3,  4, -1,  0 );
+                        __m128i swapIndeces_2      = _mm_set_epi8( 13, 14, 15, 10, 11, 12,  7,  8,  9,  4,  5,  6,  1,  2,  3, -1 );
+                        __m128i chunk0IndecesFrom1 = _mm_set_epi8(  1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 );
+                        __m128i chunk2IndecesFrom1 = _mm_set_epi8( -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 14 );
+                        __m128i chunk1IndecesFrom0 = _mm_set_epi8( -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 15, -1 );
+                        __m128i chunk1IndecesFrom2 = _mm_set_epi8( -1,  0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 );
+
+                        for ( int y = 0; y < mHeight; y++ )
+                        {
+                            uint8_t* dstRow = dst - y * dstStride;
+                            uint8_t* srcRow = pBuffer + y * srcStride;
+                            __m128i  chunk0, chunk1, chunk2;
+
+                            for ( int x = 0; x < packs; x++, srcRow += 48, dstRow += 48 )
+                            {
+                                chunk0 = _mm_loadu_si128( (__m128i*) srcRow );
+                                chunk1 = _mm_loadu_si128( (__m128i*) ( srcRow + 16 ) );
+                                chunk2 = _mm_loadu_si128( (__m128i*) ( srcRow + 32 ) );
+
+                                _mm_storeu_si128( (__m128i*) dstRow,
+                                    _mm_or_si128( _mm_shuffle_epi8( chunk0, swapIndeces_0 ),
+                                                  _mm_shuffle_epi8( chunk1, chunk0IndecesFrom1 ) ) );
+
+                                _mm_storeu_si128( (__m128i*) ( dstRow + 16 ),
+                                    _mm_or_si128(
+                                    _mm_or_si128( _mm_shuffle_epi8( chunk1, swapIndeces_1 ),
+                                                  _mm_shuffle_epi8( chunk0, chunk1IndecesFrom0 ) ),
+                                                  _mm_shuffle_epi8( chunk2, chunk1IndecesFrom2 ) ) );
+
+                                _mm_storeu_si128( (__m128i*) ( dstRow + 32 ),
+                                    _mm_or_si128( _mm_shuffle_epi8( chunk2, swapIndeces_2 ),
+                                                  _mm_shuffle_epi8( chunk1, chunk2IndecesFrom1 ) ) );
+                            }
+
+                            for ( int x = 0; x < rem; x++, dstRow += 3, srcRow += 3 )
+                            {
+                                dstRow[BlueIndex]  = srcRow[0];
+                                dstRow[GreenIndex] = srcRow[1];
+                                dstRow[RedIndex]   = srcRow[2];
+                            }
+                        }
                     }
                 }
 
