@@ -31,6 +31,8 @@
 #include <shlobj.h>
 #include <tchar.h>
 #include <future>
+#include <chrono>
+#include <numeric>
 
 #include "resource.h"
 #include "Tools.hpp"
@@ -67,6 +69,7 @@ name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 using namespace std;
+using namespace std::chrono;
 
 #define MAX_LOADSTRING          (100)
 
@@ -75,7 +78,8 @@ using namespace std;
 #define IDC_BUTTON_START        (503)
 #define IDC_LINK_STATUS         (504)
 #define IDC_STATIC_ERROR_MSG    (505)
-#define IDC_SYS_TRAY_ID         (506)
+#define IDC_STATUS_BAR          (506)
+#define IDC_SYS_TRAY_ID         (507)
 
 #define STR_ERROR               TEXT( "Error" )
 #define STR_START_STREAMING     TEXT( "&Start streaming" )
@@ -85,7 +89,11 @@ using namespace std;
 #define WM_UPDATE_ERROR         (WM_USER + 2)
 #define WM_SYS_TRAY_NOTIFY      (WM_USER + 3)
 
-#define TIMER_ID_EVENT          (0xB0B)
+#define TIMER_ID_CAMERA_CONFIG  (0xB0B)
+#define TIMER_ID_FPS_UPDATE     (0xBADB0B)
+
+// Number of the last FPS values to average
+#define FPS_HISTORY_LENGTH (10)
 
 // Information provided on version request
 #define STR_INFO_PRODUCT        "cam2web"
@@ -123,7 +131,7 @@ public:
     HWND        hwndResolutionsCombo;
     HWND        hwndStartButton;
     HWND        hwndStatusLink;
-    HWND        hwndErrorMessage;
+    HWND        hwndStatusBar;
     HICON       hiconTrayIcon;
 
     vector<XDeviceName>             devices;
@@ -150,10 +158,15 @@ public:
     XVideoSourceListenerChain       listenerChain;
     CameraErrorListener             cameraErrorListener;
 
+    uint32_t                        lastFramesGot;
+    vector<float>                   lastFpsValues;
+    int                             nextFpsIndex;
+    steady_clock::time_point        lastFpsCheck;
+
     AppData( ) :
         hInst( NULL ), hwndMain( NULL ), hwndCamerasCombo( NULL ),
         autoStartStreaming( false ), minimizeWindowOnStart( false ),
-        hwndResolutionsCombo( NULL ), hwndStartButton( NULL ), hwndStatusLink( NULL ), hwndErrorMessage( NULL ), hiconTrayIcon( NULL ),
+        hwndResolutionsCombo( NULL ), hwndStartButton( NULL ), hwndStatusLink( NULL ), hwndStatusBar( NULL ), hiconTrayIcon( NULL ),
         devices( ), cameraCapabilities( ), camera( ), selectedDeviceName( ), selectedResolutuion( ),
         cameraConfig( ), appConfig( new AppConfig( ) ), server( ), video2web( ),
         streamingInProgress( false ),
@@ -176,6 +189,8 @@ public:
 
         appConfig->SetUsersFileName( appFolder + "users.txt" );
     }
+
+    void UpdateFpsInfo( );
 };
 AppData* gData = NULL;
 
@@ -324,7 +339,7 @@ static BOOL CreateMainWindow( HINSTANCE hInstance, int nCmdShow )
 
     gData->hwndMain = hwndMain;
 
-    ResizeWindowToClientSize( hwndMain, 300, 155 );
+    ResizeWindowToClientSize( hwndMain, 300, 165 );
 
     // cameras' combo and label
     HWND hWindLabel = CreateWindow( WC_STATIC, TEXT( "&Camera:" ), WS_CHILD | WS_VISIBLE | WS_GROUP,
@@ -352,9 +367,11 @@ static BOOL CreateMainWindow( HINSTANCE hInstance, int nCmdShow )
         WS_CHILD | WS_TABSTOP,
         10, 120, 280, 20, hwndMain, (HMENU) IDC_LINK_STATUS, hInstance, NULL );
 
-    // error label
-    gData->hwndErrorMessage = CreateWindow( WC_STATIC, TEXT( "" ), WS_CHILD,
-        0, 140, 300, 15, hwndMain, (HMENU) IDC_STATIC_ERROR_MSG, hInstance, NULL );
+    // status bar
+    int sbLabelsWidth[2] = { 220, -1 };
+
+    gData->hwndStatusBar = CreateStatusWindow( WS_CHILD | WS_VISIBLE, nullptr, hwndMain, IDC_STATUS_BAR );
+    SendMessage( gData->hwndStatusBar, SB_SETPARTS, 2, (LPARAM) sbLabelsWidth );
 
     // set default font for the window and its childrent
     HGDIOBJ hFont = GetStockObject( DEFAULT_GUI_FONT );
@@ -696,8 +713,16 @@ static bool StartVideoStreaming( )
 
             SetWindowText( gData->hwndMain, newWindowTitle.c_str( ) );
 
+            // reset FPS info
+            gData->lastFpsValues.clear( );
+            gData->lastFramesGot = 0;
+            gData->nextFpsIndex  = 0;
+            gData->lastFpsCheck  = steady_clock::now( );
+
             // setup timer to save camera configuration from time to time
-            SetTimer( gData->hwndMain, TIMER_ID_EVENT, 60000, NULL );
+            SetTimer( gData->hwndMain, TIMER_ID_CAMERA_CONFIG, 60000, NULL );
+            // setup time to update camera FPS information
+            SetTimer( gData->hwndMain, TIMER_ID_FPS_UPDATE, 1000, NULL );
 
             ret = true;
         }
@@ -709,7 +734,8 @@ static bool StartVideoStreaming( )
 // Stop streaming of the current video source
 static void StopVideoStreaming( )
 {
-    KillTimer( gData->hwndMain, TIMER_ID_EVENT );
+    KillTimer( gData->hwndMain, TIMER_ID_CAMERA_CONFIG );
+    KillTimer( gData->hwndMain, TIMER_ID_FPS_UPDATE );
 
     if ( gData->camera )
     {
@@ -728,6 +754,10 @@ static void StopVideoStreaming( )
     gData->lastVideoSourceError.clear( );
 
     SetWindowText( gData->hwndMain, gData->szTitle );
+
+    // clean status bar
+    SendMessage( gData->hwndStatusBar, SB_SETTEXT, 0, (LPARAM) nullptr );
+    SendMessage( gData->hwndStatusBar, SB_SETTEXT, 1, (LPARAM) nullptr );
 }
 
 // Toggle video streaming state
@@ -963,20 +993,24 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
     case WM_UPDATE_ERROR:
         if ( gData->lastVideoSourceError.empty( ) )
         {
-            ShowWindow( gData->hwndErrorMessage, SW_HIDE );
+            SendMessage( gData->hwndStatusBar, SB_SETTEXT, 0, (LPARAM) nullptr );
         }
         else
         {
-            SetWindowTextA( gData->hwndErrorMessage, gData->lastVideoSourceError.c_str( ) );
-            ShowWindow( gData->hwndErrorMessage, SW_SHOW );
+            wstring strError = Utf8to16( gData->lastVideoSourceError );
+            SendMessage( gData->hwndStatusBar, SB_SETTEXT, 0, (LPARAM) strError.c_str( ) );
         }
         break;
 
     case WM_TIMER:
-        if ( wParam == TIMER_ID_EVENT )
+        if ( wParam == TIMER_ID_CAMERA_CONFIG )
         {
             // save camera settings
             gData->cameraConfigSerializer.SaveConfiguration( );
+        }
+        else if ( wParam == TIMER_ID_FPS_UPDATE )
+        {
+            gData->UpdateFpsInfo( );
         }
         break;
 
@@ -1002,22 +1036,6 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
     case WM_SETTEXT:
         UpdateTrayTip( hWnd, (WCHAR*) lParam );
         return DefWindowProc( hWnd, message, wParam, lParam );
-
-    case WM_CTLCOLORSTATIC:
-        if ( gData->hwndErrorMessage == (HWND) lParam )
-        {
-            HDC hdcStatic = (HDC) wParam;
-
-            SetTextColor( hdcStatic, RGB( 255, 0, 0 ) );
-            SetBkColor( hdcStatic, RGB( 255, 230, 230 ) );
-
-            return (INT_PTR) errorLabelBrush;
-        }
-        else
-        {
-            return DefWindowProc( hWnd, message, wParam, lParam );
-        }
-        break;
 
     default:
         return DefWindowProc( hWnd, message, wParam, lParam );
@@ -1081,4 +1099,42 @@ INT_PTR CALLBACK AboutDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
         break;
     }
     return (INT_PTR) FALSE;
+}
+
+// Update FPS information provided in status bar
+void AppData::UpdateFpsInfo( )
+{
+    if ( ( camera ) && ( camera->IsRunning( ) ) )
+    {
+        steady_clock::time_point timeNow   = steady_clock::now( );
+        auto                     timeTaken = duration_cast<std::chrono::milliseconds>( timeNow - lastFpsCheck ).count( );
+        uint32_t                 framesGot = camera->FramesReceived( );
+        float                    fpsValue  = (float) ( framesGot - lastFramesGot ) / ( (float) timeTaken / 1000.0f );
+
+        if ( lastFpsValues.size( ) < FPS_HISTORY_LENGTH )
+        {
+            lastFpsValues.push_back( fpsValue );
+        }
+        else
+        {
+            lastFpsValues[nextFpsIndex] = fpsValue;
+
+            nextFpsIndex++;
+            nextFpsIndex %= FPS_HISTORY_LENGTH;
+        }
+
+        // get average value
+        float fpsAvg = std::accumulate( lastFpsValues.begin( ), lastFpsValues.end( ), 0.0f ) / lastFpsValues.size( );
+        WCHAR strFps[32];
+
+        swprintf( strFps, 31, L"FPS: %0.1f", fpsAvg );
+        SendMessage( gData->hwndStatusBar, SB_SETTEXT, 1, (LPARAM) strFps );
+
+        lastFramesGot = framesGot;
+        lastFpsCheck  = timeNow;
+    }
+    else
+    {
+        SendMessage( gData->hwndStatusBar, SB_SETTEXT, 1, (LPARAM) nullptr );
+    }
 }
