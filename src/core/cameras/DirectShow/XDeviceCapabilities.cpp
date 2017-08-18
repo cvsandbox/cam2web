@@ -21,12 +21,12 @@
 #include "XDeviceCapabilities.hpp"
 
 XDeviceCapabilities::XDeviceCapabilities( ) :
-    mWidth( 0 ), mHeight( 0 ), mBits( 0 ), mAvgFps( 0 ), mMaxFps( 0 )
+    mWidth( 0 ), mHeight( 0 ), mBits( 0 ), mAvgFps( 0 ), mMaxFps( 0 ), mMinFps( 0 )
 {
 }
 
-XDeviceCapabilities::XDeviceCapabilities( int width, int height, int bits, int avgFps, int maxFps ) :
-    mWidth( width ), mHeight( height ), mBits( bits ), mAvgFps( avgFps ), mMaxFps( maxFps )
+XDeviceCapabilities::XDeviceCapabilities( int width, int height, int bits, int avgFps, int maxFps, int minFps ) :
+    mWidth( width ), mHeight( height ), mBits( bits ), mAvgFps( avgFps ), mMaxFps( maxFps ), mMinFps( minFps )
 {
 }
 

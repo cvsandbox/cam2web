@@ -25,28 +25,30 @@
 class XDeviceCapabilities
 {
 public:
-	XDeviceCapabilities( );
-	XDeviceCapabilities( int width, int height, int bits, int avgFps, int maxFps );
+    XDeviceCapabilities( );
+    XDeviceCapabilities( int width, int height, int bits, int avgFps, int maxFps, int minFps );
 
-	int Width( ) const { return mWidth; }
-	int Height( ) const { return mHeight; }
-	int BitCount( ) const { return mBits; }
-	int AverageFrameRate( ) const { return mAvgFps; }
-	int MaximumFrameRate( ) const { return mMaxFps; }
+    int Width( ) const { return mWidth; }
+    int Height( ) const { return mHeight; }
+    int BitCount( ) const { return mBits; }
+    int AverageFrameRate( ) const { return mAvgFps; }
+    int MaximumFrameRate( ) const { return mMaxFps; }
+    int MinimumFrameRate( ) const { return mMinFps; }
 
-	// Check if two capabilities are equal or not (width/height/bpp)
-	bool operator==( const XDeviceCapabilities& rhs ) const;
+    // Check if two capabilities are equal or not (width/height/bpp)
+    bool operator==( const XDeviceCapabilities& rhs ) const;
     bool operator!=( const XDeviceCapabilities& rhs  ) const
-	{
+    {
         return ( !( (*this) == rhs ) ) ;
     }
 
 private:
-	int mWidth;
-	int mHeight;
-	int mBits;
-	int mAvgFps;
-	int mMaxFps;
+    int mWidth;
+    int mHeight;
+    int mBits;
+    int mAvgFps;
+    int mMaxFps;
+    int mMinFps;
 };
 
 #endif // XDEVICE_CAPABILITIES_HPP

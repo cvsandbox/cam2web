@@ -76,7 +76,7 @@ public:
     // Set device moniker for the video source (video source must not be running)
     bool SetDeviceMoniker( const std::string& moniker );
     // Set resolution and frame rate of the device (video source must not be running)
-    bool SetResolution( const XDeviceCapabilities& resolution );
+    bool SetResolution( const XDeviceCapabilities& resolution, uint32_t requestedFps = 0 );
     // Set video input of the device
     void SetVideoInput( const XDevicePinInfo& input );
 

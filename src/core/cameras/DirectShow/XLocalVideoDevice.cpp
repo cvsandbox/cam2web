@@ -52,7 +52,8 @@ namespace Private
     // Enumerate specified category/type filter's capabilities and set its media type to one of those capabilities
     static vector<XDeviceCapabilities> GetPinCapabilitiesAndConfigureIt( ICaptureGraphBuilder2* pCaptureGraphBuilder,
                                                                          IBaseFilter* pBaseFilter, const GUID* pCategory,
-                                                                         const XDeviceCapabilities& capToSet );
+                                                                         const XDeviceCapabilities& capToSet,
+                                                                         uint32_t requestedFps = 0 );
     // Create filter described by the specified moniker string
     static IBaseFilter* CreateFilter( const string& moniker );
 
@@ -74,6 +75,7 @@ namespace Private
         recursive_mutex             Sync;
         string                      DeviceMoniker;
         XDeviceCapabilities         Resolution;
+        uint32_t                    RequestedFps;
         XDevicePinInfo              VideoInput;
         volatile bool               NeedToSetVideoInput;
 
@@ -102,7 +104,7 @@ namespace Private
         
     public:
         XLocalVideoDeviceData( const string& deviceMoniker ) :
-            Sync( ), DeviceMoniker( deviceMoniker ), Resolution( ), VideoInput( ), NeedToSetVideoInput( false ),
+            Sync( ), DeviceMoniker( deviceMoniker ), Resolution( ), RequestedFps( 0 ), VideoInput( ), NeedToSetVideoInput( false ),
             Capabilities( ), VideoPins( ), IsCrossbarAvailable( false ), InfoCollectedEvent( ),
             Listener( nullptr ), ExitEvent( ), BackgroundThread( ), Running( false ),
             FramesCounter( 0 ),
@@ -356,14 +358,15 @@ bool XLocalVideoDevice::SetDeviceMoniker( const string& moniker )
 }
 
 // Set resolution and frame rate of the device (video source must not be running)
-bool XLocalVideoDevice::SetResolution( const XDeviceCapabilities& resolution )
+bool XLocalVideoDevice::SetResolution( const XDeviceCapabilities& resolution, uint32_t requestedFps )
 {
     lock_guard<recursive_mutex> lock( mData->Sync );
     bool ret = false;
 
     if ( !IsRunning( ) )
     {
-        mData->Resolution = resolution;
+        mData->Resolution   = resolution;
+        mData->RequestedFps = requestedFps;
         ret = true;
     }
 
@@ -772,7 +775,7 @@ void XLocalVideoDeviceData::RunVideo( bool run )
                 }
 
                 // collect supported frame sizes/rates
-                Capabilities = GetPinCapabilitiesAndConfigureIt( pCaptureGraphBuilder, pSourceFilter, &PIN_CATEGORY_CAPTURE, Resolution );
+                Capabilities = GetPinCapabilitiesAndConfigureIt( pCaptureGraphBuilder, pSourceFilter, &PIN_CATEGORY_CAPTURE, Resolution, RequestedFps );
                 InfoCollectedEvent.Signal( );
 
                 if ( run )
@@ -1245,10 +1248,27 @@ vector<XDevicePinInfo> ColletCrossbarVideoInputs( IAMCrossbar* pCrossbar )
     return videoPins;
 }
 
+// Helper function to set AvgTimePerFrame for the specified media type
+static void OverrideAverageTimePerFrame( AM_MEDIA_TYPE* pMediaType, uint32_t requestedFps )
+{
+    if ( ( pMediaType != nullptr ) && ( requestedFps != 0 ) )
+    {
+        if ( pMediaType->formattype == FORMAT_VideoInfo )
+        {
+            ( (VIDEOINFOHEADER*) pMediaType->pbFormat )->AvgTimePerFrame = 10000000LL / requestedFps;
+        }
+        else if ( pMediaType->formattype == FORMAT_VideoInfo2 )
+        {
+            ( (VIDEOINFOHEADER2*) pMediaType->pbFormat )->AvgTimePerFrame = 10000000LL / requestedFps;
+        }
+    }
+}
+
 // Enumerate specified category/type filter's capabilities and set its media type to one of those capabilities
 vector<XDeviceCapabilities> GetPinCapabilitiesAndConfigureIt( ICaptureGraphBuilder2* pCaptureGraphBuilder,
                                                               IBaseFilter* pBaseFilter, const GUID* pCategory,
-                                                              const XDeviceCapabilities& capToSet )
+                                                              const XDeviceCapabilities& capToSet,
+                                                              uint32_t requestedFps )
 {
     vector<XDeviceCapabilities> capabilites;
     IAMStreamConfig*            pStreamConfig = nullptr;
@@ -1285,7 +1305,8 @@ vector<XDeviceCapabilities> GetPinCapabilitiesAndConfigureIt( ICaptureGraphBuild
                         pVideoInfo->bmiHeader.biWidth, pVideoInfo->bmiHeader.biHeight,
                         pVideoInfo->bmiHeader.biBitCount,
                         (int) ( 10000000LL / pVideoInfo->AvgTimePerFrame ),
-                        (int) ( 10000000LL / caps.MinFrameInterval ) );
+                        (int) ( 10000000LL / caps.MinFrameInterval ),
+                        (int) ( 10000000LL / caps.MaxFrameInterval ) );
                 }
                 else if ( pMediaType->formattype == FORMAT_VideoInfo2 )
                 {
@@ -1295,7 +1316,8 @@ vector<XDeviceCapabilities> GetPinCapabilitiesAndConfigureIt( ICaptureGraphBuild
                         pVideoInfo->bmiHeader.biWidth, pVideoInfo->bmiHeader.biHeight,
                         pVideoInfo->bmiHeader.biBitCount,
                         (int) ( 10000000LL / pVideoInfo->AvgTimePerFrame ),
-                        (int) ( 10000000LL / caps.MinFrameInterval ) );
+                        (int) ( 10000000LL / caps.MinFrameInterval ),
+                        (int) ( 10000000LL / caps.MaxFrameInterval ) );
                 }
 
                 // TODO: ignore 12 bpp format since graph fails to start playing that
@@ -1332,10 +1354,12 @@ vector<XDeviceCapabilities> GetPinCapabilitiesAndConfigureIt( ICaptureGraphBuild
 
         if ( pExactMediaType != nullptr )
         {
+            OverrideAverageTimePerFrame( pExactMediaType, requestedFps );
             pStreamConfig->SetFormat( pExactMediaType );
         }
         else if ( pCloseMediaType != nullptr )
         {
+            OverrideAverageTimePerFrame( pCloseMediaType, requestedFps );
             pStreamConfig->SetFormat( pCloseMediaType );
         }
 

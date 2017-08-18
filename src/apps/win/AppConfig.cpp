@@ -39,6 +39,7 @@ using namespace std;
 #define PROP_CAMERA_HEIGHT  "cameraHeight"
 #define PROP_CAMERA_BPP     "cameraBpp"
 #define PROP_CAMERA_FPS     "cameraFps"
+#define PROP_REQUESTED_FPS  "requestedFps"
 #define PROP_MIN_TO_TRAY    "minToTray"
 #define PROP_MAIN_WIN_X     "mainWinX"
 #define PROP_MAIN_WIN_Y     "mainWinY"
@@ -61,6 +62,7 @@ const static map<string, int> SupportedProperties =
     { PROP_CAMERA_HEIGHT,  TYPE_INT },
     { PROP_CAMERA_BPP,     TYPE_INT },
     { PROP_CAMERA_FPS,     TYPE_INT },
+    { PROP_REQUESTED_FPS,  TYPE_INT },
     { PROP_MIN_TO_TRAY,    TYPE_INT },
     { PROP_MAIN_WIN_X,     TYPE_INT },
     { PROP_MAIN_WIN_Y,     TYPE_INT }
@@ -79,6 +81,7 @@ AppConfig::AppConfig( ) :
     cameraHeight( 0 ),
     cameraBpp( 0 ),
     cameraFps( 0 ),
+    requestedFps( 0 ),
     minimizeToSystemTray( false ),
     mainWindowX( 0x0FFFFFFF ), mainWindowY( 0x0FFFFFFF ),
     usersFileName( "users.txt" )
@@ -180,6 +183,16 @@ void AppConfig::SetLastVideoResolution( uint16_t width, uint16_t height, uint16_
     cameraHeight = height;
     cameraBpp    = bpp;
     cameraFps    = fps;
+}
+
+// Get/Set last requested frame rate
+uint16_t AppConfig::GetLastRequestedFrameRate( ) const
+{
+    return requestedFps;
+}
+void AppConfig::SetLastRequestedFrameRate( uint16_t fps )
+{
+    requestedFps = fps;
 }
 
 // Get/Set the flag inidicating that application should minimize to system tray
@@ -290,6 +303,10 @@ XError AppConfig::SetProperty( const string& propertyName, const string& value )
             {
                 cameraFps = static_cast<uint16_t>( intValue );
             }
+            else if ( propertyName == PROP_REQUESTED_FPS )
+            {
+                requestedFps = static_cast<uint16_t>( intValue );
+            }
             else if ( propertyName == PROP_MIN_TO_TRAY )
             {
                 minimizeToSystemTray = ( intValue != 0 );
@@ -370,6 +387,10 @@ XError AppConfig::GetProperty( const string& propertyName, string& value ) const
         else if ( propertyName == PROP_CAMERA_FPS )
         {
             intValue = cameraFps;
+        }
+        else if ( propertyName == PROP_REQUESTED_FPS )
+        {
+            intValue = requestedFps;
         }
         else if ( propertyName == PROP_MIN_TO_TRAY )
         {

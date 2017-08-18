@@ -75,11 +75,13 @@ using namespace std::chrono;
 
 #define IDC_COMBO_CAMERAS       (501)
 #define IDC_COMBO_RESOLUTIONS   (502)
-#define IDC_BUTTON_START        (503)
-#define IDC_LINK_STATUS         (504)
-#define IDC_STATIC_ERROR_MSG    (505)
-#define IDC_STATUS_BAR          (506)
-#define IDC_SYS_TRAY_ID         (507)
+#define IDC_EDIT_FRAME_RATE     (503)
+#define IDC_SPIN_FRAME_RATE     (504)
+#define IDC_BUTTON_START        (505)
+#define IDC_LINK_STATUS         (506)
+#define IDC_STATIC_ERROR_MSG    (507)
+#define IDC_STATUS_BAR          (508)
+#define IDC_SYS_TRAY_ID         (509)
 
 #define STR_ERROR               TEXT( "Error" )
 #define STR_START_STREAMING     TEXT( "&Start streaming" )
@@ -129,6 +131,8 @@ public:
     HWND        hwndMain;
     HWND        hwndCamerasCombo;
     HWND        hwndResolutionsCombo;
+    HWND        hwndFrameRateEdit;
+    HWND        hwndFrameRateSpin;
     HWND        hwndStartButton;
     HWND        hwndStatusLink;
     HWND        hwndStatusBar;
@@ -339,7 +343,7 @@ static BOOL CreateMainWindow( HINSTANCE hInstance, int nCmdShow )
 
     gData->hwndMain = hwndMain;
 
-    ResizeWindowToClientSize( hwndMain, 300, 165 );
+    ResizeWindowToClientSize( hwndMain, 300, 190 );
 
     // cameras' combo and label
     HWND hWindLabel = CreateWindow( WC_STATIC, TEXT( "&Camera:" ), WS_CHILD | WS_VISIBLE | WS_GROUP,
@@ -357,15 +361,27 @@ static BOOL CreateMainWindow( HINSTANCE hInstance, int nCmdShow )
         CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VSCROLL | WS_VISIBLE | WS_TABSTOP,
         80, 35, 210, 150, hwndMain, (HMENU) IDC_COMBO_RESOLUTIONS, hInstance, NULL );
 
+    // frame rate overriding
+    hWindLabel = CreateWindow( WC_STATIC, TEXT( "Fr&ame rate:" ), WS_CHILD | WS_VISIBLE,
+        10, 64, 70, 20, hwndMain, (HMENU) IDC_STATIC, hInstance, NULL );
+
+    gData->hwndFrameRateEdit = CreateWindowEx( WS_EX_LEFT | WS_EX_CLIENTEDGE, WC_EDIT, NULL,
+        WS_CHILDWINDOW | WS_VISIBLE | WS_BORDER | WS_TABSTOP | ES_NUMBER | ES_LEFT,
+        80, 60, 210, 20, hwndMain, (HMENU) IDC_EDIT_FRAME_RATE, hInstance, NULL );
+
+    gData->hwndFrameRateSpin = CreateWindowEx( WS_EX_LEFT | WS_EX_LTRREADING, UPDOWN_CLASS, NULL,
+        WS_CHILDWINDOW | WS_VISIBLE | UDS_AUTOBUDDY | UDS_SETBUDDYINT | UDS_ALIGNRIGHT | UDS_ARROWKEYS | UDS_HOTTRACK,
+        0, 0, 0, 0, hwndMain, (HMENU) IDC_SPIN_FRAME_RATE, hInstance, NULL );
+
     // streaming start/stop button
     gData->hwndStartButton = CreateWindow( WC_BUTTON, STR_START_STREAMING,
         WS_CHILD | WS_OVERLAPPED | WS_VISIBLE | WS_TABSTOP,
-        10, 70, 280, 40, hwndMain, (HMENU) IDC_BUTTON_START, hInstance, NULL );
+        10, 95, 280, 40, hwndMain, (HMENU) IDC_BUTTON_START, hInstance, NULL );
 
     // HTTP link to open camera in local browser
     gData->hwndStatusLink = CreateWindowEx( 0, WC_LINK, TEXT( "" ),
         WS_CHILD | WS_TABSTOP,
-        10, 120, 280, 20, hwndMain, (HMENU) IDC_LINK_STATUS, hInstance, NULL );
+        10, 145, 280, 20, hwndMain, (HMENU) IDC_LINK_STATUS, hInstance, NULL );
 
     // status bar
     int sbLabelsWidth[2] = { 220, -1 };
@@ -482,6 +498,46 @@ int APIENTRY _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
     return ret;
 }
 
+// Get the range of supported frame rates for the selected resolution
+static void GetFrameRateRange( )
+{
+    int resolutionIndex = static_cast<int>( SendMessage( gData->hwndResolutionsCombo, (UINT) CB_GETCURSEL, 0, 0 ) );
+
+    if ( ( resolutionIndex >= 0 ) && ( resolutionIndex < (int) gData->cameraCapabilities.size( ) ) )
+    {
+        XDeviceCapabilities selectedCaps = gData->cameraCapabilities[resolutionIndex];
+        int                 requestedFps = static_cast<int>( SendMessage( gData->hwndFrameRateSpin, UDM_GETPOS32, 0, 0 ) );
+
+        if ( requestedFps == 0 )
+        {
+            // nothing was chosen by user yet, so try the one used last time
+            requestedFps = gData->appConfig->GetLastRequestedFrameRate( );
+
+            if ( ( requestedFps < selectedCaps.MinimumFrameRate( ) ) ||
+                 ( requestedFps > selectedCaps.MaximumFrameRate( ) ) )
+            {
+                requestedFps = selectedCaps.AverageFrameRate( );
+            }
+        }
+        else
+        {
+            // always prefer default average frame when changing resolution
+            requestedFps = selectedCaps.AverageFrameRate( );
+        }
+
+        InitUpDownControl( gData->hwndFrameRateSpin, gData->hwndFrameRateEdit,
+                           static_cast<uint16_t>( selectedCaps.MinimumFrameRate( ) ),
+                           static_cast<uint16_t>( selectedCaps.MaximumFrameRate( ) ),
+                           static_cast<uint16_t>( requestedFps ) );
+        EnableWindow( gData->hwndFrameRateEdit, ( selectedCaps.MinimumFrameRate( ) != selectedCaps.MaximumFrameRate( ) ) );
+    }
+    else
+    {
+        InitUpDownControl( gData->hwndFrameRateSpin, gData->hwndFrameRateEdit, 0, 0, 0 );
+        EnableWindow( gData->hwndFrameRateEdit, FALSE );
+    }
+}
+
 // Create video source object for the selected device and get its available resolutions
 static void CreateDeviceAndGetResolutions( )
 {
@@ -549,6 +605,7 @@ static void CreateDeviceAndGetResolutions( )
             }
 
             SendMessage( gData->hwndResolutionsCombo, CB_SETCURSEL, ( foundExactMatch ) ? exactMatchIndex : closeMatchIndex, 0 );
+            GetFrameRateRange( );
         }
     }
 }
@@ -566,6 +623,7 @@ void GetVideoDevices( )
 
         EnableWindow( gData->hwndCamerasCombo, FALSE );
         EnableWindow( gData->hwndResolutionsCombo, FALSE );
+        EnableWindow( gData->hwndFrameRateEdit, FALSE );
         EnableWindow( gData->hwndStartButton, FALSE );
     }
     else
@@ -604,11 +662,12 @@ static bool StartVideoStreaming( )
         int       resolutionIndex = static_cast<int>( SendMessage( gData->hwndResolutionsCombo, (UINT) CB_GETCURSEL, 0, 0 ) );
         UserGroup viewersGroup    = static_cast<UserGroup>( gData->appConfig->ViewersGroup( ) );
         UserGroup configGroup     = static_cast<UserGroup>( gData->appConfig->ConfiguratorsGroup( ) );
+        uint16_t  requestedFps    = static_cast<uint16_t>( SendMessage( gData->hwndFrameRateSpin, UDM_GETPOS32, 0, 0 ) );
 
         if ( ( resolutionIndex >= 0 ) && ( resolutionIndex < (int) gData->cameraCapabilities.size( ) ) )
         {
             gData->selectedResolutuion = gData->cameraCapabilities[resolutionIndex];
-            gData->camera->SetResolution( gData->selectedResolutuion );
+            gData->camera->SetResolution( gData->selectedResolutuion, requestedFps );
         }
 
         // remember selected camera and resolution
@@ -617,6 +676,7 @@ static bool StartVideoStreaming( )
                                                   static_cast<uint16_t>( gData->selectedResolutuion.Height( ) ),
                                                   static_cast<uint16_t>( gData->selectedResolutuion.BitCount( ) ),
                                                   static_cast<uint16_t>( gData->selectedResolutuion.MaximumFrameRate( ) ) );
+        gData->appConfig->SetLastRequestedFrameRate( requestedFps );
         gData->appConfigSerializer.SaveConfiguration( );
 
         // some read-only information about the version
@@ -893,6 +953,13 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             }
             break;
 
+        case IDC_COMBO_RESOLUTIONS:
+            if ( wmEvent == CBN_SELCHANGE )
+            {
+                GetFrameRateRange( );
+            }
+            break;
+
         case IDC_BUTTON_START:
             if ( wmEvent == BN_CLICKED )
             {
@@ -902,6 +969,15 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
                 std::async( ToggleStreaming );
             }
+            break;
+
+        case IDC_EDIT_FRAME_RATE:
+            if ( wmEvent == EN_KILLFOCUS )
+            {
+                EnsureUpDownBuddyInRange( gData->hwndFrameRateSpin, gData->hwndFrameRateEdit );
+            }
+            break;
+
         default:
             return DefWindowProc( hWnd, message, wParam, lParam );
         }
@@ -985,6 +1061,7 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             ShowWindow( gData->hwndStatusLink, showStatusLink );
             EnableWindow( gData->hwndCamerasCombo, enableCameraSelection );
             EnableWindow( gData->hwndResolutionsCombo, enableCameraSelection );
+            EnableWindow( gData->hwndFrameRateEdit, enableCameraSelection );
             EnableWindow( gData->hwndStartButton, TRUE );
             SetFocus( gData->hwndStartButton );
         }
