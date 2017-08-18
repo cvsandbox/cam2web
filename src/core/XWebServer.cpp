@@ -32,6 +32,7 @@
 #endif
 
 using namespace std;
+using namespace std::chrono;
 
 namespace Private
 {
@@ -233,10 +234,13 @@ namespace Private
     class XWebServerData
     {
     public:
-        recursive_mutex DataSync;
-        string          DocumentRoot;
-        string          AuthDomain;
-        uint16_t        Port;
+        recursive_mutex           DataSync;
+        string                    DocumentRoot;
+        string                    AuthDomain;
+        uint16_t                  Port;
+
+        steady_clock::time_point  LastAccessTime;
+        bool                      WasAccessed;
 
     private:
         struct mg_mgr             EventManager;
@@ -266,6 +270,7 @@ namespace Private
     public:
         XWebServerData( const string& documentRoot, uint16_t port ) :
             DataSync( ), DocumentRoot( documentRoot ), AuthDomain( DEFAULT_AUTH_DOMAIN ), Port( port ),
+            LastAccessTime( ), WasAccessed( false ),
             EventManager( { 0 } ), ServerOptions( { 0 } ),
             ActiveDocumentRoot( nullptr ), ActiveAuthDomain( ),
             NeedToStop( ), IsStopped( ), StartSync( ), IsRunning( false )
@@ -404,6 +409,16 @@ void XWebServer::Stop( )
     mData->Stop( );
 }
 
+// Get time of the last access/request to the web server
+steady_clock::time_point XWebServer::LastAccessTime( bool* pWasAccessed )
+{
+    if ( pWasAccessed )
+    {
+        *pWasAccessed = mData->WasAccessed;
+    }
+    return mData->LastAccessTime;
+}
+
 // Add new web request handler
 XWebServer& XWebServer::AddHandler( const shared_ptr<IWebRequestHandler>& handler, UserGroup allowedUserGroup )
 {
@@ -495,6 +510,9 @@ bool XWebServerData::Start( )
 
     NeedToStop.Reset( );
     IsStopped.Reset( );
+
+    WasAccessed    = false;
+    LastAccessTime = steady_clock::time_point( );
 
     struct mg_connection* connection = mg_bind( &EventManager, strPort, eventHandler );
 
@@ -886,6 +904,12 @@ void XWebServerData::eventHandler( struct mg_connection* connection, int event, 
 
             handler->HandleTimer( response );
         }
+    }
+
+    if ( ( event != MG_EV_POLL ) && ( event != MG_EV_CLOSE ) )
+    {
+        self->WasAccessed    = true;
+        self->LastAccessTime = steady_clock::now( );
     }
 }
 

@@ -93,6 +93,7 @@ using namespace std::chrono;
 
 #define TIMER_ID_CAMERA_CONFIG  (0xB0B)
 #define TIMER_ID_FPS_UPDATE     (0xBADB0B)
+#define TIMER_ID_ACTIVITY_CHECK (0xF00D)
 
 // Number of the last FPS values to average
 #define FPS_HISTORY_LENGTH (10)
@@ -137,6 +138,7 @@ public:
     HWND        hwndStatusLink;
     HWND        hwndStatusBar;
     HICON       hiconTrayIcon;
+    HICON       hiconTrayActiveIcon;
 
     vector<XDeviceName>             devices;
     vector<XDeviceCapabilities>     cameraCapabilities;
@@ -170,7 +172,8 @@ public:
     AppData( ) :
         hInst( NULL ), hwndMain( NULL ), hwndCamerasCombo( NULL ),
         autoStartStreaming( false ), minimizeWindowOnStart( false ),
-        hwndResolutionsCombo( NULL ), hwndStartButton( NULL ), hwndStatusLink( NULL ), hwndStatusBar( NULL ), hiconTrayIcon( NULL ),
+        hwndResolutionsCombo( NULL ), hwndStartButton( NULL ), hwndStatusLink( NULL ), hwndStatusBar( NULL ),
+        hiconTrayIcon( NULL ), hiconTrayActiveIcon( NULL ),
         devices( ), cameraCapabilities( ), camera( ), selectedDeviceName( ), selectedResolutuion( ),
         cameraConfig( ), appConfig( new AppConfig( ) ), server( ), video2web( ),
         streamingInProgress( false ),
@@ -194,7 +197,9 @@ public:
         appConfig->SetUsersFileName( appFolder + "users.txt" );
     }
 
+    void LoadAppIcons( );
     void UpdateFpsInfo( );
+    void UpdateWebActivity( );
 };
 AppData* gData = NULL;
 
@@ -461,6 +466,8 @@ int APIENTRY _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
     gData->appConfigSerializer.LoadConfiguration( );
 
     MyRegisterClass( hInstance );
+
+    gData->LoadAppIcons( );
 
     // create main window of the application
     if ( CreateMainWindow( hInstance, ( gData->minimizeWindowOnStart ) ? SW_MINIMIZE : nCmdShow ) )
@@ -781,9 +788,11 @@ static bool StartVideoStreaming( )
 
             // setup timer to save camera configuration from time to time
             SetTimer( gData->hwndMain, TIMER_ID_CAMERA_CONFIG, 60000, NULL );
-            // setup time to update camera FPS information
+            // setup timer to update camera FPS information
             SetTimer( gData->hwndMain, TIMER_ID_FPS_UPDATE, 1000, NULL );
-
+            // setup timer to monitor for web server activity
+            SetTimer( gData->hwndMain, TIMER_ID_ACTIVITY_CHECK, 1000, NULL );
+            
             ret = true;
         }
     }
@@ -796,6 +805,7 @@ static void StopVideoStreaming( )
 {
     KillTimer( gData->hwndMain, TIMER_ID_CAMERA_CONFIG );
     KillTimer( gData->hwndMain, TIMER_ID_FPS_UPDATE );
+    KillTimer( gData->hwndMain, TIMER_ID_ACTIVITY_CHECK );
 
     if ( gData->camera )
     {
@@ -818,6 +828,8 @@ static void StopVideoStreaming( )
     // clean status bar
     SendMessage( gData->hwndStatusBar, SB_SETTEXT, 0, (LPARAM) nullptr );
     SendMessage( gData->hwndStatusBar, SB_SETTEXT, 1, (LPARAM) nullptr );
+
+    gData->UpdateWebActivity( );
 }
 
 // Toggle video streaming state
@@ -847,12 +859,6 @@ void MinimizeToTray( HWND hwnd )
 {
     NOTIFYICONDATA notifyData = { };
 
-    if ( gData->hiconTrayIcon == NULL )
-    {
-        gData->hiconTrayIcon = (HICON) LoadImage( GetModuleHandle( NULL ), MAKEINTRESOURCE( IDI_CAM2WEB ), IMAGE_ICON,
-                                                  GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
-    }
-
     notifyData.cbSize           = sizeof( notifyData );
     notifyData.hWnd             = hwnd;
     notifyData.uID              = IDC_SYS_TRAY_ID;
@@ -862,6 +868,8 @@ void MinimizeToTray( HWND hwnd )
 
     GetWindowText( hwnd, notifyData.szTip, sizeof( notifyData.szTip ) / sizeof( WCHAR ) );
     Shell_NotifyIcon( NIM_ADD, &notifyData );
+
+    gData->UpdateWebActivity( );
 
     // hide the window
     ShowWindow( hwnd, SW_HIDE );
@@ -1089,6 +1097,10 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         {
             gData->UpdateFpsInfo( );
         }
+        else if ( wParam == TIMER_ID_ACTIVITY_CHECK )
+        {
+            gData->UpdateWebActivity( );
+        }
         break;
 
     case WM_SIZE:
@@ -1178,6 +1190,16 @@ INT_PTR CALLBACK AboutDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
     return (INT_PTR) FALSE;
 }
 
+// Load some icons to be used by the application
+void AppData::LoadAppIcons( )
+{
+    hiconTrayIcon       = (HICON) LoadImage( GetModuleHandle( NULL ), MAKEINTRESOURCE( IDI_CAM2WEB ), IMAGE_ICON,
+                                             GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
+
+    hiconTrayActiveIcon = (HICON) LoadImage( GetModuleHandle( NULL ), MAKEINTRESOURCE( IDI_CAMERA_ACTIVE_BLUE ), IMAGE_ICON,
+                                             GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
+}
+
 // Update FPS information provided in status bar
 void AppData::UpdateFpsInfo( )
 {
@@ -1214,4 +1236,25 @@ void AppData::UpdateFpsInfo( )
     {
         SendMessage( gData->hwndStatusBar, SB_SETTEXT, 1, (LPARAM) nullptr );
     }
+}
+
+// Check last time web server was accessed
+void AppData::UpdateWebActivity( )
+{
+    bool    wasAccessedAtAll    = false;
+    auto    timeSinceLastAccess = duration_cast<std::chrono::milliseconds>( steady_clock::now( ) - server.LastAccessTime( &wasAccessedAtAll ) ).count( );
+    bool    activeIcon          = ( streamingInProgress ) && ( wasAccessedAtAll ) && ( timeSinceLastAccess <= 1000 );
+    HICON   iconToSet           = ( activeIcon ) ? hiconTrayActiveIcon : hiconTrayIcon;
+
+    NOTIFYICONDATA notifyData = { };
+
+    notifyData.cbSize = sizeof( notifyData );
+    notifyData.hWnd   = hwndMain;
+    notifyData.uID    = IDC_SYS_TRAY_ID;
+    notifyData.uFlags = NIF_ICON;
+    notifyData.hIcon  = iconToSet;
+
+    Shell_NotifyIcon( NIM_MODIFY, &notifyData );
+
+    SendMessage( hwndMain, WM_SETICON, ICON_SMALL, (LRESULT) iconToSet );
 }

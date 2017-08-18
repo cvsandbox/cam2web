@@ -319,6 +319,7 @@ del "$(ProjectDir)..\..\..\build\msvc\release\include\*.js"
     <Image Include="access.ico" />
     <Image Include="admin.ico" />
     <Image Include="cam2web.ico" />
+    <Image Include="camera_active_blue.ico" />
     <Image Include="family.ico" />
     <Image Include="password.ico" />
     <Image Include="settings.ico" />

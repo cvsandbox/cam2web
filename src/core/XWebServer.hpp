@@ -25,6 +25,7 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <chrono>
 
 #include "XInterfaces.hpp"
 
@@ -176,6 +177,9 @@ public:
     // Start/Stop the Web server
     bool Start( );
     void Stop( );
+
+    // Get time of the last access/request to the web server
+    std::chrono::steady_clock::time_point LastAccessTime( bool* pWasAccessed = nullptr );
 
     // Add/Remove user to access protected request handlers
     XWebServer& AddUser( const std::string& name, const std::string& digestHa1, UserGroup group );
