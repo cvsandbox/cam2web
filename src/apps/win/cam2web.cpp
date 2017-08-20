@@ -1072,6 +1072,11 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             EnableWindow( gData->hwndFrameRateEdit, enableCameraSelection );
             EnableWindow( gData->hwndStartButton, TRUE );
             SetFocus( gData->hwndStartButton );
+
+            if ( !gData->streamingInProgress )
+            {
+                GetFrameRateRange( );
+            }
         }
         break;
 
