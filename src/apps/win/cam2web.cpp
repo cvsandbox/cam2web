@@ -828,8 +828,6 @@ static void StopVideoStreaming( )
     // clean status bar
     SendMessage( gData->hwndStatusBar, SB_SETTEXT, 0, (LPARAM) nullptr );
     SendMessage( gData->hwndStatusBar, SB_SETTEXT, 1, (LPARAM) nullptr );
-
-    gData->UpdateWebActivity( );
 }
 
 // Toggle video streaming state
@@ -1077,6 +1075,8 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             {
                 GetFrameRateRange( );
             }
+
+            gData->UpdateWebActivity( );
         }
         break;
 
