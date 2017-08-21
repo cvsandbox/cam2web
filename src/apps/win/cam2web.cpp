@@ -1033,9 +1033,10 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
     case WM_UPDATE_UI:
         {
-            BOOL   enableCameraSelection = TRUE;
-            int    showStatusLink        = SW_HIDE;
-            TCHAR* startButtonText       = STR_START_STREAMING;
+            BOOL   enableCameraSelection    = TRUE;
+            BOOL   enableFrameRateSelection = FALSE;
+            int    showStatusLink           = SW_HIDE;
+            TCHAR* startButtonText          = STR_START_STREAMING;
 
             // update UI to reflect current streaming status
             if ( gData->streamingInProgress )
@@ -1062,19 +1063,22 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
                 enableCameraSelection = FALSE;
                 showStatusLink        = SW_SHOW;
             }
+            else
+            {
+                int minFps, maxFps;
+
+                SendMessage( gData->hwndFrameRateSpin, UDM_GETRANGE32, (WPARAM) &minFps, (LPARAM) &maxFps );
+
+                enableFrameRateSelection = ( minFps != maxFps );
+            }
 
             SetWindowText( gData->hwndStartButton, startButtonText );
             ShowWindow( gData->hwndStatusLink, showStatusLink );
             EnableWindow( gData->hwndCamerasCombo, enableCameraSelection );
             EnableWindow( gData->hwndResolutionsCombo, enableCameraSelection );
-            EnableWindow( gData->hwndFrameRateEdit, enableCameraSelection );
+            EnableWindow( gData->hwndFrameRateEdit, enableFrameRateSelection );
             EnableWindow( gData->hwndStartButton, TRUE );
             SetFocus( gData->hwndStartButton );
-
-            if ( !gData->streamingInProgress )
-            {
-                GetFrameRateRange( );
-            }
 
             gData->UpdateWebActivity( );
         }
