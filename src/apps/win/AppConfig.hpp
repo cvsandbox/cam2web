@@ -70,12 +70,16 @@ public:
     void SetLastVideoResolution( uint16_t  width, uint16_t  height, uint16_t  bpp, uint16_t  fps );
 
     // Get/Set last requested frame rate
-    uint16_t GetLastRequestedFrameRate( ) const;
+    uint16_t LastRequestedFrameRate( ) const;
     void SetLastRequestedFrameRate( uint16_t fps );
 
     // Get/Set the flag inidicating that application should minimize to system tray
     bool MinimizeToSystemTray( ) const;
     void SetMinimizeToSystemTray( bool enabled );
+
+    // Get/Set index of the window/tray icon to use
+    uint16_t WindowIconIndex( ) const;
+    void SetWindowIconIndex( uint16_t index );
 
     // Get/Set file name to store users' list in
     std::string UsersFileName( ) const;
@@ -108,6 +112,7 @@ private:
     uint16_t    cameraBpp;
     uint16_t    cameraFps;
     uint16_t    requestedFps;
+    uint16_t    windowIcon;
     bool        minimizeToSystemTray;
     int32_t     mainWindowX;
     int32_t     mainWindowY;

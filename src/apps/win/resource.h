@@ -3,7 +3,7 @@
 // Used by cam2web.rc
 //
 
-#define ID_MAX                  149
+#define ID_MAX                  156
 
 #define IDS_APP_TITLE           103
 
@@ -17,15 +17,21 @@
 #define IDM_SETTINGS            111
 #define IDM_ACCESS_RIGHTS       123
 #define IDI_CAM2WEB             107
-#define IDI_SETTINGS            122
-#define IDI_USER                130
-#define IDI_ADMIN               131
-#define IDI_ABOUT               132
-#define IDI_ACCESS              133
-#define IDI_FAMILY              134
-#define IDI_PASSWORD            135
-#define IDI_CAMERA_ACTIVE_BLUE  146
-#define IDI_FOLDER              149
+#define IDI_CAM2WEB_GREEN       122
+#define IDI_CAM2WEB_ORANGE      130
+#define IDI_CAM2WEB_RED         131
+#define IDI_CAMERA_ACTIVE_BLUE  132
+#define IDI_CAMERA_ACTIVE_GREEN 133
+#define IDI_CAMERA_ACTIVE_ORANGE 134
+#define IDI_CAMERA_ACTIVE_RED   135
+#define IDI_SETTINGS            146
+#define IDI_USER                149
+#define IDI_ADMIN               150
+#define IDI_ABOUT               151
+#define IDI_ACCESS              152
+#define IDI_FAMILY              153
+#define IDI_PASSWORD            154
+#define IDI_FOLDER              155
 #define IDC_CAM2WEB             109
 #define IDC_MYICON              2
 #define IDC_JPEG_Q_EDIT         113
@@ -38,6 +44,7 @@
 #define IDC_CUSTOM_WEB_BUTTON   148
 #define IDC_CAMERA_TITLE_EDIT   147
 #define IDC_SYS_TRAY_CHECK      145
+#define IDC_ICON_COLOR_COMBO    156
 #define IDC_LINK_HOME_PAGE      120
 #define IDC_LINK_EMAIL          121
 #define IDC_AUTH_DOMAIN_EDIT    125

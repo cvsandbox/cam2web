@@ -39,6 +39,8 @@ static int CALLBACK BrowseFolderCallback( HWND hwnd, UINT uMsg, LPARAM lParam, L
 // Message handler for Settings dialog box
 INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
+    static const WCHAR* iconColors[] = { L"Blue", L"Green", L"Orange", L"Red" };
+
     static AppConfig* appConfig   = nullptr;
     static HICON      hIcon       = NULL;
     static HICON      hFolderIcon = NULL;
@@ -49,6 +51,8 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
     {
     case WM_INITDIALOG:
         {
+            uint16_t iconColor = 0;
+
             // load icons
             if ( hIcon == NULL )
             {
@@ -75,9 +79,18 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
                 SendMessage( GetDlgItem( hDlg, IDC_CUSTOM_WEB_BUTTON ), BM_SETIMAGE, (WPARAM) IMAGE_ICON, (LPARAM) hFolderIcon );
             }
 
-            appConfig = (AppConfig*) lParam;
+            // configure icon colors' combo box
+            HWND hwndIconColorCombo = GetDlgItem( hDlg, IDC_ICON_COLOR_COMBO );
+
+            for ( int i = 0; i < sizeof( iconColors ) / sizeof( iconColors[0] ); i++ )
+            {
+                SendMessage( hwndIconColorCombo, CB_ADDSTRING, 0, (LPARAM) iconColors[i] );
+            }
 
             CenterWindowTo( hDlg, GetParent( hDlg ) );
+
+            // get current configuration
+            appConfig = (AppConfig*) lParam;
 
             if ( appConfig != nullptr )
             {
@@ -92,7 +105,15 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
                 SetWindowText( GetDlgItem( hDlg, IDC_CAMERA_TITLE_EDIT ), strCameraTitle.c_str( ) );
 
                 SendMessage( GetDlgItem( hDlg, IDC_SYS_TRAY_CHECK ), BM_SETCHECK, ( appConfig->MinimizeToSystemTray( ) ) ? BST_CHECKED : BST_UNCHECKED, 0 );
+
+                iconColor = appConfig->WindowIconIndex( );
+                if ( iconColor >= 4 )
+                {
+                    iconColor = 0;
+                }
             }
+
+            SendMessage( hwndIconColorCombo, CB_SETCURSEL, iconColor, 0 );
 
             return (INT_PTR) TRUE;
         }
@@ -121,6 +142,7 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
                     appConfig->SetMjpegFrameRate( (uint16_t) SendMessage( GetDlgItem( hDlg, IDC_MJPEG_RATE_SPIN ), UDM_GETPOS32, 0, 0 ) );
                     appConfig->SetHttpPort( (uint16_t) SendMessage( GetDlgItem( hDlg, IDC_HTTP_PORT_SPIN ), UDM_GETPOS32, 0, 0 ) );
                     appConfig->SetMinimizeToSystemTray( SendMessage( GetDlgItem( hDlg, IDC_SYS_TRAY_CHECK ), BM_GETCHECK, 0, 0 ) == BST_CHECKED );
+                    appConfig->SetWindowIconIndex( (uint16_t) SendMessage( GetDlgItem( hDlg, IDC_ICON_COLOR_COMBO ), CB_GETCURSEL, 0, 0 ) );
 
                     appConfig->SetCustomWebContent( GetWindowString( GetDlgItem( hDlg, IDC_CUSTOM_WEB_EDIT ), true ) );
 
@@ -189,7 +211,7 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
 }
 
 // Callback for the dialog used to select fodler
-int CALLBACK BrowseFolderCallback( HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData )
+int CALLBACK BrowseFolderCallback( HWND hwnd, UINT uMsg, LPARAM /* lParam */, LPARAM lpData )
 {
     if ( uMsg == BFFM_INITIALIZED )
     {

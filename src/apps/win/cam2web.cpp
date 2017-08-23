@@ -103,6 +103,10 @@ using namespace std::chrono;
 #define STR_INFO_VERSION        "1.0.0"
 #define STR_INFO_PLATFORM       "Windows"
 
+// Available application icons
+static const int AppIconIds[]       = { IDI_CAM2WEB, IDI_CAM2WEB_GREEN, IDI_CAM2WEB_ORANGE, IDI_CAM2WEB_RED };
+static const int AppActiveIconIds[] = { IDI_CAMERA_ACTIVE_BLUE, IDI_CAMERA_ACTIVE_GREEN, IDI_CAMERA_ACTIVE_ORANGE, IDI_CAMERA_ACTIVE_RED };
+
 // Forward declarations of functions included in this code module:
 LRESULT CALLBACK MainWndProc( HWND, UINT, WPARAM, LPARAM );
 INT_PTR CALLBACK AboutDlgProc( HWND, UINT, WPARAM, LPARAM );
@@ -137,6 +141,8 @@ public:
     HWND        hwndStartButton;
     HWND        hwndStatusLink;
     HWND        hwndStatusBar;
+    HICON       hiconAppIcon;
+    HICON       hiconAppActiveIcon;
     HICON       hiconTrayIcon;
     HICON       hiconTrayActiveIcon;
 
@@ -173,7 +179,7 @@ public:
         hInst( NULL ), hwndMain( NULL ), hwndCamerasCombo( NULL ),
         autoStartStreaming( false ), minimizeWindowOnStart( false ),
         hwndResolutionsCombo( NULL ), hwndStartButton( NULL ), hwndStatusLink( NULL ), hwndStatusBar( NULL ),
-        hiconTrayIcon( NULL ), hiconTrayActiveIcon( NULL ),
+        hiconAppIcon( NULL ), hiconAppActiveIcon( NULL ), hiconTrayIcon( NULL ), hiconTrayActiveIcon( NULL ),
         devices( ), cameraCapabilities( ), camera( ), selectedDeviceName( ), selectedResolutuion( ),
         cameraConfig( ), appConfig( new AppConfig( ) ), server( ), video2web( ),
         streamingInProgress( false ),
@@ -306,6 +312,12 @@ static bool ParseCommandLine( int argc, WCHAR* argv[], AppData* appData )
 static ATOM MyRegisterClass( HINSTANCE hInstance )
 {
     WNDCLASSEX wcex;
+    uint16_t   iconIndex = ( gData->appConfig == nullptr ) ? 0 : gData->appConfig->WindowIconIndex( );
+
+    if ( iconIndex > sizeof( AppIconIds ) / sizeof( AppIconIds[0] ) )
+    {
+        iconIndex = 0;
+    }
 
     wcex.cbSize        = sizeof( WNDCLASSEX );
     wcex.style         = CS_HREDRAW | CS_VREDRAW;
@@ -313,12 +325,12 @@ static ATOM MyRegisterClass( HINSTANCE hInstance )
     wcex.cbClsExtra    = 0;
     wcex.cbWndExtra    = 0;
     wcex.hInstance     = hInstance;
-    wcex.hIcon         = LoadIcon( hInstance, MAKEINTRESOURCE( IDI_CAM2WEB ) );
+    wcex.hIcon         = LoadIcon( hInstance, MAKEINTRESOURCE( AppIconIds[iconIndex] ) );
     wcex.hCursor       = LoadCursor( NULL, IDC_ARROW );
     wcex.hbrBackground = (HBRUSH) ( COLOR_WINDOW );
     wcex.lpszMenuName  = MAKEINTRESOURCE( IDC_CAM2WEB );
     wcex.lpszClassName = gData->szWindowClass;
-    wcex.hIconSm       = LoadIcon( wcex.hInstance, MAKEINTRESOURCE( IDI_CAM2WEB ) );
+    wcex.hIconSm       = LoadIcon( hInstance, MAKEINTRESOURCE( AppIconIds[iconIndex] ) );
 
     return RegisterClassEx( &wcex );
 }
@@ -518,7 +530,7 @@ static void GetFrameRateRange( )
         if ( requestedFps == 0 )
         {
             // nothing was chosen by user yet, so try the one used last time
-            requestedFps = gData->appConfig->GetLastRequestedFrameRate( );
+            requestedFps = gData->appConfig->LastRequestedFrameRate( );
 
             if ( ( requestedFps < selectedCaps.MinimumFrameRate( ) ) ||
                  ( requestedFps > selectedCaps.MaximumFrameRate( ) ) )
@@ -945,6 +957,9 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             if ( DialogBoxParam( gData->hInst, MAKEINTRESOURCE( IDD_SETTINGS_BOX ), hWnd, SettingsDlgProc, (LPARAM) gData->appConfig.get( ) ) == IDOK )
             {
                 gData->appConfigSerializer.SaveConfiguration( );
+
+                gData->LoadAppIcons( );
+                gData->UpdateWebActivity( );
             }
             break;
 
@@ -1209,10 +1224,40 @@ INT_PTR CALLBACK AboutDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lP
 // Load some icons to be used by the application
 void AppData::LoadAppIcons( )
 {
-    hiconTrayIcon       = (HICON) LoadImage( GetModuleHandle( NULL ), MAKEINTRESOURCE( IDI_CAM2WEB ), IMAGE_ICON,
+    uint16_t iconIndex = ( appConfig == nullptr ) ? 0 : appConfig->WindowIconIndex( );
+
+    if ( iconIndex > sizeof( AppIconIds ) / sizeof( AppIconIds[0] ) )
+    {
+        iconIndex = 0;
+    }
+
+    if ( hiconAppIcon != NULL )
+    {
+        DestroyIcon( hiconAppIcon );
+    }
+
+    if ( hiconAppActiveIcon != NULL )
+    {
+        DestroyIcon( hiconAppActiveIcon );
+    }
+
+    if ( hiconTrayIcon != NULL )
+    {
+        DestroyIcon( hiconTrayIcon );
+    }
+
+    if ( hiconTrayActiveIcon != NULL )
+    {
+        DestroyIcon( hiconTrayActiveIcon );
+    }
+
+    hiconAppIcon        = LoadIcon( GetModuleHandle( NULL ), MAKEINTRESOURCE( AppIconIds[iconIndex] ) );
+    hiconAppActiveIcon  = LoadIcon( GetModuleHandle( NULL ), MAKEINTRESOURCE( AppActiveIconIds[iconIndex] ) );
+
+    hiconTrayIcon       = (HICON) LoadImage( GetModuleHandle( NULL ), MAKEINTRESOURCE( AppIconIds[iconIndex] ), IMAGE_ICON,
                                              GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
 
-    hiconTrayActiveIcon = (HICON) LoadImage( GetModuleHandle( NULL ), MAKEINTRESOURCE( IDI_CAMERA_ACTIVE_BLUE ), IMAGE_ICON,
+    hiconTrayActiveIcon = (HICON) LoadImage( GetModuleHandle( NULL ), MAKEINTRESOURCE( AppActiveIconIds[iconIndex] ), IMAGE_ICON,
                                              GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
 }
 
@@ -1260,7 +1305,6 @@ void AppData::UpdateWebActivity( )
     bool    wasAccessedAtAll    = false;
     auto    timeSinceLastAccess = duration_cast<std::chrono::milliseconds>( steady_clock::now( ) - server.LastAccessTime( &wasAccessedAtAll ) ).count( );
     bool    activeIcon          = ( streamingInProgress ) && ( wasAccessedAtAll ) && ( timeSinceLastAccess <= 1000 );
-    HICON   iconToSet           = ( activeIcon ) ? hiconTrayActiveIcon : hiconTrayIcon;
 
     NOTIFYICONDATA notifyData = { };
 
@@ -1268,9 +1312,9 @@ void AppData::UpdateWebActivity( )
     notifyData.hWnd   = hwndMain;
     notifyData.uID    = IDC_SYS_TRAY_ID;
     notifyData.uFlags = NIF_ICON;
-    notifyData.hIcon  = iconToSet;
+    notifyData.hIcon  = ( activeIcon ) ? hiconTrayActiveIcon : hiconTrayIcon;;
 
     Shell_NotifyIcon( NIM_MODIFY, &notifyData );
 
-    SendMessage( hwndMain, WM_SETICON, ICON_SMALL, (LRESULT) iconToSet );
+    SendMessage( hwndMain, WM_SETICON, ICON_SMALL, (LRESULT) ( ( activeIcon ) ? hiconAppActiveIcon : hiconAppIcon ) );
 }

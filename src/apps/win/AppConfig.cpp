@@ -42,6 +42,7 @@ using namespace std;
 #define PROP_CAMERA_FPS     "cameraFps"
 #define PROP_REQUESTED_FPS  "requestedFps"
 #define PROP_MIN_TO_TRAY    "minToTray"
+#define PROP_WINDOW_ICON    "windowIcon"
 #define PROP_MAIN_WIN_X     "mainWinX"
 #define PROP_MAIN_WIN_Y     "mainWinY"
 
@@ -66,6 +67,7 @@ const static map<string, int> SupportedProperties =
     { PROP_CAMERA_FPS,     TYPE_INT },
     { PROP_REQUESTED_FPS,  TYPE_INT },
     { PROP_MIN_TO_TRAY,    TYPE_INT },
+    { PROP_WINDOW_ICON,    TYPE_INT },
     { PROP_MAIN_WIN_X,     TYPE_INT },
     { PROP_MAIN_WIN_Y,     TYPE_INT }
 };
@@ -86,6 +88,7 @@ AppConfig::AppConfig( ) :
     cameraFps( 0 ),
     requestedFps( 0 ),
     minimizeToSystemTray( false ),
+    windowIcon( 0 ),
     mainWindowX( 0x0FFFFFFF ), mainWindowY( 0x0FFFFFFF ),
     usersFileName( "users.txt" )
 {
@@ -199,7 +202,7 @@ void AppConfig::SetLastVideoResolution( uint16_t width, uint16_t height, uint16_
 }
 
 // Get/Set last requested frame rate
-uint16_t AppConfig::GetLastRequestedFrameRate( ) const
+uint16_t AppConfig::LastRequestedFrameRate( ) const
 {
     return requestedFps;
 }
@@ -216,6 +219,16 @@ bool AppConfig::MinimizeToSystemTray( ) const
 void AppConfig::SetMinimizeToSystemTray( bool enabled )
 {
     minimizeToSystemTray = enabled;
+}
+
+// Get/Set index of the window/tray icon to use
+uint16_t AppConfig::WindowIconIndex( ) const
+{
+    return windowIcon;
+}
+void AppConfig::SetWindowIconIndex( uint16_t index )
+{
+    windowIcon = index;
 }
 
 // Get/Set main window's position
@@ -328,6 +341,10 @@ XError AppConfig::SetProperty( const string& propertyName, const string& value )
             {
                 minimizeToSystemTray = ( intValue != 0 );
             }
+            else if ( propertyName == PROP_WINDOW_ICON )
+            {
+                windowIcon = static_cast<uint16_t>( intValue );
+            }
             else if ( propertyName == PROP_MAIN_WIN_X )
             {
                 mainWindowX = intValue;
@@ -416,6 +433,10 @@ XError AppConfig::GetProperty( const string& propertyName, string& value ) const
         else if ( propertyName == PROP_MIN_TO_TRAY )
         {
             intValue = ( minimizeToSystemTray ) ? 1 : 0;
+        }
+        else if ( propertyName == PROP_WINDOW_ICON )
+        {
+            intValue = windowIcon;
         }
         else if ( propertyName == PROP_MAIN_WIN_X )
         {
