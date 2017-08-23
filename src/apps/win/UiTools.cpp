@@ -182,17 +182,27 @@ void SetMenuItemIcon( HMENU hMenu, UINT menuCommand, UINT idIcon )
 string GetWindowString( HWND hwnd, bool trimIt )
 {
     string strText;
-    int    textLength = GetWindowTextLength( hwnd ) + 1;
-    WCHAR* text       = new WCHAR[textLength];
+    int    textLength = GetWindowTextLength( hwnd );
+    WCHAR* text       = new WCHAR[textLength + 1];
+    WCHAR* ptr        = text;
 
-    GetWindowText( hwnd, text, textLength );
-
-    strText = Utf16to8( text );
+    GetWindowText( hwnd, text, textLength + 1 );
 
     if ( trimIt )
     {
-        StringTrim( strText );
+        while ( ( textLength > 0 ) && ( iswspace( ptr[textLength - 1] ) ) )
+        {
+            ptr[textLength - 1] = L'\0';
+            textLength--;
+        }
+
+        while ( ( textLength > 0 ) && ( iswspace( ptr[0] ) ) )
+        {
+            ptr++;
+        }
     }
+
+    strText = Utf16to8( ptr );
 
     delete [] text;
 

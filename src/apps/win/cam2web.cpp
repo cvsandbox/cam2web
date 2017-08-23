@@ -696,11 +696,18 @@ static bool StartVideoStreaming( )
         // prepare some read-only informational properties of the camera
         PropertyMap cameraInfo;
         char        strVideoSize[32];
+        string      cameraTite = gData->appConfig->CameraTitle( );
+
+        if ( cameraTite.empty( ) )
+        {
+            cameraTite = gData->selectedDeviceName.Name( );
+        }
 
         sprintf( strVideoSize,      "%d", gData->selectedResolutuion.Width( ) );
         sprintf( strVideoSize + 16, "%d", gData->selectedResolutuion.Height( ) );
 
         cameraInfo.insert( PropertyMap::value_type( "device", gData->selectedDeviceName.Name( ) ) );
+        cameraInfo.insert( PropertyMap::value_type( "title",  cameraTite ) );
         cameraInfo.insert( PropertyMap::value_type( "width",  strVideoSize ) );
         cameraInfo.insert( PropertyMap::value_type( "height", strVideoSize + 16 ) );
 

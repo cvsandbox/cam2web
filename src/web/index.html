@@ -58,7 +58,15 @@ function getCameraInfo( )
                 config = data.config;
                 var cameraWidth = parseInt( config.width );
 
-                $('#title').html( config.device );
+                if ( ( config.title ) && ( config.title.length != 0 ) )
+                {
+                    $('#title').html( config.title );
+                }
+                else
+                {
+                    $('#title').html( config.device );
+                }
+                
                 $('#camera').width( config.width );
                 $('#camera').height( config.height );
                 

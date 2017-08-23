@@ -99,6 +99,32 @@ string& StringTrim( string& s )
     return StringLTrimg( StringRTrim( s ) );
 }
 
+// Replace sub-string within a string
+string& StringReplace( string& s, const string& lookFor, const string& replaceWith )
+{
+    if ( !lookFor.empty( ) )
+    {
+        size_t index  = 0;
+        size_t length = lookFor.length( );
+
+        while ( true )
+        {
+            index = s.find( lookFor, index );
+
+            if ( index == string::npos )
+            {
+                break;
+            }
+
+            s.replace( index, length, replaceWith );
+
+            index += length;
+        }
+    }
+
+    return s;
+}
+
 // Calculate MD5 hash string for the given buffer
 string GetMd5Hash( const uint8_t* buffer, int bufferLength )
 {

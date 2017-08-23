@@ -35,6 +35,7 @@ using namespace std;
 #define PROP_AUTH_DOMAIN    "authDomain"
 #define PROP_CUSTOM_WEB     "customWeb"
 #define PROP_CAMERA_MONIKER "cameraMoniker"
+#define PROP_CAMERA_TITLE   "cameraTitle"
 #define PROP_CAMERA_WIDTH   "cameraWidth"
 #define PROP_CAMERA_HEIGHT  "cameraHeight"
 #define PROP_CAMERA_BPP     "cameraBpp"
@@ -58,6 +59,7 @@ const static map<string, int> SupportedProperties =
     { PROP_AUTH_DOMAIN,    TYPE_STR },
     { PROP_CUSTOM_WEB,     TYPE_STR },
     { PROP_CAMERA_MONIKER, TYPE_STR },
+    { PROP_CAMERA_TITLE,   TYPE_STR },
     { PROP_CAMERA_WIDTH,   TYPE_INT },
     { PROP_CAMERA_HEIGHT,  TYPE_INT },
     { PROP_CAMERA_BPP,     TYPE_INT },
@@ -77,6 +79,7 @@ AppConfig::AppConfig( ) :
     authDomain( "cam2web" ),
     customWebContent( ),
     cameraMoniker( ),
+    cameraTitle( ),
     cameraWidth( 0 ),
     cameraHeight( 0 ),
     cameraBpp( 0 ),
@@ -167,6 +170,16 @@ string AppConfig::CameraMoniker( ) const
 void AppConfig::SetCameraMoniker( const string& moniker )
 {
     cameraMoniker = moniker;
+}
+
+// Get/Set camera title
+string AppConfig::CameraTitle( ) const
+{
+    return cameraTitle;
+}
+void AppConfig::SetCameraTitle( const string& title )
+{
+    cameraTitle = title;
 }
 
 // Get/Set last used video resolution
@@ -287,6 +300,10 @@ XError AppConfig::SetProperty( const string& propertyName, const string& value )
             {
                 cameraMoniker = value;
             }
+            else if ( propertyName == PROP_CAMERA_TITLE )
+            {
+                cameraTitle = value;
+            }
             else if ( propertyName == PROP_CAMERA_WIDTH )
             {
                 cameraWidth = static_cast<uint16_t>( intValue );
@@ -371,6 +388,10 @@ XError AppConfig::GetProperty( const string& propertyName, string& value ) const
         else if ( propertyName == PROP_CAMERA_MONIKER )
         {
             value = cameraMoniker;
+        }
+        else if ( propertyName == PROP_CAMERA_TITLE )
+        {
+            value = cameraTitle;
         }
         else if ( propertyName == PROP_CAMERA_WIDTH )
         {

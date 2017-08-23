@@ -61,6 +61,10 @@ public:
     std::string CameraMoniker( ) const;
     void SetCameraMoniker( const std::string& moniker );
 
+    // Get/Set camera title
+    std::string CameraTitle( ) const;
+    void SetCameraTitle( const std::string& title );
+
     // Get/Set last used video resolution
     void GetLastVideoResolution( uint16_t* width, uint16_t* height, uint16_t* bpp, uint16_t* fps ) const;
     void SetLastVideoResolution( uint16_t  width, uint16_t  height, uint16_t  bpp, uint16_t  fps );
@@ -98,6 +102,7 @@ private:
     std::string authDomain;
     std::string customWebContent;
     std::string cameraMoniker;
+    std::string cameraTitle;
     uint16_t    cameraWidth;
     uint16_t    cameraHeight;
     uint16_t    cameraBpp;

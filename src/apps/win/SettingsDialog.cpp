@@ -66,6 +66,9 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
                 wstring strWebContent = Utf8to16( appConfig->CustomWebContent( ) );
                 SetWindowText( GetDlgItem( hDlg, IDC_CUSTOM_WEB_EDIT ), strWebContent.c_str( ) );
 
+                wstring strCameraTitle = Utf8to16( appConfig->CameraTitle( ) );
+                SetWindowText( GetDlgItem( hDlg, IDC_CAMERA_TITLE_EDIT ), strCameraTitle.c_str( ) );
+
                 SendMessage( GetDlgItem( hDlg, IDC_SYS_TRAY_CHECK ), BM_SETCHECK, ( appConfig->MinimizeToSystemTray( ) ) ? BST_CHECKED : BST_UNCHECKED, 0 );
             }
 
@@ -97,16 +100,13 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
                     appConfig->SetHttpPort( (uint16_t) SendMessage( GetDlgItem( hDlg, IDC_HTTP_PORT_SPIN ), UDM_GETPOS32, 0, 0 ) );
                     appConfig->SetMinimizeToSystemTray( SendMessage( GetDlgItem( hDlg, IDC_SYS_TRAY_CHECK ), BM_GETCHECK, 0, 0 ) == BST_CHECKED );
 
-                    HWND   hwndWebContentEdit = GetDlgItem( hDlg, IDC_CUSTOM_WEB_EDIT );
-                    int    len                = GetWindowTextLength( hwndWebContentEdit ) + 1;
-                    WCHAR* strWebContent      = new WCHAR[len];
+                    appConfig->SetCustomWebContent( GetWindowString( GetDlgItem( hDlg, IDC_CUSTOM_WEB_EDIT ), true ) );
 
-                    GetWindowText( hwndWebContentEdit, strWebContent, len );
+                    string cameraTitle = GetWindowString( GetDlgItem( hDlg, IDC_CAMERA_TITLE_EDIT ), true );
+                    StringReplace( cameraTitle, "<", "&lt;" );
+                    StringReplace( cameraTitle, ">", "&gt;" );
 
-                    string utf8rWebContent = Utf16to8( strWebContent );
-                    appConfig->SetCustomWebContent( StringTrim( utf8rWebContent ) );
-
-                    delete [] strWebContent;
+                    appConfig->SetCameraTitle( cameraTitle );
                 }
             }
 

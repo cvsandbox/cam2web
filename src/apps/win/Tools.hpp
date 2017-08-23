@@ -36,6 +36,9 @@ std::string& StringRTrim( std::string& s );
 // Trim spaces from both ends of a string
 std::string& StringTrim( std::string& s );
 
+// Replace sub-string within a string
+std::string& StringReplace( std::string& s, const std::string& lookFor, const std::string& replaceWith );
+
 // Calculate MD5 hash string for the given buffer
 std::string GetMd5Hash( const uint8_t* buffer, int bufferLength );
 
