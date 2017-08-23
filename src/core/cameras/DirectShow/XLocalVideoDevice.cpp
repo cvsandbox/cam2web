@@ -220,6 +220,7 @@ namespace Private
                 int      srcStride = bufferLen / mHeight;
                 uint8_t* dst       = mImage->Data( ) + dstStride * ( mHeight - 1 );
 
+                /*
                 if ( BlueIndex == 0 )
                 {
                     int toCopy = mWidth * 3;
@@ -230,6 +231,7 @@ namespace Private
                     }
                 }
                 else
+                */
                 {
                     if ( !mSSSE3supported )
                     {

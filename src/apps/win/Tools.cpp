@@ -107,18 +107,16 @@ string& StringReplace( string& s, const string& lookFor, const string& replaceWi
         size_t index  = 0;
         size_t length = lookFor.length( );
 
-        while ( true )
+        while ( index != string::npos )
         {
             index = s.find( lookFor, index );
 
-            if ( index == string::npos )
+            if ( index != string::npos )
             {
-                break;
+                s.replace( index, length, replaceWith );
+
+                index += length;
             }
-
-            s.replace( index, length, replaceWith );
-
-            index += length;
         }
     }
 
