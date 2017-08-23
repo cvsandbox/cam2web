@@ -24,6 +24,7 @@
 #include <sdkddkver.h>
 #include <windows.h>
 #include <commctrl.h>
+#include <shlobj.h>
 
 #include "resource.h"
 #include "SettingsDialog.hpp"
@@ -33,11 +34,14 @@
 
 using namespace std;
 
+static int CALLBACK BrowseFolderCallback( HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData );
+
 // Message handler for Settings dialog box
 INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
-    static AppConfig* appConfig = nullptr;
-    static HICON      hIcon     = NULL;
+    static AppConfig* appConfig   = nullptr;
+    static HICON      hIcon       = NULL;
+    static HICON      hFolderIcon = NULL;
     int               wmId;
     int               wmEvent;
 
@@ -45,12 +49,30 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
     {
     case WM_INITDIALOG:
         {
-            hIcon = (HICON) LoadImage( GetModuleHandle( NULL ), MAKEINTRESOURCE( IDI_SETTINGS ), IMAGE_ICON,
-                                       GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
+            // load icons
+            if ( hIcon == NULL )
+            {
+                hIcon = (HICON) LoadImage( GetModuleHandle( NULL ), MAKEINTRESOURCE( IDI_SETTINGS ), IMAGE_ICON,
+                                           GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
+            
+            }
 
+            if ( hFolderIcon == NULL )
+            {
+                hFolderIcon = (HICON) LoadImage( GetModuleHandle( NULL ), MAKEINTRESOURCE( IDI_FOLDER ), IMAGE_ICON,
+                                                 GetSystemMetrics( SM_CXSMICON ), GetSystemMetrics( SM_CYSMICON ), 0 );
+
+            }
+
+            // set icons
             if ( hIcon )
             {
                 SendMessage( hDlg, WM_SETICON, ICON_SMALL, (LPARAM) hIcon );
+            }
+
+            if ( hFolderIcon )
+            {
+                SendMessage( GetDlgItem( hDlg, IDC_CUSTOM_WEB_BUTTON ), BM_SETIMAGE, (WPARAM) IMAGE_ICON, (LPARAM) hFolderIcon );
             }
 
             appConfig = (AppConfig*) lParam;
@@ -134,8 +156,50 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
             
             return (INT_PTR) TRUE;
         }
+        else if ( wmId == IDC_CUSTOM_WEB_BUTTON )
+        {
+            BROWSEINFO browseInfo = { 0 };
+
+            browseInfo.hwndOwner = hDlg;
+            browseInfo.lpszTitle = L"Select custom web root folder:";
+            browseInfo.ulFlags   = BIF_NEWDIALOGSTYLE | BIF_NONEWFOLDERBUTTON | BIF_RETURNONLYFSDIRS;
+            browseInfo.lParam    = reinterpret_cast<LPARAM>( hDlg );
+            browseInfo.lpfn      = BrowseFolderCallback;
+
+            PIDLIST_ABSOLUTE pidl = SHBrowseForFolder( &browseInfo );
+
+            if ( pidl != NULL )
+            {
+                WCHAR selectedPath[MAX_PATH];
+
+                if ( SHGetPathFromIDList( pidl, selectedPath ) )
+                {
+                    SetWindowText( GetDlgItem( hDlg, IDC_CUSTOM_WEB_EDIT ), selectedPath );
+                }
+                else
+                {
+                    MessageBox( hDlg, L"Invalid folder was selected.", L"Error", MB_OK | MB_ICONERROR );
+                }
+            }
+        }
         break;
     }
 
     return (INT_PTR) FALSE;
+}
+
+// Callback for the dialog used to select fodler
+int CALLBACK BrowseFolderCallback( HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData )
+{
+    if ( uMsg == BFFM_INITIALIZED )
+    {
+        HWND    hwndParent         = reinterpret_cast<HWND>( lpData );
+        wstring strCustomWebFolder = Utf8to16( GetWindowString( GetDlgItem( hwndParent, IDC_CUSTOM_WEB_EDIT ), true ) );
+
+        SendMessage( hwnd, BFFM_SETSELECTION, TRUE, (LPARAM) strCustomWebFolder.c_str( ) );
+
+        CenterWindowTo( hwnd, GetParent( hwnd ) );
+    }
+
+    return 0;
 }

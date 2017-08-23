@@ -3,7 +3,7 @@
 // Used by cam2web.rc
 //
 
-#define ID_MAX                  147
+#define ID_MAX                  149
 
 #define IDS_APP_TITLE           103
 
@@ -25,6 +25,7 @@
 #define IDI_FAMILY              134
 #define IDI_PASSWORD            135
 #define IDI_CAMERA_ACTIVE_BLUE  146
+#define IDI_FOLDER              149
 #define IDC_CAM2WEB             109
 #define IDC_MYICON              2
 #define IDC_JPEG_Q_EDIT         113
@@ -34,6 +35,7 @@
 #define IDC_HTTP_PORT_EDIT      117
 #define IDC_HTTP_PORT_SPIN      118
 #define IDC_CUSTOM_WEB_EDIT     119
+#define IDC_CUSTOM_WEB_BUTTON   148
 #define IDC_CAMERA_TITLE_EDIT   147
 #define IDC_SYS_TRAY_CHECK      145
 #define IDC_LINK_HOME_PAGE      120

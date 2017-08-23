@@ -219,5 +219,8 @@
     <Image Include="camera_active_blue.ico">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="folder.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>
