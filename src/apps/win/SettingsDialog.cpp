@@ -26,6 +26,8 @@
 #include <commctrl.h>
 #include <shlobj.h>
 
+#include <XStringTools.hpp>
+
 #include "resource.h"
 #include "SettingsDialog.hpp"
 #include "Tools.hpp"

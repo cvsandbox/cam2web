@@ -111,6 +111,9 @@
     <ClInclude Include="EditAuthDomainDialog.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\core\XStringTools.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cam2web.cpp">
@@ -184,6 +187,9 @@
     </ClCompile>
     <ClCompile Include="EditAuthDomainDialog.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\XStringTools.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "XObjectInformationRequestHandler.hpp"
+#include "XStringTools.hpp"
 
 using namespace std;
 
@@ -109,7 +110,7 @@ void XObjectInformationRequestHandler::HandleGet( const string& varsToGet, IWebR
         reply += "\"";
         reply += kvp.first;
         reply += "\":\"";
-        reply += kvp.second;
+        reply += StringReplace( kvp.second, "\"", "\\\"" );
         reply += "\"";
 
         first = false;

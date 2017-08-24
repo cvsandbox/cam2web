@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "XObjectConfigurationRequestHandler.hpp"
+#include "XStringTools.hpp"
 #include "XSimpleJsonParser.hpp"
 
 using namespace std;
@@ -120,7 +121,7 @@ void XObjectConfigurationRequestHandler::HandleGet( const string& varsToGet, IWe
         reply += "\"";
         reply += kvp.first;
         reply += "\":\"";
-        reply += kvp.second;
+        reply += StringReplace( kvp.second, "\"", "\\\"" );
         reply += "\"";
 
         first = false;

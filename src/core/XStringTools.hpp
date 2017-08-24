@@ -18,21 +18,19 @@
     51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
 */
 
-#ifndef TOOLS_HPP
-#define TOOLS_HPP
+#ifndef XSTRING_TOOLS_HPP
+#define XSTRING_TOOLS_HPP
 
 #include <string>
-#include <stdint.h>
 
-// Convert specfied UTF8 string to wide character string
-std::wstring Utf8to16( const std::string& utf8string );
-// Convert specfied wide character string to UTF8 string
-std::string Utf16to8( const std::wstring& utf16string );
+// Trim spaces from the start of a string
+std::string& StringLTrimg( std::string& s );
+// Trim spaces from the end of a string
+std::string& StringRTrim( std::string& s );
+// Trim spaces from both ends of a string
+std::string& StringTrim( std::string& s );
 
-// Calculate MD5 hash string for the given buffer
-std::string GetMd5Hash( const uint8_t* buffer, int bufferLength );
+// Replace sub-string within a string
+std::string& StringReplace( std::string& s, const std::string& lookFor, const std::string& replaceWith );
 
-// Get local IP address as string (if a single valid IP found). Returns empty string if fails to resolve.
-std::string GetLocalIpAddress( );
-
-#endif // UI_TOOLS_HPP
+#endif // XSTRING_TOOLS_HPP

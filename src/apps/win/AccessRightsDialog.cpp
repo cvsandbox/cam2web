@@ -27,6 +27,8 @@
 #include <vector>
 #include <algorithm>
 
+#include <XStringTools.hpp>
+
 #include "resource.h"
 #include "EditUserDialog.hpp"
 #include "EditAuthDomainDialog.hpp"

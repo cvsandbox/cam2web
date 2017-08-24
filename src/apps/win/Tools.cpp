@@ -25,9 +25,6 @@
 #include <windows.h>
 #include <wincrypt.h>
 #include <iphlpapi.h>
-#include <algorithm>
-#include <functional>
-#include <cctype>
 
 #include "Tools.hpp"
 
@@ -75,52 +72,6 @@ string Utf16to8( const wstring& utf16string )
     }
 
     return ret;
-}
-
-// Trim spaces from the start of a string
-string& StringLTrimg( string& s )
-{
-    s.erase( s.begin( ), std::find_if( s.begin( ), s.end( ),
-        std::not1( std::ptr_fun<int, int>( std::isspace ) ) ) );
-    return s;
-}
-
-// Trim spaces from the end of a string
-string& StringRTrim( string& s )
-{
-    s.erase( std::find_if( s.rbegin( ), s.rend( ),
-        std::not1( std::ptr_fun<int, int>( std::isspace ) ) ).base( ), s.end( ) );
-    return s;
-}
-
-// Trim spaces from both ends of a string
-string& StringTrim( string& s )
-{
-    return StringLTrimg( StringRTrim( s ) );
-}
-
-// Replace sub-string within a string
-string& StringReplace( string& s, const string& lookFor, const string& replaceWith )
-{
-    if ( !lookFor.empty( ) )
-    {
-        size_t index  = 0;
-        size_t length = lookFor.length( );
-
-        while ( index != string::npos )
-        {
-            index = s.find( lookFor, index );
-
-            if ( index != string::npos )
-            {
-                s.replace( index, length, replaceWith );
-
-                index += length;
-            }
-        }
-    }
-
-    return s;
 }
 
 // Calculate MD5 hash string for the given buffer
