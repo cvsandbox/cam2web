@@ -24,17 +24,12 @@
 #include <string>
 #include <map>
 
-#include "XError.hpp"
+#include "IObjectInformation.hpp"
 
-class IObjectConfigurator
+class IObjectConfigurator : public IObjectInformation
 {
 public:
-    virtual ~IObjectConfigurator( ) { }
-
     virtual XError SetProperty( const std::string& propertyName, const std::string& value ) = 0;
-    virtual XError GetProperty( const std::string& propertyName, std::string& value ) const = 0;
-
-    virtual std::map<std::string, std::string> GetAllProperties( ) const = 0;
 };
 
 #endif // IOBJECT_CONFIGURATOR_HPP
