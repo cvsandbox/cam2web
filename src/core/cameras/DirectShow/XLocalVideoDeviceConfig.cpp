@@ -185,7 +185,6 @@ map<string, string> XLocalVideoDevicePropsInfo::GetAllProperties( ) const
 {
     map<string, string> properties;
     string              value;
-    string              propertiesOrder;
 
     for ( auto property : SupportedProperties )
     {

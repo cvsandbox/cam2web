@@ -189,7 +189,6 @@ map<string, string> XV4LCameraPropsInfo::GetAllProperties( ) const
 {
     map<string, string> properties;
     string              value;
-    string              propertiesOrder;
 
     for ( auto property : SupportedProperties )
     {
