@@ -52,7 +52,7 @@ using namespace std;
 
 // Information provided on version request
 #define STR_INFO_PRODUCT        "cam2web"
-#define STR_INFO_VERSION        "1.0.0"
+#define STR_INFO_VERSION        "1.1.0"
 #define STR_INFO_PLATFORM       "RaspberryPi"
 
 // Name of the device and default title of the camera
@@ -292,7 +292,8 @@ bool ParseCommandLine( int argc, char* argv[] )
 
     if ( i != argc )
     {
-        printf( "cam2web - streaming camera to web \n\n" );
+        printf( "cam2web - streaming camera to web \n" );
+        printf( "Version: %s \n\n", STR_INFO_VERSION );
         printf( "Available command line options: \n" );
         printf( "  -size:<0-4> Sets video size to one from the list below: \n" );
         printf( "              0: 320x240 \n" );
