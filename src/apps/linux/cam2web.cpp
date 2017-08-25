@@ -320,7 +320,7 @@ bool ParseCommandLine( int argc, char* argv[] )
         printf( "              Default is '~/.cam_config'. \n" );
         printf( "  -web:<?>    Name of the folder to serve custom web content. \n" );
         printf( "              By default embedded web files are used. \n" );
-        printf( "  -title:<?>  Name of the camera to be show in WebUI. \n" );
+        printf( "  -title:<?>  Name of the camera to be shown in WebUI. \n" );
         printf( "              Use double quotes if the name contains spaces. \n" );
         printf( "\n" );
 
