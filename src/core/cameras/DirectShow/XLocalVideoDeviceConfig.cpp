@@ -26,41 +26,42 @@
 
 using namespace std;
 
-// map of supported property names
-const static map<string, XVideoProperty> SupportedProperties =
+#define TYPE_INT  (0)
+#define TYPE_BOOL (1)
+
+typedef struct
 {
-    { "brightness", XVideoProperty::Brightness            },
-    { "contrast",   XVideoProperty::Contrast              },
-    { "hue",        XVideoProperty::Hue                   },
-    { "saturation", XVideoProperty::Saturation            },
-    { "sharpness",  XVideoProperty::Sharpness             },
-    { "gamma",      XVideoProperty::Gamma                 },
-    { "color",      XVideoProperty::ColorEnable           },
-    { "blc",        XVideoProperty::BacklightCompensation }
+    XVideoProperty  VideoProperty;
+    uint16_t        Type;
+    uint16_t        Order;
+    const char*     Name;
+}
+PropertyInformation;
+
+const static map<string, PropertyInformation> SupportedProperties =
+{
+    { "brightness", { XVideoProperty::Brightness,            TYPE_INT,  0, "Brightness"              } },
+    { "contrast",   { XVideoProperty::Contrast,              TYPE_INT,  1, "Contrast"                } },
+    { "hue",        { XVideoProperty::Hue,                   TYPE_INT,  2, "Hue"                     } },
+    { "saturation", { XVideoProperty::Saturation,            TYPE_INT,  3, "Saturation"              } },
+    { "sharpness",  { XVideoProperty::Sharpness,             TYPE_INT,  4, "Sharpness"               } },
+    { "gamma",      { XVideoProperty::Gamma,                 TYPE_INT,  5, "Gamma"                   } },
+    { "color",      { XVideoProperty::ColorEnable,           TYPE_BOOL, 6, "Color Image"             } },
+    { "blc",        { XVideoProperty::BacklightCompensation, TYPE_BOOL, 7, "Back Light Compensation" } }
 };
-
-// available subproperties
-const static char* STR_MIN = "min";
-const static char* STR_MAX = "max";
-const static char* STR_DEF = "def";
-
-const static list<string> SupportedSubproperties = { STR_MIN, STR_MAX, STR_DEF };
 
 // ------------------------------------------------------------------------------------------
 
 XLocalVideoDeviceConfig::XLocalVideoDeviceConfig( const shared_ptr<XLocalVideoDevice>& camera ) :
     mCamera( camera )
 {
-
 }
 
 // Set the specified property of a DirectShow video device
 XError XLocalVideoDeviceConfig::SetProperty( const string& propertyName, const string& value )
 {
-    XError  ret              = XError::Success;
-    string  basePropertyName = propertyName;
-    string  subPropertyName;
-    int32_t propValue        = 0;
+    XError  ret       = XError::Success;
+    int32_t propValue = 0;
 
     // assume all configuration values are numeric
     int scannedCount = sscanf( value.c_str( ), "%d", &propValue );
@@ -71,15 +72,7 @@ XError XLocalVideoDeviceConfig::SetProperty( const string& propertyName, const s
     }
     else
     {
-        string::size_type delimiterPos = basePropertyName.find( ':' );
-
-        if ( delimiterPos != string::npos )
-        {
-            subPropertyName = basePropertyName.substr( delimiterPos + 1 );
-            basePropertyName = basePropertyName.substr( 0, delimiterPos );
-        }
-
-        map<string, XVideoProperty>::const_iterator itSupportedProperty = SupportedProperties.find( basePropertyName );
+        map<string, PropertyInformation>::const_iterator itSupportedProperty = SupportedProperties.find( propertyName );
 
         if ( itSupportedProperty == SupportedProperties.end( ) )
         {
@@ -87,21 +80,7 @@ XError XLocalVideoDeviceConfig::SetProperty( const string& propertyName, const s
         }
         else
         {
-            if ( subPropertyName.empty( ) )
-            {
-                ret = mCamera->SetVideoProperty( itSupportedProperty->second, propValue, false );
-            }
-            else
-            {
-                if ( std::find( SupportedSubproperties.begin( ), SupportedSubproperties.end( ), subPropertyName ) == SupportedSubproperties.end( ) )
-                {
-                    ret = XError::UnknownProperty;
-                }
-                else
-                {
-                    ret = XError::ReadOnlyProperty;
-                }
-            }
+            ret = mCamera->SetVideoProperty( itSupportedProperty->second.VideoProperty, propValue, false );
         }
     }
 
@@ -111,22 +90,12 @@ XError XLocalVideoDeviceConfig::SetProperty( const string& propertyName, const s
 // Get the specified property of a DirectShow video device
 XError XLocalVideoDeviceConfig::GetProperty( const string& propertyName, string& value ) const
 {
-    XError  ret              = XError::Success;
-    string  basePropertyName = propertyName;
-    string  subPropertyName;
-    int32_t propValue        = 0;
+    XError  ret       = XError::Success;
+    int32_t propValue = 0;
     char    buffer[32];
 
-    string::size_type delimiterPos = basePropertyName.find( ':' );
-
-    if ( delimiterPos != string::npos )
-    {
-        subPropertyName = basePropertyName.substr( delimiterPos + 1 );
-        basePropertyName = basePropertyName.substr( 0, delimiterPos );
-    }
-
     // find the property in the list of supported
-    map<string, XVideoProperty>::const_iterator itSupportedProperty = SupportedProperties.find( basePropertyName );
+    map<string, PropertyInformation>::const_iterator itSupportedProperty = SupportedProperties.find( propertyName );
 
     if ( itSupportedProperty == SupportedProperties.end( ) )
     {
@@ -134,39 +103,8 @@ XError XLocalVideoDeviceConfig::GetProperty( const string& propertyName, string&
     }
     else
     {
-        if ( subPropertyName.empty( ) )
-        {
-            // get the property value itself
-            ret = mCamera->GetVideoProperty( itSupportedProperty->second, &propValue );
-        }
-        else
-        {
-            int32_t min, max, step, default;
-            bool    isAutoSupported;
-
-            // get property features - min/max/default/etc
-            ret = mCamera->GetVideoPropertyRange( itSupportedProperty->second, &min, &max, &step, &default, &isAutoSupported );
-
-            if ( ret )
-            {
-                if ( subPropertyName == STR_MIN )
-                {
-                    propValue = min;
-                }
-                else if ( subPropertyName == STR_MAX )
-                {
-                    propValue = max;
-                }
-                else if ( subPropertyName == STR_DEF )
-                {
-                    propValue = default;
-                }
-                else
-                {
-                    ret = XError::UnknownProperty;
-                }
-            }
-        }
+        // get the property value itself
+        ret = mCamera->GetVideoProperty( itSupportedProperty->second.VideoProperty, &propValue );
     }
 
     if ( ret )
@@ -190,16 +128,70 @@ map<string, string> XLocalVideoDeviceConfig::GetAllProperties( ) const
         {
             properties.insert( pair<string, string>( property.first, value ) );
         }
+    }
 
-        // get its subproperties as well
-        for ( auto subproperty : SupportedSubproperties )
+    return properties;
+}
+
+// ------------------------------------------------------------------------------------------
+
+XLocalVideoDevicePropsInfo::XLocalVideoDevicePropsInfo( const shared_ptr<XLocalVideoDevice>& camera ) :
+    mCamera( camera )
+{
+}
+
+XError XLocalVideoDevicePropsInfo::GetProperty( const std::string& propertyName, std::string& value ) const
+{
+    XError  ret = XError::Success;
+    char    buffer[128];
+
+    // find the property in the list of supported
+    map<string, PropertyInformation>::const_iterator itSupportedProperty = SupportedProperties.find( propertyName );
+
+    if ( itSupportedProperty == SupportedProperties.end( ) )
+    {
+        ret = XError::UnknownProperty;
+    }
+    else
+    {
+        int32_t min, max, step, default;
+        bool    isAutoSupported;
+
+        // get property features - min/max/default/etc
+        ret = mCamera->GetVideoPropertyRange( itSupportedProperty->second.VideoProperty, &min, &max, &step, &default, &isAutoSupported );
+
+        if ( ret )
         {
-            string subpropertyName = property.first + ":" + subproperty;
-
-            if ( GetProperty( subpropertyName, value ) )
+            if ( itSupportedProperty->second.Type == TYPE_INT )
             {
-                properties.insert( pair<string, string>( subpropertyName, value ) );
+                sprintf( buffer, "{\"min\":\"%d\",\"max\":\"%d\",\"def\":\"%d\",\"type\":\"int\",\"order\":\"%d\",\"name\":\"%s\"}",
+                         min, max, default, itSupportedProperty->second.Order, itSupportedProperty->second.Name );
             }
+            else
+            {
+                sprintf( buffer, "{\"def\":\"%d\",\"type\":\"bool\",\"order\":\"%d\",\"name\":\"%s\"}",
+                         default, itSupportedProperty->second.Order, itSupportedProperty->second.Name );
+            }
+
+            value = buffer;
+        }
+    }
+
+    return ret;
+}
+
+// Get information for all supported properties of a DirectShow video device
+map<string, string> XLocalVideoDevicePropsInfo::GetAllProperties( ) const
+{
+    map<string, string> properties;
+    string              value;
+    string              propertiesOrder;
+
+    for ( auto property : SupportedProperties )
+    {
+        if ( GetProperty( property.first, value ) )
+        {
+            properties.insert( pair<string, string>( property.first, value ) );
         }
     }
 

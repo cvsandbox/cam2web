@@ -1,43 +1,6 @@
 <div id="properties" style="display: none;">
 
-<div id="div_brightness">
-<label for="brightness">Brightness:</label>
-<input type="range" id="brightness" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
-</div>
-
-<div id="div_contrast">
-<label for="contrast">Contrast:</label>
-<input type="range" id="contrast" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
-</div>
-
-<div id="div_hue">
-<label for="hue">Hue:</label>
-<input type="range" id="hue" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
-</div>
-
-<div id="div_saturation">
-<label for="saturation">Saturation:</label>
-<input type="range" id="saturation" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
-</div>
-
-<div id="div_sharpness">
-<label for="sharpness">Sharpness:</label>
-<input type="range" id="sharpness" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
-</div>
-
-<div id="div_gamma">
-<label for="gamma">Gamma:</label>
-<input type="range" id="gamma" value="50" min="0" max="100" oninput="handleRangeProperty(this)" onchange="handleRangeProperty(this)" />
-</div>
-
-<div id="div_color">
-<input id="color" type="checkbox" data-mini="true" onclick="handleBoolProperty(this);" />
-<label for="color">Color Image</label>
-</div>
-    
-<div id="div_blc">
-<input id="blc" type="checkbox" data-mini="true" onclick="handleBoolProperty(this);" />
-<label for="blc">Back Light Compensation</label>
+<div id="properties_list">
 </div>
 
 <button type="button" id="reset" onclick="resetToDefaults()">Reset to Defaults</button> 
@@ -46,54 +9,87 @@
 
 <script>
 
-var config = { }
-var rangeProperties = [ "brightness", "contrast", "hue", "saturation", "sharpness", "gamma" ];
-var boolProperties = [ "color", "blc" ];
+var config     = { };
+var properties = [ ];
 
-function configureRangeProperty( range, config )
-{
-    range.min = config[range.id + ":min"];
-    range.max = config[range.id + ":max"];
-    range.value = config[range.id];
-}
+var configLoaded     = false;
+var propertiesLoaded = false;
 
+// Reset all camera's properties to their default values
 function resetToDefaults( )
 {
-    for ( var i = 0, len = rangeProperties.length; i < len; i++ )
-    {
-        if ( config[rangeProperties[i] + ":def"] )
+    if ( configLoaded && propertiesLoaded )
+    {                
+        for ( var i = 0, len = properties.length; i < len; i++ )
         {
-            var jRange = $( "#" + rangeProperties[i] );
-            var range = jRange[0];
+            if ( config[properties[i][0]] )
+            {
+                var jControl = $( "#" + properties[i][0] );
+                var control  = jControl[0];
             
-            range.value = config[rangeProperties[i] + ":def"];
-            range.onchange( );
+                if ( properties[i][1].type == "int" )
+                {
+                    control.value = properties[i][1].def;
+                    control.onchange( );
 
-            jRange.slider( "refresh" );
+                    jControl.slider( "refresh" );
+                }
+                else if ( properties[i][1].type == "bool" )
+                {
+                    control.checked = ( properties[i][1].def == "1" );
+                    control.onclick( );
+                    
+                    jControl.checkboxradio( "refresh" );
+                }
+            }
         }
-    }
-
-    for ( var i = 0, len = boolProperties.length; i < len; i++ )
-    {
-        if ( config[boolProperties[i] + ":def"] )
-        {
-            var jCheck = $( "#" + boolProperties[i] );
-            var check = jCheck[0];
-            
-            check.checked = ( config[boolProperties[i] + ":def"] == "1" );
-            check.onclick( );
-            
-            jCheck.checkboxradio( "refresh" );
-        }
+        
+        $( "#properties_list" ).html( propertiesHtml ).trigger( 'create' );
+        $( "#properties" ).show( );
     }
 }
 
-function hideControl( id )
+// Build HTML for camera's properties
+function showSettings( )
 {
-    $( "#div_" + id ).hide( );
+    if ( configLoaded && propertiesLoaded )
+    {
+        var propertiesHtml = "";
+                
+        for ( var i = 0, len = properties.length; i < len; i++ )
+        {
+            if ( config[properties[i][0]] )
+            {
+                var propertyHtml = "<div id=\"div_" + properties[i][0] + "\">";
+          
+                if ( properties[i][1].type == "int" )
+                {
+                    propertyHtml += "<label for=\"" + properties[i][0] + "\">" + properties[i][1].name + ":</label>";
+                    propertyHtml += "<input type=\"range\" id=\"" + properties[i][0] + "\" value=\"" + config[properties[i][0]] + "\" " ;
+                    propertyHtml += "min=\"" + properties[i][1].min + "\" max=\"" + properties[i][1].max + "\"";
+                    propertyHtml += "oninput=\"handleRangeProperty(this)\" onchange=\"handleRangeProperty(this)\" />";
+                    
+                }
+                else if ( properties[i][1].type == "bool" )
+                {
+                    var check = ( config[properties[i][0]] != "0" ) ? "checked " : "";
+                    
+                    propertyHtml += "<input id=\"" +  properties[i][0] + "\" type=\"checkbox\" " + check + "data-min=\"true\" onclick=\"handleBoolProperty(this);\" />";
+                    propertyHtml += "<label for=\"" + properties[i][0] +"\">" + properties[i][1].name + "</label>";
+                }
+                
+                propertyHtml += "</div>";
+                propertiesHtml += propertyHtml;
+            }
+        }
+        
+        $( "#properties_list" ).html( propertiesHtml ).trigger( 'create' );
+        $( "#properties" ).show( );
+    }
 }
 
-function loadCurrentSetting( )
+// Load current values of camera's properties
+function loadCurrentSettings( )
 {
     $.ajax( {
         type        : "GET",
@@ -108,47 +104,9 @@ function loadCurrentSetting( )
             }
             else
             {
-                var propertiesLoaded = 0;
-                
                 config = data.config;
-                
-                for ( var i = 0, len = rangeProperties.length; i < len; i++ )
-                {
-                    if ( config[rangeProperties[i]] )
-                    {
-                        var jRange = $( "#" + rangeProperties[i] );
-                        
-                        configureRangeProperty( jRange[0], data.config );
-                        jRange.slider( "refresh" );
-                        
-                        propertiesLoaded++;
-                    }
-                    else
-                    {
-                        hideControl( rangeProperties[i] );
-                    }
-                }
-                
-                for ( var i = 0, len = boolProperties.length; i < len; i++ )
-                {
-                    if ( config[boolProperties[i]] )
-                    {
-                        $( "#" + boolProperties[i] ).attr( "checked", ( data.config[boolProperties[i]] == "1" ) ).checkboxradio( "refresh" );
-                        
-                        propertiesLoaded++;
-                    }
-                    else
-                    {
-                        hideControl( boolProperties[i] );
-                    }
-                }
-
-                if ( propertiesLoaded == 0 )
-                {
-                    $( "#properties" ).text( "The camera does not expose any configuration properties." );
-                }
-                
-                $( "#properties" ).show( );
+                configLoaded = true;
+                showSettings( );
             }
         },
         failure: function( errMsg )
@@ -158,6 +116,57 @@ function loadCurrentSetting( )
     } );
 }
 
-loadCurrentSetting( );
+// Load information about camera's properties, like name, type, min/max/default value
+function loadPropertiesInfo( )
+{
+    function compare( a, b )
+    {
+        if ( a[1].order < b[1].order )
+            return -1;
+        if ( a[1].order > b[1].order )
+            return 1;
+        return 0;
+    }
+    
+    $.ajax( {
+        type        : "GET",
+        url         : "/camera/properties",
+        contentType : "application/json; charset=utf-8",
+        async       : true,
+        success: function( data )
+        {
+            if ( data.status != "OK" )
+            {
+                console.log( "Failed getting camera properties" );
+            }
+            else
+            {
+                for ( var key in data.config )
+                {
+                    properties.push( [ key, data.config[key]] );
+                }
+                                
+                properties.sort( compare );
+                
+                propertiesLoaded = true;
+                showSettings( );
+            }
+        },
+        failure: function( errMsg )
+        {
+            console.log( errMsg );
+        }
+    } );
+}
 
+function getSettings( )
+{
+    configLoaded     = false;
+    propertiesLoaded = false;
+
+    loadCurrentSettings( );
+    loadPropertiesInfo( );
+}
+
+getSettings( );
 </script>

@@ -22,6 +22,7 @@
 
 #include "XObjectInformationRequestHandler.hpp"
 #include "XStringTools.hpp"
+#include "XSimpleJsonParser.hpp"
 
 using namespace std;
 
@@ -102,6 +103,8 @@ void XObjectInformationRequestHandler::HandleGet( const string& varsToGet, IWebR
     // form a JSON response with values of the properties
     for ( auto kvp : values )
     {
+        map<string, string> innerValue;
+
         if ( !first )
         {
             reply += ",";
@@ -109,9 +112,20 @@ void XObjectInformationRequestHandler::HandleGet( const string& varsToGet, IWebR
 
         reply += "\"";
         reply += kvp.first;
-        reply += "\":\"";
-        reply += StringReplace( kvp.second, "\"", "\\\"" );
-        reply += "\"";
+        reply += "\":";
+        
+        // a dirty hack for providing already serialized JSON
+        if ( ( kvp.second.length( ) >= 2 ) && ( kvp.second.front( ) == '{' ) && ( kvp.second.back( ) == '}' ) &&
+             ( XSimpleJsonParser( kvp.second, innerValue ) ) )
+        {
+            reply += kvp.second;
+        }
+        else
+        {
+            reply += "\"";
+            reply += StringReplace( kvp.second, "\"", "\\\"" );
+            reply += "\"";
+        }
 
         first = false;
     }

@@ -744,6 +744,7 @@ static bool StartVideoStreaming( )
         gData->server.SetPort( gData->appConfig->HttpPort( ) ).
                       AddHandler( make_shared<XObjectInformationRequestHandler>( "/version", make_shared<XObjectInformationMap>( versionInfo ) ) ).
                       AddHandler( make_shared<XObjectConfigurationRequestHandler>( "/camera/config", gData->cameraConfig ), configGroup ).
+                      AddHandler( make_shared<XObjectInformationRequestHandler>( "/camera/properties", make_shared<XLocalVideoDevicePropsInfo>( gData->camera ) ), configGroup ).
                       AddHandler( make_shared<XObjectInformationRequestHandler>( "/camera/info", make_shared<XObjectInformationMap>( cameraInfo ) ), viewersGroup ).
                       AddHandler( gData->video2web.CreateJpegHandler( "/camera/jpeg" ), viewersGroup ).
                       AddHandler( gData->video2web.CreateMjpegHandler( "/camera/mjpeg", gData->appConfig->MjpegFrameRate( ) ), viewersGroup );

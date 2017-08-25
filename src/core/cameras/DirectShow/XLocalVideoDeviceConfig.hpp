@@ -24,6 +24,7 @@
 #include "IObjectConfigurator.hpp"
 #include "XLocalVideoDevice.hpp"
 
+// The class is to get/set camera properties
 class XLocalVideoDeviceConfig : public IObjectConfigurator
 {
 public:
@@ -37,5 +38,20 @@ public:
 private:
     std::shared_ptr<XLocalVideoDevice> mCamera;
 };
+
+// The class is to get/set camera properties information - min, max, default, etc.
+class XLocalVideoDevicePropsInfo : public IObjectInformation
+{
+public:
+    XLocalVideoDevicePropsInfo( const std::shared_ptr<XLocalVideoDevice>& camera );
+
+    XError GetProperty( const std::string& propertyName, std::string& value ) const;
+
+    std::map<std::string, std::string> GetAllProperties( ) const;
+
+private:
+    std::shared_ptr<XLocalVideoDevice> mCamera;
+};
+
 
 #endif // XLOCAL_VIDEO_DEVICE_CONFIG_HPP
