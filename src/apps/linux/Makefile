@@ -106,7 +106,6 @@ copyweb:
 	cp ../../web/* $(OUT_WEB)
 	cp ../../../externals/jquery/*.js $(OUT_WEB)
 	cp ../../../externals/jquery/*.css $(OUT_WEB)
-	mv $(OUT_WEB)cameraproperties_v4l.html $(OUT_WEB)cameraproperties.html
 	cp -r $(OUT_WEB) .
 
 generateweb:
@@ -118,7 +117,7 @@ generateweb:
 	$(WEB2H) -i $(OUT_INC)styles.css -o $(OUT_INC)styles.css.h
 	$(WEB2H) -i $(OUT_INC)cam2web.png -o $(OUT_INC)cam2web.png.h
 	$(WEB2H) -i $(OUT_INC)cam2web_white.png -o $(OUT_INC)cam2web_white.png.h
-	$(WEB2H) -i $(OUT_INC)cameraproperties_v4l.html -o $(OUT_INC)cameraproperties.html.h    
+	$(WEB2H) -i $(OUT_INC)cameraproperties.html -o $(OUT_INC)cameraproperties.html.h    
 	$(WEB2H) -i $(OUT_INC)camera.js -o $(OUT_INC)camera.js.h
 	$(WEB2H) -i $(OUT_INC)cameraproperties.js -o $(OUT_INC)cameraproperties.js.h
 	$(WEB2H) -i $(OUT_INC)jquery.js -o $(OUT_INC)jquery.js.h

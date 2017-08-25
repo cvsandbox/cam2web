@@ -24,12 +24,27 @@
 #include "IObjectConfigurator.hpp"
 #include "XV4LCamera.hpp"
 
+// The class is to get/set camera properties
 class XV4LCameraConfig : public IObjectConfigurator
 {
 public:
     XV4LCameraConfig( const std::shared_ptr<XV4LCamera>& camera );
 
     XError SetProperty( const std::string& propertyName, const std::string& value );
+    XError GetProperty( const std::string& propertyName, std::string& value ) const;
+
+    std::map<std::string, std::string> GetAllProperties( ) const;
+
+private:
+    std::shared_ptr<XV4LCamera> mCamera;
+};
+
+// The class is to get/set camera properties information - min, max, default, etc.
+class XV4LCameraPropsInfo : public IObjectInformation
+{
+public:
+    XV4LCameraPropsInfo( const std::shared_ptr<XV4LCamera>& camera );
+
     XError GetProperty( const std::string& propertyName, std::string& value ) const;
 
     std::map<std::string, std::string> GetAllProperties( ) const;
