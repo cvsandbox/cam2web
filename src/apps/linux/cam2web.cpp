@@ -32,7 +32,6 @@
 #include "XVideoSourceToWeb.hpp"
 #include "XObjectConfigurationSerializer.hpp"
 #include "XObjectConfigurationRequestHandler.hpp"
-#include "XObjectInformationRequestHandler.hpp"
 #include "XManualResetEvent.hpp"
 
 // Release build embeds web resources into executable
