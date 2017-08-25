@@ -359,7 +359,7 @@ static BOOL CreateMainWindow( HINSTANCE hInstance, int nCmdShow )
 
     gData->hwndMain = hwndMain;
 
-    ResizeWindowToClientSize( hwndMain, 300, 190 );
+    ResizeWindowToClientSize( hwndMain, 300, 195 );
 
     // cameras' combo and label
     HWND hWindLabel = CreateWindow( WC_STATIC, TEXT( "&Camera:" ), WS_CHILD | WS_VISIBLE | WS_GROUP,
