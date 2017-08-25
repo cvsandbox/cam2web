@@ -104,8 +104,6 @@
     <PostBuildEvent>
       <Command>xcopy /Y "$(TargetPath)" "$(ProjectDir)..\..\..\build\msvc\debug\bin\"
 xcopy /Y "$(ProjectDir)..\..\web\*.*" "$(ProjectDir)..\..\..\build\msvc\debug\bin\web\"
-del "$(ProjectDir)..\..\..\build\msvc\debug\bin\web\cameraproperties.html"
-ren "$(ProjectDir)..\..\..\build\msvc\debug\bin\web\cameraproperties_directshow.html" cameraproperties.html
 xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.js" "$(ProjectDir)..\..\..\build\msvc\debug\bin\web\"
 xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.css" "$(ProjectDir)..\..\..\build\msvc\debug\bin\web\"
 
@@ -135,8 +133,6 @@ xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.css" "$(ProjectDir)..\..\..\b
     <PostBuildEvent>
       <Command>xcopy /Y "$(TargetPath)" "$(ProjectDir)..\..\..\build\msvc\debug\bin\64\"
 xcopy /Y "$(ProjectDir)..\..\web\*.*" "$(ProjectDir)..\..\..\build\msvc\debug\bin\64\web\"
-del "$(ProjectDir)..\..\..\build\msvc\debug\bin\64\web\cameraproperties.html"
-ren "$(ProjectDir)..\..\..\build\msvc\debug\bin\64\web\cameraproperties_directshow.html" cameraproperties.html
 xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.js" "$(ProjectDir)..\..\..\build\msvc\debug\bin\64\web\"
 xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.css" "$(ProjectDir)..\..\..\build\msvc\debug\bin\64\web\"
 
@@ -184,7 +180,7 @@ xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.css" "$(ProjectDir)..\..\..\b
 "$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\styles.css" -o "$(ProjectDir)..\..\..\build\msvc\release\include\styles.css.h"
 "$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\cam2web.png" -o "$(ProjectDir)..\..\..\build\msvc\release\include\cam2web.png.h"
 "$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\cam2web_white.png" -o "$(ProjectDir)..\..\..\build\msvc\release\include\cam2web_white.png.h"
-"$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\cameraproperties_directshow.html" -o "$(ProjectDir)..\..\..\build\msvc\release\include\cameraproperties.html.h"
+"$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\cameraproperties.html" -o "$(ProjectDir)..\..\..\build\msvc\release\include\cameraproperties.html.h"
 "$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\camera.js" -o "$(ProjectDir)..\..\..\build\msvc\release\include\camera.js.h"
 "$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\cameraproperties.js" -o "$(ProjectDir)..\..\..\build\msvc\release\include\cameraproperties.js.h"
 
@@ -233,7 +229,7 @@ xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.css" "$(ProjectDir)..\..\..\b
 "$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\styles.css" -o "$(ProjectDir)..\..\..\build\msvc\release\include\styles.css.h"
 "$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\cam2web.png" -o "$(ProjectDir)..\..\..\build\msvc\release\include\cam2web.png.h"
 "$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\cam2web_white.png" -o "$(ProjectDir)..\..\..\build\msvc\release\include\cam2web_white.png.h"
-"$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\cameraproperties_directshow.html" -o "$(ProjectDir)..\..\..\build\msvc\release\include\cameraproperties.html.h"
+"$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\cameraproperties.html" -o "$(ProjectDir)..\..\..\build\msvc\release\include\cameraproperties.html.h"
 "$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\camera.js" -o "$(ProjectDir)..\..\..\build\msvc\release\include\camera.js.h"
 "$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\cameraproperties.js" -o "$(ProjectDir)..\..\..\build\msvc\release\include\cameraproperties.js.h"
 
