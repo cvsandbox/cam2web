@@ -46,7 +46,6 @@
 #include "XVideoSourceToWeb.hpp"
 #include "XObjectConfigurationSerializer.hpp"
 #include "XObjectConfigurationRequestHandler.hpp"
-#include "XObjectInformationRequestHandler.hpp"
 #include "AppConfig.hpp"
 
 // Release build embeds web resources into executable

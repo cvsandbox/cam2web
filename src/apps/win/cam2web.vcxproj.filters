@@ -81,9 +81,6 @@
     <ClInclude Include="..\..\core\IObjectInformation.hpp">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\core\XObjectInformationRequestHandler.hpp">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\core\XObjectConfigurationRequestHandler.hpp">
       <Filter>Core</Filter>
     </ClInclude>
@@ -157,9 +154,6 @@
     </ClCompile>
     <ClCompile Include="..\..\..\externals\mongoose\mongoose.c">
       <Filter>Externals\mongoose</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\core\XObjectInformationRequestHandler.cpp">
-      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="..\..\core\XObjectConfigurationRequestHandler.cpp">
       <Filter>Core</Filter>

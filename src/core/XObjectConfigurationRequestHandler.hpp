@@ -24,6 +24,7 @@
 #include "IObjectConfigurator.hpp"
 #include "XWebServer.hpp"
 
+// Web request handler to allow configuration of object's properties
 class XObjectConfigurationRequestHandler : public IWebRequestHandler
 {
 public:
@@ -32,11 +33,19 @@ public:
     void HandleHttpRequest( const IWebRequest& request, IWebResponse& response );
 
 private:
-    void HandleGet( const std::string& varsToGet, IWebResponse& response );
-    void HandlePost( const std::string& body, IWebResponse& response );
+    std::shared_ptr<IObjectConfigurator> ObjectToConfig;
+};
+
+// Web request handler to provide information about object's properties - read/only
+class XObjectInformationRequestHandler : public IWebRequestHandler
+{
+public:
+    XObjectInformationRequestHandler( const std::string& uri, const std::shared_ptr<IObjectInformation>& infoObject );
+
+    void HandleHttpRequest( const IWebRequest& request, IWebResponse& response );
 
 private:
-    std::shared_ptr<IObjectConfigurator> ObjectToConfig;
+    std::shared_ptr<IObjectInformation> InfoObject;
 };
 
 #endif // XOBJECT_CONFIGURATION_REQUEST_HANDLER_HPP

@@ -32,39 +32,10 @@ const static char* StatusUnknownProperty      = "Unknown property";
 const static char* StatusInvalidPropertyValue = "Invalid property value";
 const static char* StatusPropertyFailed       = "Failed setting property";
 
-XObjectConfigurationRequestHandler::XObjectConfigurationRequestHandler( const string& uri,
-                                                                        const shared_ptr<IObjectConfigurator>& objectToConfig ) :
-    IWebRequestHandler( uri, false ),
-    ObjectToConfig( objectToConfig )
-{
-}
-
-// Handle object configuration request by providing its current configuration or setting specified varaibles/properties
-void XObjectConfigurationRequestHandler::HandleHttpRequest( const IWebRequest& request, IWebResponse& response )
-{
-    string method = request.Method( );
-
-    if ( method == "POST" )
-    {
-        HandlePost( request.Body( ), response );
-    }
-    else if ( method == "GET" )
-    {
-        HandleGet( request.GetVariable( "vars" ), response );
-    }
-    else
-    {
-        response.Printf( "HTTP/1.1 405 Method Not Allowed\r\n"
-                         "Allow: GET, POST\r\n"
-                         "Content-Type: text/plain\r\n"
-                         "Connection: close\r\n"
-                         "\r\n"
-                         "Method Not Allowed" );
-    }
-}
+// ------------- Helpers to do actual requests handling -------------
 
 // Get all or the list of specified variables
-void XObjectConfigurationRequestHandler::HandleGet( const string& varsToGet, IWebResponse& response )
+static void HandleGetRequest( const shared_ptr<const IObjectInformation>& infoObject, const string& varsToGet, IWebResponse& response )
 {
     map<string, string> values;
     string              reply = "{\"status\":\"OK\",\"config\":{";
@@ -73,7 +44,7 @@ void XObjectConfigurationRequestHandler::HandleGet( const string& varsToGet, IWe
     if ( varsToGet.empty( ) )
     {
         // get all properties of the object
-        values = ObjectToConfig->GetAllProperties( );
+        values = infoObject->GetAllProperties( );
     }
     else
     {
@@ -96,7 +67,7 @@ void XObjectConfigurationRequestHandler::HandleGet( const string& varsToGet, IWe
                 string varName = varsToGet.substr( start, count );
                 string varValue;
 
-                if ( ObjectToConfig->GetProperty( varName, varValue ) == XError::Success )
+                if ( infoObject->GetProperty( varName, varValue ) == XError::Success )
                 {
                     values.insert( pair<string, string>( varName, varValue ) );
                 }
@@ -113,6 +84,8 @@ void XObjectConfigurationRequestHandler::HandleGet( const string& varsToGet, IWe
     // form a JSON response with values of the properties
     for ( auto kvp : values )
     {
+        map<string, string> innerValue;
+
         if ( !first )
         {
             reply += ",";
@@ -120,9 +93,20 @@ void XObjectConfigurationRequestHandler::HandleGet( const string& varsToGet, IWe
 
         reply += "\"";
         reply += kvp.first;
-        reply += "\":\"";
-        reply += StringReplace( kvp.second, "\"", "\\\"" );
-        reply += "\"";
+        reply += "\":";
+        
+        // a dirty hack for providing already serialized JSON
+        if ( ( kvp.second.length( ) >= 2 ) && ( kvp.second.front( ) == '{' ) && ( kvp.second.back( ) == '}' ) &&
+             ( XSimpleJsonParser( kvp.second, innerValue ) ) )
+        {
+            reply += kvp.second;
+        }
+        else
+        {
+            reply += "\"";
+            reply += StringReplace( kvp.second, "\"", "\\\"" );
+            reply += "\"";
+        }
 
         first = false;
     }
@@ -139,7 +123,7 @@ void XObjectConfigurationRequestHandler::HandleGet( const string& varsToGet, IWe
 }
 
 // Set all variables specified in the posted JSON
-void XObjectConfigurationRequestHandler::HandlePost( const string& body, IWebResponse& response )
+void HandlePostRequest( const shared_ptr<IObjectConfigurator>& objectToConfig, const string& body, IWebResponse& response )
 {
     const char*         status = StatusOK;
     map<string, string> values;
@@ -154,7 +138,7 @@ void XObjectConfigurationRequestHandler::HandlePost( const string& body, IWebRes
     {
         for ( auto kvp : values )
         {
-            XError ecode = ObjectToConfig->SetProperty( kvp.first, kvp.second );
+            XError ecode = objectToConfig->SetProperty( kvp.first, kvp.second );
 
             if ( ecode != XError::Success )
             {
@@ -189,4 +173,66 @@ void XObjectConfigurationRequestHandler::HandlePost( const string& body, IWebRes
                      "Cache-Control: no-store, must-revalidate\r\nPragma: no-cache\r\nExpires: 0\r\n"
                      "\r\n"
                      "%s", (int) reply.length( ), reply.c_str( ) );
+}
+
+// ------------- Implmenetation of XObjectConfigurationRequestHandler -------------
+
+XObjectConfigurationRequestHandler::XObjectConfigurationRequestHandler( const string& uri,
+                                                                        const shared_ptr<IObjectConfigurator>& objectToConfig ) :
+    IWebRequestHandler( uri, false ),
+    ObjectToConfig( objectToConfig )
+{
+}
+
+// Handle object configuration request by providing its current configuration or setting specified varaibles/properties
+void XObjectConfigurationRequestHandler::HandleHttpRequest( const IWebRequest& request, IWebResponse& response )
+{
+    string method = request.Method( );
+
+    if ( method == "POST" )
+    {
+        HandlePostRequest( ObjectToConfig, request.Body( ), response );
+    }
+    else if ( method == "GET" )
+    {
+        HandleGetRequest( ObjectToConfig, request.GetVariable( "vars" ), response );
+    }
+    else
+    {
+        response.Printf( "HTTP/1.1 405 Method Not Allowed\r\n"
+                         "Allow: GET, POST\r\n"
+                         "Content-Type: text/plain\r\n"
+                         "Connection: close\r\n"
+                         "\r\n"
+                         "Method Not Allowed" );
+    }
+}
+
+// ------------- Implmenetation of XObjectConfigurationRequestHandler -------------
+
+XObjectInformationRequestHandler::XObjectInformationRequestHandler( const string& uri,
+                                                                    const shared_ptr<IObjectInformation>& infoObject ) :
+    IWebRequestHandler( uri, false ),
+    InfoObject( infoObject )
+{
+}
+
+// Handle object configuration request by providing its current configuration or setting specified varaibles/properties
+void XObjectInformationRequestHandler::HandleHttpRequest( const IWebRequest& request, IWebResponse& response )
+{
+    string method = request.Method( );
+
+    if ( method == "GET" )
+    {
+        HandleGetRequest( InfoObject, request.GetVariable( "vars" ), response );
+    }
+    else
+    {
+        response.Printf( "HTTP/1.1 405 Method Not Allowed\r\n"
+                         "Allow: GET\r\n"
+                         "Content-Type: text/plain\r\n"
+                         "Connection: close\r\n"
+                         "\r\n"
+                         "Method Not Allowed" );
+    }
 }
