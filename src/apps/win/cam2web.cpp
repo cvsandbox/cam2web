@@ -99,7 +99,7 @@ using namespace std::chrono;
 
 // Information provided on version request
 #define STR_INFO_PRODUCT        "cam2web"
-#define STR_INFO_VERSION        "1.0.0"
+#define STR_INFO_VERSION        "1.1.0"
 #define STR_INFO_PLATFORM       "Windows"
 
 // Available application icons
