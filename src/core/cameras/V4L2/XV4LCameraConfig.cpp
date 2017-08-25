@@ -168,12 +168,12 @@ XError XV4LCameraPropsInfo::GetProperty( const std::string& propertyName, std::s
         {
             if ( itSupportedProperty->second.Type == TYPE_INT )
             {
-                sprintf( buffer, "{\"min\":\"%d\",\"max\":\"%d\",\"def\":\"%d\",\"type\":\"int\",\"order\":\"%d\",\"name\":\"%s\"}",
+                sprintf( buffer, "{\"min\":%d,\"max\":%d,\"def\":%d,\"type\":\"int\",\"order\":%d,\"name\":\"%s\"}",
                          min, max, def, itSupportedProperty->second.Order, itSupportedProperty->second.Name );
             }
             else
             {
-                sprintf( buffer, "{\"def\":\"%d\",\"type\":\"bool\",\"order\":\"%d\",\"name\":\"%s\"}",
+                sprintf( buffer, "{\"def\":%d,\"type\":\"bool\",\"order\":%d,\"name\":\"%s\"}",
                          def, itSupportedProperty->second.Order, itSupportedProperty->second.Name );
             }
 
