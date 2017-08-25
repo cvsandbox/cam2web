@@ -55,6 +55,9 @@ using namespace std;
 #define STR_INFO_VERSION        "1.0.0"
 #define STR_INFO_PLATFORM       "Linux"
 
+// Name of the device and default title of the camera
+const char* DEVICE_NAME = "Video for Linux Camera";
+
 XManualResetEvent ExitEvent;
 
 // Different application settings
@@ -69,7 +72,7 @@ struct
     string   HtDigestFileName;
     string   CameraConfigFileName;
     string   CustomWebContent;
-
+    string   CameraTitle;
     UserGroup ViewersGroup;
     UserGroup ConfigGroup;
 }
@@ -128,6 +131,8 @@ void SetDefaultSettings( )
     // default location of web content for debug builds
     Settings.CustomWebContent = "./web";
 #endif
+
+    Settings.CameraTitle = DEVICE_NAME;
 }
 
 // Parse command line and override default settings
@@ -251,6 +256,10 @@ bool ParseCommandLine( int argc, char* argv[] )
         {
             Settings.CustomWebContent = value;
         }
+        else if ( key == "title" )
+        {
+            Settings.CameraTitle = value;
+        }
         else
         {
             break;
@@ -310,6 +319,8 @@ bool ParseCommandLine( int argc, char* argv[] )
         printf( "              Default is '~/.cam_config'. \n" );
         printf( "  -web:<?>    Name of the folder to serve custom web content. \n" );
         printf( "              By default embedded web files are used. \n" );
+        printf( "  -title:<?>  Name of the camera to be show in WebUI. \n" );
+        printf( "              Use double quotes if the name contains spaces. \n" );
         printf( "\n" );
 
         ret = false;
@@ -359,7 +370,8 @@ int main( int argc, char* argv[] )
     sprintf( strVideoSize,      "%u", Settings.FrameWidth );
     sprintf( strVideoSize + 16, "%u", Settings.FrameHeight );
 
-    cameraInfo.insert( PropertyMap::value_type( "device", "Video for Linux Camera" ) );
+    cameraInfo.insert( PropertyMap::value_type( "device", DEVICE_NAME ) );
+    cameraInfo.insert( PropertyMap::value_type( "title",  Settings.CameraTitle ) );
     cameraInfo.insert( PropertyMap::value_type( "width",  strVideoSize ) );
     cameraInfo.insert( PropertyMap::value_type( "height", strVideoSize + 16 ) );
 
