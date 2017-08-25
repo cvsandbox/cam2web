@@ -42,8 +42,8 @@ const static map<string, PropertyInformation> SupportedProperties =
 {
     { "brightness", { XVideoProperty::Brightness,            TYPE_INT,  0, "Brightness"              } },
     { "contrast",   { XVideoProperty::Contrast,              TYPE_INT,  1, "Contrast"                } },
-    { "hue",        { XVideoProperty::Hue,                   TYPE_INT,  2, "Hue"                     } },
-    { "saturation", { XVideoProperty::Saturation,            TYPE_INT,  3, "Saturation"              } },
+    { "saturation", { XVideoProperty::Saturation,            TYPE_INT,  2, "Saturation"              } },
+    { "hue",        { XVideoProperty::Hue,                   TYPE_INT,  3, "Hue"                     } },
     { "sharpness",  { XVideoProperty::Sharpness,             TYPE_INT,  4, "Sharpness"               } },
     { "gamma",      { XVideoProperty::Gamma,                 TYPE_INT,  5, "Gamma"                   } },
     { "color",      { XVideoProperty::ColorEnable,           TYPE_BOOL, 6, "Color Image"             } },
