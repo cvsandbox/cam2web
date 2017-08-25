@@ -143,7 +143,10 @@ function loadPropertiesInfo( )
             {
                 for ( var key in data.config )
                 {
-                    properties.push( [ key, data.config[key]] );
+                    var obj = data.config[key];
+                    
+                    obj.order = parseInt( obj.order );
+                    properties.push( [ key, obj ] );
                 }
                                 
                 properties.sort( compare );
