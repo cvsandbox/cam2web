@@ -164,12 +164,12 @@ XError XLocalVideoDevicePropsInfo::GetProperty( const std::string& propertyName,
         {
             if ( itSupportedProperty->second.Type == TYPE_INT )
             {
-                sprintf( buffer, "{\"min\":\"%d\",\"max\":\"%d\",\"def\":\"%d\",\"type\":\"int\",\"order\":\"%d\",\"name\":\"%s\"}",
+                sprintf( buffer, "{\"min\":%d,\"max\":%d,\"def\":%d,\"type\":\"int\",\"order\":%d,\"name\":\"%s\"}",
                          min, max, default, itSupportedProperty->second.Order, itSupportedProperty->second.Name );
             }
             else
             {
-                sprintf( buffer, "{\"def\":\"%d\",\"type\":\"bool\",\"order\":\"%d\",\"name\":\"%s\"}",
+                sprintf( buffer, "{\"def\":%d,\"type\":\"bool\",\"order\":%d,\"name\":\"%s\"}",
                          default, itSupportedProperty->second.Order, itSupportedProperty->second.Name );
             }
 
