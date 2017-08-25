@@ -47,4 +47,3 @@ function handleSelectionProperty( selection )
 {
     setCameraProperty( selection.id, selection.value );
 }
-

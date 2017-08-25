@@ -45,8 +45,12 @@ const static map<string, string> SupportedProperties =
     { PROP_SATURATION, "{\"min\":-100,\"max\":100,\"def\":0,\"type\":\"int\",\"order\":2,\"name\":\"Saturation\"}"  },
     { PROP_SHARPNESS,  "{\"min\":-100,\"max\":100,\"def\":0,\"type\":\"int\",\"order\":3,\"name\":\"Sharpness\"}"   },
     
-    { PROP_AWBMODE, "{\"def\":\"Auto\",\"type\":\"select\",\"order\":4,\"name\":\"White Balance\"}" },
-    
+    { PROP_AWBMODE, "{\"def\":\"Auto\",\"type\":\"select\",\"order\":4,\"name\":\"White Balance\","
+                    "\"choices\":[[\"Off\",\"Off\"],[\"Auto\",\"Auto\"],[\"Sunlight\",\"Sunlight\"],"
+                    "[\"Cloudy\",\"Cloudy\"],[\"Shade\",\"Shade\"],[\"Tungsten\",\"Tungsten\"],"
+                    "[\"Fluorescent\",\"Fluorescent\"],[\"Incandescent\",\"Incandescent\"],[\"Flash\",\"Flash\"],"
+                    "[\"Horizon\",\"Horizon\"]]}" },
+
     { PROP_HFLIP, "{\"def\":0,\"type\":\"bool\",\"order\":8,\"name\":\"Horizontal Flip\"}"   },
     { PROP_VFLIP, "{\"def\":0,\"type\":\"bool\",\"order\":9,\"name\":\"Vertical Flip\"}"   },
     { PROP_VIDEO_STABILISATION, "{\"def\":0,\"type\":\"bool\",\"order\":10,\"name\":\"Video Stabilisation\"}"   },

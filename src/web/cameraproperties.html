@@ -41,6 +41,13 @@ function resetToDefaults( )
                     
                     jControl.checkboxradio( "refresh" );
                 }
+                else if ( properties[i][1].type == "select" )
+                {
+                    control.value = properties[i][1].def;
+                    control.onchange( );
+
+                    jControl.change( );
+                }
             }
         }
         
@@ -77,8 +84,20 @@ function showSettings( )
                     propertyHtml += "<input id=\"" +  properties[i][0] + "\" type=\"checkbox\" " + check + "data-min=\"true\" onclick=\"handleBoolProperty(this);\" />";
                     propertyHtml += "<label for=\"" + properties[i][0] +"\">" + properties[i][1].name + "</label>";
                 }
+                else if ( properties[i][1].type == "select" )
+                {                    
+                    propertyHtml += "<label for=\"" + properties[i][0] + "\">" + properties[i][1].name + ":</label>";
+                    propertyHtml += "<select id=\"" + properties[i][0] + "\" data-mini=\"true\" onchange=\"handleSelectionProperty(this)\">";
+                    
+                    for ( var j = 0, choicesCount = properties[i][1].choices.length; j < choicesCount; j++ )
+                    {
+                        propertyHtml += "<option value=\"" + properties[i][1].choices[j][0] + "\">" + properties[i][1].choices[j][1] + "</option>";
+                    }
+                    
+                    propertyHtml += "</select>";
+                }
                 
-                propertyHtml += "</div>";
+                propertyHtml   += "</div>";
                 propertiesHtml += propertyHtml;
             }
         }
