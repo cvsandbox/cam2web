@@ -406,6 +406,7 @@ int main( int argc, char* argv[] )
     // add web handlers
     server.AddHandler( make_shared<XObjectInformationRequestHandler>( "/version", make_shared<XObjectInformationMap>( versionInfo ) ) ).
            AddHandler( make_shared<XObjectConfigurationRequestHandler>( "/camera/config", xcameraConfig ), configGroup ).
+           AddHandler( make_shared<XObjectInformationRequestHandler>( "/camera/properties", make_shared<XRaspiCameraPropsInfo>( xcamera ) ), configGroup ).
            AddHandler( make_shared<XObjectInformationRequestHandler>( "/camera/info", make_shared<XObjectInformationMap>( cameraInfo ) ), viewersGroup ).
            AddHandler( video2web.CreateJpegHandler( "/camera/jpeg" ), viewersGroup ).
            AddHandler( video2web.CreateMjpegHandler( "/camera/mjpeg", Settings.FrameRate ), viewersGroup );
@@ -426,7 +427,7 @@ int main( int argc, char* argv[] )
                AddHandler( make_shared<XEmbeddedContentHandler>( "cam2web_white.png", &web_cam2web_white_png ) ).
                AddHandler( make_shared<XEmbeddedContentHandler>( "camera.js", &web_camera_js ), viewersGroup ).
                AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.js", &web_cameraproperties_js ), viewersGroup ).
-               AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.html", &web_cameraproperties_pi_html ), configGroup ).
+               AddHandler( make_shared<XEmbeddedContentHandler>( "cameraproperties.html", &web_cameraproperties_html ), configGroup ).
                AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.js", &web_jquery_js ), viewersGroup ).
                AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.js", &web_jquery_mobile_js ), viewersGroup ).
                AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.css", &web_jquery_mobile_css ), viewersGroup );

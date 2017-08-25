@@ -24,23 +24,32 @@
 
 using namespace std;
 
+const static string  PROP_BRIGHTNESS          = "brightness";
+const static string  PROP_CONTRAST            = "contrast";
+const static string  PROP_SATURATION          = "saturation";
+const static string  PROP_SHARPNESS           = "sharpness";
 const static string  PROP_HFLIP               = "hflip";
 const static string  PROP_VFLIP               = "vflip";
 const static string  PROP_VIDEO_STABILISATION = "videostabilisation";
-const static string  PROP_SHARPNESS           = "sharpness";
-const static string  PROP_CONTRAST            = "contrast";
-const static string  PROP_BRIGHTNESS          = "brightness";
-const static string  PROP_SATURATION          = "saturation";
+
 const static string  PROP_AWBMODE             = "awb";
+
 const static string  PROP_EXPMODE             = "expmode";
 const static string  PROP_EXPMETERINGMODE     = "expmeteringmode";
 const static string  PROP_EFFECT              = "effect";
 
-const static string* SupportedProperties[] =
+const static map<string, string> SupportedProperties =
 {
-    &PROP_HFLIP, &PROP_VFLIP, &PROP_VIDEO_STABILISATION,
-    &PROP_SHARPNESS, &PROP_CONTRAST, &PROP_BRIGHTNESS, &PROP_SATURATION,
-    &PROP_AWBMODE, &PROP_EXPMODE, &PROP_EXPMETERINGMODE, &PROP_EFFECT
+    { PROP_BRIGHTNESS, "{\"min\":0,\"max\":100,\"def\":50,\"type\":\"int\",\"order\":0,\"name\":\"Brightness\"}"    },
+    { PROP_CONTRAST,   "{\"min\":-100,\"max\":100,\"def\":0,\"type\":\"int\",\"order\":1,\"name\":\"Contrast\"}"    },
+    { PROP_SATURATION, "{\"min\":-100,\"max\":100,\"def\":0,\"type\":\"int\",\"order\":2,\"name\":\"Saturation\"}"  },
+    { PROP_SHARPNESS,  "{\"min\":-100,\"max\":100,\"def\":0,\"type\":\"int\",\"order\":3,\"name\":\"Sharpness\"}"   },
+    
+    { PROP_AWBMODE, "{\"def\":\"Auto\",\"type\":\"select\",\"order\":4,\"name\":\"White Balance\"}" },
+    
+    { PROP_HFLIP, "{\"def\":0,\"type\":\"bool\",\"order\":8,\"name\":\"Horizontal Flip\"}"   },
+    { PROP_VFLIP, "{\"def\":0,\"type\":\"bool\",\"order\":9,\"name\":\"Vertical Flip\"}"   },
+    { PROP_VIDEO_STABILISATION, "{\"def\":0,\"type\":\"bool\",\"order\":10,\"name\":\"Video Stabilisation\"}"   },
 };
 
 const static map<string, AwbMode> SupportedAwbModes =
@@ -105,6 +114,8 @@ const static map<string, ImageEffect> SupportedImageEffects =
     { "ColorBalance", ImageEffect::ColorBalance },
     { "Cartoon",      ImageEffect::Cartoon      }
 };
+
+// ------------------------------------------------------------------------------------------
 
 XRaspiCameraConfig::XRaspiCameraConfig( const shared_ptr<XRaspiCamera>& camera ) :
     mCamera( camera )
@@ -360,17 +371,59 @@ XError XRaspiCameraConfig::GetProperty( const string& propertyName, string& valu
 map<string, string> XRaspiCameraConfig::GetAllProperties( ) const
 {
     map<string, string> properties;
+    string              value;
 
-    for ( int i = 0; i < sizeof( SupportedProperties ) / sizeof( SupportedProperties[0] ); i++ )
+    for ( auto property : SupportedProperties )
     {
-        string value;
-
-        if ( GetProperty( *SupportedProperties[i], value ) == XError::Success )
+        if ( GetProperty( property.first, value ) )
         {
-            properties.insert( pair<string, string>( *SupportedProperties[i], value ) );
+            properties.insert( pair<string, string>( property.first, value ) );
         }
     }
 
     return properties;
 }
 
+// ------------------------------------------------------------------------------------------
+
+XRaspiCameraPropsInfo::XRaspiCameraPropsInfo( const shared_ptr<XRaspiCamera>& camera ) :
+    mCamera( camera )
+{
+}
+
+XError XRaspiCameraPropsInfo::GetProperty( const std::string& propertyName, std::string& value ) const
+{
+    XError  ret = XError::Success;
+    char    buffer[128];
+
+    // find the property in the list of supported
+    map<string, string>::const_iterator itSupportedProperty = SupportedProperties.find( propertyName );
+
+    if ( itSupportedProperty == SupportedProperties.end( ) )
+    {
+        ret = XError::UnknownProperty;
+    }
+    else
+    {
+        value = itSupportedProperty->second;
+    }
+
+    return ret;
+}
+
+// Get information for all supported properties of a DirectShow video device
+map<string, string> XRaspiCameraPropsInfo::GetAllProperties( ) const
+{
+    map<string, string> properties;
+    string              value;
+
+    for ( auto property : SupportedProperties )
+    {
+        if ( GetProperty( property.first, value ) )
+        {
+            properties.insert( pair<string, string>( property.first, value ) );
+        }
+    }
+
+    return properties;
+}

@@ -24,12 +24,27 @@
 #include "IObjectConfigurator.hpp"
 #include "XRaspiCamera.hpp"
 
+// The class is to get/set camera properties
 class XRaspiCameraConfig : public IObjectConfigurator
 {
 public:
     XRaspiCameraConfig( const std::shared_ptr<XRaspiCamera>& camera );
 
     XError SetProperty( const std::string& propertyName, const std::string& value );
+    XError GetProperty( const std::string& propertyName, std::string& value ) const;
+
+    std::map<std::string, std::string> GetAllProperties( ) const;
+
+private:
+    std::shared_ptr<XRaspiCamera> mCamera;
+};
+
+// The class is to get/set camera properties information - min, max, default, etc.
+class XRaspiCameraPropsInfo : public IObjectInformation
+{
+public:
+    XRaspiCameraPropsInfo( const std::shared_ptr<XRaspiCamera>& camera );
+
     XError GetProperty( const std::string& propertyName, std::string& value ) const;
 
     std::map<std::string, std::string> GetAllProperties( ) const;
