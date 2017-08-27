@@ -91,7 +91,9 @@ function showSettings( )
                     
                     for ( var j = 0, choicesCount = properties[i][1].choices.length; j < choicesCount; j++ )
                     {
-                        propertyHtml += "<option value=\"" + properties[i][1].choices[j][0] + "\">" + properties[i][1].choices[j][1] + "</option>";
+                        var selected = ( properties[i][1].choices[j][0] == config[properties[i][0]] ) ? " selected" : "";
+                        
+                        propertyHtml += "<option value=\"" + properties[i][1].choices[j][0] + "\"" + selected + ">" + properties[i][1].choices[j][1] + "</option>";
                     }
                     
                     propertyHtml += "</select>";
