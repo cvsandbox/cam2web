@@ -37,7 +37,7 @@
 </div>
 
 <div data-role="footer" data-theme="b"> 
-    <div id="copyright"><a href="https://github.com/cvsandbox/cam2web" target="_blank">cam2web - camera web streamer</a> :: Copyright © 2017 cvsandbox<div>
+    <div id="copyright"><a href="https://github.com/cvsandbox/cam2web" target="_blank">cam2web - camera web streamer</a><span id="version"></span> :: Copyright © 2017 cvsandbox<div>
 </div>
 
 </div>
@@ -83,6 +83,23 @@ function getCameraInfo( )
     } );
 }
 
+function getVersionInfo( )
+{
+    $.ajax( {
+        type        : "GET",
+        url         : "/version",
+        contentType : "application/json; charset=utf-8",
+        async       : true,
+        success: function( data )
+        {
+            if ( ( data.status == "OK" ) && ( data.config.version ) )
+            {
+                $('#version').html( " :: " + data.config.version );
+            }
+        }
+    } );
+}
+
 var showingSettings = false;
 
 // Load camera settings controls
@@ -119,6 +136,8 @@ document.getElementById( 'settingsButton' ).onclick = showSettings;
 
 // get camera information like name, width, height
 getCameraInfo( );
+// get version of the streamer
+getVersionInfo( );
 // start camera (it defaults to MJPEG; but if it fails back to JPEG, then try keeping 30 fps rate)
 Camera.Start( 30 );
 
