@@ -33,7 +33,6 @@ const static string  PROP_VFLIP               = "vflip";
 const static string  PROP_VIDEO_STABILISATION = "videostabilisation";
 
 const static string  PROP_AWBMODE             = "awb";
-
 const static string  PROP_EXPMODE             = "expmode";
 const static string  PROP_EXPMETERINGMODE     = "expmeteringmode";
 const static string  PROP_EFFECT              = "effect";
@@ -50,7 +49,23 @@ const static map<string, string> SupportedProperties =
                     "[\"Cloudy\",\"Cloudy\"],[\"Shade\",\"Shade\"],[\"Tungsten\",\"Tungsten\"],"
                     "[\"Fluorescent\",\"Fluorescent\"],[\"Incandescent\",\"Incandescent\"],[\"Flash\",\"Flash\"],"
                     "[\"Horizon\",\"Horizon\"]]}" },
-
+    { PROP_EXPMODE, "{\"def\":\"Auto\",\"type\":\"select\",\"order\":5,\"name\":\"Exposure Mode\","
+                    "\"choices\":[[\"Off\",\"Off\"],[\"Auto\",\"Auto\"],[\"Night\",\"Night\"],"
+                    "[\"NightPreview\",\"Night Preview\"],[\"Backlight\",\"Backlight\"],[\"Spotlight\",\"Spotlight\"],"
+                    "[\"Sports\",\"Sports\"],[\"Snow\",\"Snow\"],[\"Beach\",\"Beach\"],[\"VeryLong\",\"Very Long\"],"
+                    "[\"FixedFps\",\"Fixed Fps\"],[\"AntiShake\",\"Anti Shake\"],[\"Fireworks\",\"Fireworks\"]]}" },
+    { PROP_EXPMETERINGMODE, "{\"def\":\"Average\",\"type\":\"select\",\"order\":6,\"name\":\"Exposure Metering Mode\","
+                    "\"choices\":[[\"Average\",\"Average\"],[\"Spot\",\"Spot\"],[\"Backlit\",\"Backlit\"],"
+                    "[\"Matrix\",\"Matrix\"]]}" },
+    { PROP_EFFECT,  "{\"def\":\"None\",\"type\":\"select\",\"order\":7,\"name\":\"Image Effect\","
+                    "\"choices\":[[\"None\",\"None\"],[\"Negative\",\"Negative\"],[\"Solarize\",\"Solarize\"],"
+                    "[\"Sketch\",\"Sketch\"],[\"Denoise\",\"Denoise\"],[\"Emboss\",\"Emboss\"],"
+                    "[\"OilPaint\",\"Oil Paint\"],[\"Hatch\",\"Hatch\"],[\"Gpen\",\"G-Pen\"],"
+                    "[\"Pastel\",\"Pastel\"],[\"WaterColor\",\"Water Color\"],[\"Film\",\"Film\"],"
+                    "[\"Blur\",\"Blur\"],[\"Saturation\",\"Saturation\"],[\"ColorSwap\",\"Color Swap\"],"
+                    "[\"WashedOut\",\"Washed Out\"],[\"Posterise\",\"Posterise\"],[\"ColorPoint\",\"Color Point\"],"
+                    "[\"ColorBalance\",\"Color Balance\"],[\"Cartoon\",\"Cartoon\"]]}" },
+                    
     { PROP_HFLIP, "{\"def\":0,\"type\":\"bool\",\"order\":8,\"name\":\"Horizontal Flip\"}"   },
     { PROP_VFLIP, "{\"def\":0,\"type\":\"bool\",\"order\":9,\"name\":\"Vertical Flip\"}"   },
     { PROP_VIDEO_STABILISATION, "{\"def\":0,\"type\":\"bool\",\"order\":10,\"name\":\"Video Stabilisation\"}"   },
