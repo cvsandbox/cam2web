@@ -4,7 +4,7 @@ All release builds of cam2web come with embedded Web resources, so the applicati
 Using configuration UI on Windows or command line options on Linux, it is possible to specify folder name to use for serving custom Web content. When the option is not set, embedded UI is provided. And when it is set, whatever is found in the specified folder will be provided instead.
 
 ### Getting default Web files
-The easiest way to start customizing Web UI is to get all default content first as a starting point. All the required files can be found in the two folders: [src/web](src/web) and [externals/jquery](externals/jquery). Those files must be put into a single folder and one of the **cameraproperties_???.html** files must be renamed to **cameraproperties.html** (choose the one corresponding the version of cam2web you are running: directshow for Windows, pi for Raspberry Pi, v4l for Linux). So, the basic directory tree should look like this:
+The easiest way to start customizing Web UI is to get all default content first as a starting point. All the required files can be found in the two folders: [src/web](src/web) and [externals/jquery](externals/jquery). Those files must be put into a single folder , so the basic directory tree should look like this:
 ```
 index.html
 cameraproperties.html
