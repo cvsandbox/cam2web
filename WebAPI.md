@@ -107,7 +107,7 @@ The JSON response provides name of all available properties, their default value
         ["Auto","Auto"],
         ["Sunlight","Sunlight"],
         ...
-       ]
+      ]
     },
     ...
    }
