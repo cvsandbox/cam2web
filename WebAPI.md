@@ -77,24 +77,24 @@ The JSON response provides name of all available properties, their default value
 ```JSON
 {
   "status":"OK",
-  "hflip":
-  {
-    "def":0,
-    "type":"bool",
-    "order":8,
-    "name":"Horizontal Flip"
-  },
-  "brightness":
-  {
-    "min":0,
-    "max":100,
-    "def":50,
-    "type":"int",
-    "order":0,
-    "name":"Brightness"
-  },
   "config":
   {
+    "hflip":
+    {
+      "def":0,
+      "type":"bool",
+      "order":8,
+      "name":"Horizontal Flip"
+    },
+    "brightness":
+    {
+      "min":0,
+      "max":100,
+      "def":50,
+      "type":"int",
+      "order":0,
+      "name":"Brightness"
+    },
     "awb":
     {
       "def":"Auto",
@@ -107,9 +107,10 @@ The JSON response provides name of all available properties, their default value
         ["Auto","Auto"],
         ["Sunlight","Sunlight"],
         ...
-     ]
-   },
-   ...
+       ]
+    },
+    ...
+   }
 }
 ```
 
