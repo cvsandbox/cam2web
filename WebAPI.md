@@ -22,8 +22,9 @@ It provides reply in JSON format, which may look like the one below:
   "config":
   {
     "device":"RaspberryPi Camera",
-    "height":"480",
-    "width":"640"
+    "title":"My home camera",
+    "width":"640",
+    "height":"480"
   }
 }
 ````
@@ -65,6 +66,52 @@ For setting camera’s properties, the same URL is used, but HTTP POST request m
 }
 ```
 On success, the reply JSON will have **status** variable set to "OK". Or it will contain failure reason otherwise.
+
+### Getting description of camera properties
+Starting from version 1.1.0, the cam2web application provides description of all properties camera provides. This allows, for example, to have single WebUI code, which queries the list of available properties first and then does unified rendering. The properties description can be optained using the below URL:
+```
+http://ip:port/camera/properties
+```
+
+The JSON response provides name of all available properties, their default value, type, display name and order. For integer type properties, it also includes allowed minimum and maximum values. And for selection type properties, it provides all possible choices for the property.
+```JSON
+{
+  "status":"OK",
+  "hflip":
+  {
+    "def":0,
+    "type":"bool",
+    "order":8,
+    "name":"Horizontal Flip"
+  },
+  "brightness":
+  {
+    "min":0,
+    "max":100,
+    "def":50,
+    "type":"int",
+    "order":0,
+    "name":"Brightness"
+  },
+  "config":
+  {
+    "awb":
+    {
+      "def":"Auto",
+      "type":"select",
+      "order":4,
+      "name":"White Balance",
+      "choices":
+      [
+        ["Off","Off"],
+        ["Auto","Auto"],
+        ["Sunlight","Sunlight"],
+        ...
+     ]
+   },
+   ...
+}
+```
 
 ### Getting version information
 To get information about version of the cam2web application streaming the camera, the next URL is used
