@@ -1,3 +1,28 @@
+cam2web 1.1.0 release notes
+-------------------------------------------
+30.08.2017.
+
+Version updates and fixes:
+
+* The REST API is updated to provide description of camera's properties (GET request to
+  /camera/properties). This description allows now to have common WebUI, which renders
+  camera's properties for all supported APIs (DirectShow, V4L, MMAL).
+* New configuration option is added to specify name of a streamed camera, which is displayed
+  in WebUI.
+* Windows: Added configuration option to override default camera's frame rate. It allows
+  to choose from a range of supported frame rates. Note: not all frame rate values will work.
+  This is caused by limitations of DirectShow API and simply some bad camera drivers, which
+  don't care about what they report.
+* Windows: Main application's window now shows actual camera's frame rate.
+* Windows: Optimized BGR to RGB conversion using SSSE3 instructions if CPU supports those.
+* Windows: Main window's icon and system tray's icon (if minimized) show an indication of
+  web activity - when the streamed camera is accessed.
+* Windows: Added an option to specify folder for custom WebUI using folder selection form.
+* Windows: Added configuration option to specify color of window/tray icon. This makes it
+  easier to distinguish multiple instances of the application streaming different cameras.
+
+
+
 cam2web 1.0.0 release notes
 -------------------------------------------
 30.07.2017.
