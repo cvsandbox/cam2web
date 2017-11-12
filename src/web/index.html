@@ -55,16 +55,17 @@ function getCameraInfo( )
         {
             if ( data.status == "OK" )
             {
-                config = data.config;
+                var title       = "";
+                var config      = data.config;
                 var cameraWidth = parseInt( config.width );
 
                 if ( ( config.title ) && ( config.title.length != 0 ) )
                 {
-                    $('#title').html( config.title );
+                    title = config.title;
                 }
                 else
                 {
-                    $('#title').html( config.device );
+                    title = config.device;
                 }
 
                 $('#camera').width( config.width );
@@ -73,7 +74,8 @@ function getCameraInfo( )
                 $('#cameracontainer').width( cameraWidth + 20 );
                 $('#cameraproperties').css( { 'margin-left' : cameraWidth + 40 } );
 
-                document.title = 'web2cam :: ' + config.device;
+                $('#title').html( title );
+                document.title = 'web2cam :: ' + title;
             }
         },
         failure: function( errMsg )

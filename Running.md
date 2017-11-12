@@ -4,6 +4,8 @@ cam2web application comes as a single executable, which does not require any ins
 ## Windows version
 Windows version of cam2web provides graphical user interface, which allows to start/stop camera streaming and set different configuration settings. The application’s main window lists all detected cameras and their supported resolutions. Once selection is done, streaming can be started. All other settings are optional and are used to change default behaviour.
 
+**Note**: The resolution box shows default average frame rate for all resolutions supported by a camera. However, some cameras support a range of frames rates - minimum/maximum rate. For such cameras it is possible to override default frame rate and set the one needed. But, don't expect all frame rate values to work from the provided range. Due to limitations of DirectShow API and badly written drivers of some cameras, many frame rate values may no work.
+
 ![winMain](https://github.com/cvsandbox/cam2web/blob/master/images/win_main.png)
 
 When a camera is streamed, it can be accessed from a web browser – http://ip:port/ (or by clicking the link in the main window for a quick start). If camera provides any configuration settings, like brightness, contrast, saturation, etc., those can be changed from the web UI.
