@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
@@ -12,7 +12,7 @@
     $(document).bind('mobileinit', function () {
         $.mobile.activeBtnClass = 'unused';
     });
-    </script>    
+    </script>
     <script src="jquery.mobile.js"></script>
 </head>
 <body>
@@ -22,7 +22,7 @@
 <div data-role="header" data-theme="b">
     <img width="32" height="32" src="cam2web_white.png" style="float:left;display:inline;margin-left:10px;margin-top:5px"/>
     <h1 id="title">Remote Camera</h1>
-    <a href="index.html" id="settingsButton" data-icon="gear" class="ui-btn-right">Settings</a>
+    <a href="#" id="settingsButton" data-icon="gear" class="ui-btn-right">Settings</a>
 </div>
 
 <div data-role="content">
@@ -36,7 +36,7 @@
 
 </div>
 
-<div data-role="footer" data-theme="b"> 
+<div data-role="footer" data-theme="b">
     <div id="copyright"><a href="https://github.com/cvsandbox/cam2web" target="_blank">cam2web - camera web streamer</a><span id="version"></span> :: Copyright © 2017 cvsandbox<div>
 </div>
 
@@ -55,25 +55,27 @@ function getCameraInfo( )
         {
             if ( data.status == "OK" )
             {
-                config = data.config;
+                var title       = "";
+                var config      = data.config;
                 var cameraWidth = parseInt( config.width );
 
                 if ( ( config.title ) && ( config.title.length != 0 ) )
                 {
-                    $('#title').html( config.title );
+                    title = config.title;
                 }
                 else
                 {
-                    $('#title').html( config.device );
+                    title = config.device;
                 }
-                
+
                 $('#camera').width( config.width );
                 $('#camera').height( config.height );
-                
+
                 $('#cameracontainer').width( cameraWidth + 20 );
                 $('#cameraproperties').css( { 'margin-left' : cameraWidth + 40 } );
 
-                document.title = 'web2cam :: ' + config.device;
+                $('#title').html( title );
+                document.title = 'web2cam :: ' + title;
             }
         },
         failure: function( errMsg )
@@ -116,7 +118,7 @@ function showSettings( )
             {
                 $( "#cameraproperties" ).html( data ).trigger( 'create' );
                 $( "#cameraproperties" ).show( );
-                
+
                 $( "#settingsButton" ).addClass( 'ui-btn-active' );
                 showingSettings = true;
             }
