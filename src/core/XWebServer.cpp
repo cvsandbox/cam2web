@@ -1,7 +1,7 @@
 /*
     cam2web - streaming camera to web
 
-    Copyright (C) 2017, cvsandbox, cvsandbox@gmail.com
+    Copyright (C) 2017-2018, cvsandbox, cvsandbox@gmail.com
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -788,7 +788,8 @@ UserGroup XWebServerData::CheckDigestAuth( struct http_message* msg )
     UserGroup       userGroup = UserGroup::Anyone;
     struct mg_str*  hdr;
     char            user[50], cnonce[45], response[40], uri[200], qop[20], nc[20], nonce[30];
-    char            expected_response[33];
+    char            expectedResponse1[33];
+    char            expectedResponse2[33];
 
     /* parse "Authorization:" header */
     if ( ( msg != nullptr ) &&
@@ -820,7 +821,7 @@ UserGroup XWebServerData::CheckDigestAuth( struct http_message* msg )
                              nullptr );
 
                 // response = MD5( HA1:nonce:nonceCount:cnonce:qop:HA2 )
-                cs_md5( expected_response, 
+                cs_md5( expectedResponse1, 
                         itUser->second.first.c_str( ), itUser->second.first.length( ), // HA1 of the user
                         ":", static_cast<size_t>( 1 ),
                         nonce, strlen( nonce ),
@@ -834,7 +835,33 @@ UserGroup XWebServerData::CheckDigestAuth( struct http_message* msg )
                         ha2, static_cast<size_t>( 32 ),
                         nullptr );
 
-                if ( strcmp( response, expected_response ) == 0 )
+                if ( msg->query_string.len != 0 )
+                {
+                    // Found some clients (like .NET's HttpWebRequest), which calculate HA2 using URI without query part.
+                    // So need to calculate both variant, to make all clients happy.
+
+                    cs_md5( ha2, msg->method.p, static_cast<size_t>( msg->method.len ),
+                            ":", static_cast<size_t>( 1 ),
+                            msg->uri.p, static_cast<size_t>( msg->uri.len ),
+                            nullptr );
+
+                    cs_md5( expectedResponse2,
+                            itUser->second.first.c_str( ), itUser->second.first.length( ), // HA1 of the user
+                            ":", static_cast<size_t>( 1 ),
+                            nonce, strlen( nonce ),
+                            ":", static_cast<size_t>( 1 ),
+                            nc, strlen( nc ),
+                            ":", static_cast<size_t>( 1 ),
+                            cnonce, strlen( cnonce ),
+                            ":", static_cast<size_t>( 1 ),
+                            qop, strlen( qop ),
+                            ":", static_cast<size_t>( 1 ),
+                            ha2, static_cast<size_t>( 32 ),
+                            nullptr );
+                }
+
+                if ( ( strcmp( response, expectedResponse1 ) == 0 ) ||
+                     ( ( msg->query_string.len != 0 ) && ( strcmp( response, expectedResponse2 ) == 0 ) ) )
                 {
                     userGroup = itUser->second.second;
                 }
