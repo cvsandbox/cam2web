@@ -217,10 +217,12 @@ namespace Private
     public:
         shared_ptr<IWebRequestHandler>  Handler;
         UserGroup                       AllowedUserGroup;
-
+        steady_clock::time_point        LastAccessTime;
+        bool                            WasAccessed;
     public:
         RequestHandlerData( ) :
-            Handler( ), AllowedUserGroup( UserGroup::Anyone )
+            Handler( ), AllowedUserGroup( UserGroup::Anyone ),
+            LastAccessTime( ), WasAccessed( false )
         { }
 
         RequestHandlerData( const shared_ptr<IWebRequestHandler>& handler, UserGroup allowedUserGroup ) :
@@ -289,7 +291,8 @@ namespace Private
         void AddHandler( const shared_ptr<IWebRequestHandler>& handler, UserGroup userGroup );
         void RemoveHandler( const shared_ptr<IWebRequestHandler>& handler );
         void ClearHandlers( );
-        RequestHandlerData FindHandler( const string& uri );
+        RequestHandlerData* FindHandler( const string& uri );
+        steady_clock::time_point HandlerLastAccessTime( const string& handlerUri, bool* pWasAccessed = nullptr );
 
         void AddUser( const string& name, const string& digestHa1, UserGroup group );
         void RemoveUser( const string& name );
@@ -304,7 +307,7 @@ namespace Private
 }
 
 /* ================================================================= */
-/* Implemenetation of the IWebRequestHandler                         */
+/* Implementation of the IWebRequestHandler                          */
 /* ================================================================= */
 
 IWebRequestHandler::IWebRequestHandler( const string& uri, bool canHandleSubContent ) :
@@ -324,7 +327,7 @@ IWebRequestHandler::IWebRequestHandler( const string& uri, bool canHandleSubCont
 }
 
 /* ================================================================= */
-/* Implemenetation of the XEmbeddedContentHandler                    */
+/* Implementation of the XEmbeddedContentHandler                     */
 /* ================================================================= */
 
 XEmbeddedContentHandler::XEmbeddedContentHandler( const string& uri, const XEmbeddedContent* content ) :
@@ -343,7 +346,7 @@ void XEmbeddedContentHandler::HandleHttpRequest( const IWebRequest& /* request *
 }
 
 /* ================================================================= */
-/* Implemenetation of the XWebServer                                 */
+/* Implementation of the XWebServer                                  */
 /* ================================================================= */
 
 XWebServer::XWebServer( const string& documentRoot, uint16_t port ) :
@@ -417,6 +420,12 @@ steady_clock::time_point XWebServer::LastAccessTime( bool* pWasAccessed )
         *pWasAccessed = mData->WasAccessed;
     }
     return mData->LastAccessTime;
+}
+
+// Get time of the last access/request to the specified handler
+steady_clock::time_point XWebServer::LastAccessTime( const string& handlerUri, bool* pWasAccessed )
+{
+    return mData->HandlerLastAccessTime( handlerUri, pWasAccessed );
 }
 
 // Add new web request handler
@@ -603,14 +612,14 @@ void XWebServerData::ClearHandlers( )
 }
 
 // Find request handler for the specified URI
-RequestHandlerData XWebServerData::FindHandler( const string& uri )
+RequestHandlerData* XWebServerData::FindHandler( const string& uri )
 {
-    RequestHandlerData          handler;
-    HandlersMap::const_iterator fileIt = ActiveFileHandlers.find( uri );
+    RequestHandlerData*   handler = nullptr;
+    HandlersMap::iterator fileIt  = ActiveFileHandlers.find( uri );
 
     if ( fileIt != ActiveFileHandlers.end( ) )
     {
-        handler = fileIt->second;
+        handler = &fileIt->second;
     }
     else
     {
@@ -618,13 +627,34 @@ RequestHandlerData XWebServerData::FindHandler( const string& uri )
         {
             if ( uri.compare( 0, folderHandlerData.Handler->Uri( ).length( ), folderHandlerData.Handler->Uri( ) ) == 0 )
             {
-                handler = folderHandlerData;
+                handler = &folderHandlerData;
                 break;
             }
         }
     }
 
     return handler;
+}
+
+// Get time of the last access/request to the specified handler
+steady_clock::time_point XWebServerData::HandlerLastAccessTime( const string& handlerUri, bool* pWasAccessed )
+{
+    RequestHandlerData*      handlerData = FindHandler( handlerUri );
+    steady_clock::time_point lastAccess;
+    bool                     wasAccessed = false;
+
+    if ( handlerData != nullptr )
+    {
+        lastAccess  = handlerData->LastAccessTime;
+        wasAccessed = handlerData->WasAccessed;
+    }
+
+    if ( pWasAccessed != nullptr )
+    {
+        *pWasAccessed = wasAccessed;
+    }
+
+    return lastAccess;
 }
 
 // Add/Remove user to/from the list of user who can access protected request handlers
@@ -894,19 +924,22 @@ void XWebServerData::eventHandler( struct mg_connection* connection, int event, 
         }
 
         // try finding handler for the URI
-        RequestHandlerData handlerData = self->FindHandler( uri );
+        RequestHandlerData* handlerData = self->FindHandler( uri );
 
-        if ( handlerData.Handler )
+        if ( handlerData != nullptr )
         {
-            if ( static_cast<int>( authUserGroup ) < static_cast<int>( handlerData.AllowedUserGroup ) )
+            if ( static_cast<int>( authUserGroup ) < static_cast<int>( handlerData->AllowedUserGroup ) )
             {
                 http_send_digest_auth_request( connection, self->ActiveAuthDomain.c_str( ) );
             }
             else
             {
-                response.SetHandler( handlerData.Handler.get( ) );
+                response.SetHandler( handlerData->Handler.get( ) );
                 // handle request with the found handler
-                handlerData.Handler->HandleHttpRequest( request, response );
+                handlerData->Handler->HandleHttpRequest( request, response );
+
+                handlerData->WasAccessed    = true;
+                handlerData->LastAccessTime = steady_clock::now( );
             }
         }
         else if ( self->ActiveDocumentRoot )

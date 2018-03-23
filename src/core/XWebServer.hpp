@@ -180,6 +180,8 @@ public:
 
     // Get time of the last access/request to the web server
     std::chrono::steady_clock::time_point LastAccessTime( bool* pWasAccessed = nullptr );
+    // Get time of the last access/request to the specified handler
+    std::chrono::steady_clock::time_point LastAccessTime( const std::string& handlerUri, bool* pWasAccessed = nullptr );
 
     // Add/Remove user to access protected request handlers
     XWebServer& AddUser( const std::string& name, const std::string& digestHa1, UserGroup group );
