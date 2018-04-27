@@ -1,7 +1,7 @@
 /*
     cam2web - streaming camera to web
 
-    Copyright (C) 2017, cvsandbox, cvsandbox@gmail.com
+    Copyright (C) 2017-2018, cvsandbox, cvsandbox@gmail.com
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -51,6 +51,7 @@
 // Release build embeds web resources into executable
 #ifdef NDEBUG
     #include "index.html.h"
+    #include "admin.html.h"
     #include "styles.css.h"
     #include "cam2web.png.h"
     #include "cam2web_white.png.h"
@@ -121,6 +122,28 @@ public:
     virtual void OnError( const string& errorMessage, bool fatal );
 };
 
+// Helper class to keep streaming status
+class StreamingStatusController : public IObjectConfigurator
+{
+private:
+    bool streamingInProgress;
+
+    static const string STR_RUNNING;
+
+public:
+    StreamingStatusController( ) : streamingInProgress( false )
+    { }
+
+    bool IsStreaming( ) const { return streamingInProgress; }
+    void SetStreamingStatus( bool isStreaming ) { streamingInProgress = isStreaming; }
+
+    XError SetProperty( const string& propertyName, const string& value );
+    XError GetProperty( const string& propertyName, string& value ) const;
+    map<string, string> GetAllProperties( ) const;
+};
+
+const string StreamingStatusController::STR_RUNNING = "running";
+
 // Place holder for all global variables the application needs
 class AppData
 {
@@ -131,6 +154,7 @@ public:
 
     bool        autoStartStreaming;
     bool        minimizeWindowOnStart;
+    uint16_t    adminPort;
 
     HWND        hwndMain;
     HWND        hwndCamerasCombo;
@@ -154,9 +178,10 @@ public:
     shared_ptr<AppConfig>           appConfig;
 
     XWebServer                      server;
+    XWebServer                      adminServer;
     XVideoSourceToWeb               video2web;
 
-    bool                            streamingInProgress;
+    shared_ptr<StreamingStatusController>   streamingStatus;
 
     string                          appFolder;
     string                          appConfigFile;
@@ -176,12 +201,12 @@ public:
 
     AppData( ) :
         hInst( NULL ), hwndMain( NULL ), hwndCamerasCombo( NULL ),
-        autoStartStreaming( false ), minimizeWindowOnStart( false ),
+        autoStartStreaming( false ), minimizeWindowOnStart( false ), adminPort( 0 ),
         hwndResolutionsCombo( NULL ), hwndStartButton( NULL ), hwndStatusLink( NULL ), hwndStatusBar( NULL ),
         hiconAppIcon( NULL ), hiconAppActiveIcon( NULL ), hiconTrayIcon( NULL ), hiconTrayActiveIcon( NULL ),
         devices( ), cameraCapabilities( ), camera( ), selectedDeviceName( ), selectedResolutuion( ),
-        cameraConfig( ), appConfig( new AppConfig( ) ), server( ), video2web( ),
-        streamingInProgress( false ),
+        cameraConfig( ), appConfig( new AppConfig( ) ), server( ), adminServer( ), video2web( ),
+        streamingStatus( make_shared<StreamingStatusController>( ) ),
         appFolder( ".\\" ), appConfigFile( "cam2web.cfg" ),
         appConfigSerializer( ), cameraConfigSerializer( ), lastVideoSourceError( ),
         listenerChain( ), cameraErrorListener( )
@@ -205,6 +230,7 @@ public:
     void LoadAppIcons( );
     void UpdateFpsInfo( );
     void UpdateWebActivity( );
+    void StartAdminServer( );
 };
 AppData* gData = NULL;
 
@@ -296,6 +322,18 @@ static bool ParseCommandLine( int argc, WCHAR* argv[], AppData* appData )
             else
             {
                 break;
+            }
+        }
+        else if ( key == L"adminport" )
+        {
+            if ( !value.empty( ) )
+            {
+                int port;
+
+                if ( swscanf( value.c_str( ), L"%u", &port ) == 1 )
+                {
+                    appData->adminPort = static_cast< uint16_t >( port );
+                }
             }
         }
         else
@@ -494,6 +532,9 @@ int APIENTRY _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
         {
             PostMessage( gData->hwndMain, WM_COMMAND, MAKELONG( IDC_BUTTON_START, BN_CLICKED ), 0 );
         }
+
+        // start an instance of web server for administration only
+        gData->StartAdminServer( );
 
         // main message loop
         while ( GetMessage( &msg, NULL, 0, 0 ) )
@@ -853,16 +894,16 @@ static void StopVideoStreaming( )
 static void ToggleStreaming( )
 {
     // start/stop streaming
-    if ( gData->streamingInProgress )
+    if ( gData->streamingStatus->IsStreaming( ) )
     {
         StopVideoStreaming( );
-        gData->streamingInProgress = false;
+        gData->streamingStatus->SetStreamingStatus( false );
     }
     else
     {
         if ( StartVideoStreaming( ) )
         {
-            gData->streamingInProgress = true;
+            gData->streamingStatus->SetStreamingStatus( true );
         }
     }
 
@@ -1016,7 +1057,7 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         break;
 
     case WM_DESTROY:
-        if ( gData->streamingInProgress )
+        if ( gData->streamingStatus->IsStreaming( ) )
         {
             StopVideoStreaming( );
         }
@@ -1061,7 +1102,7 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             TCHAR* startButtonText          = STR_START_STREAMING;
 
             // update UI to reflect current streaming status
-            if ( gData->streamingInProgress )
+            if ( gData->streamingStatus->IsStreaming( ) )
             {
                 WCHAR  strStatusLinkText[256];
                 WCHAR  strPortNumber[16] = L"";
@@ -1304,7 +1345,7 @@ void AppData::UpdateWebActivity( )
 {
     bool    wasAccessedAtAll    = false;
     auto    timeSinceLastAccess = duration_cast<std::chrono::milliseconds>( steady_clock::now( ) - server.LastAccessTime( &wasAccessedAtAll ) ).count( );
-    bool    activeIcon          = ( streamingInProgress ) && ( wasAccessedAtAll ) && ( timeSinceLastAccess <= 1000 );
+    bool    activeIcon          = ( streamingStatus->IsStreaming( ) ) && ( wasAccessedAtAll ) && ( timeSinceLastAccess <= 1000 );
 
     NOTIFYICONDATA notifyData = { };
 
@@ -1317,4 +1358,114 @@ void AppData::UpdateWebActivity( )
     Shell_NotifyIcon( NIM_MODIFY, &notifyData );
 
     SendMessage( hwndMain, WM_SETICON, ICON_SMALL, (LRESULT) ( ( activeIcon ) ? hiconAppActiveIcon : hiconAppIcon ) );
+}
+
+// Start administration web server (if requested)
+void AppData::StartAdminServer( )
+{
+    if ( adminPort != 0 )
+    {
+        // some read-only information about the version
+        PropertyMap versionInfo;
+
+        versionInfo.insert( PropertyMap::value_type( "product", STR_INFO_PRODUCT ) );
+        versionInfo.insert( PropertyMap::value_type( "version", STR_INFO_VERSION ) );
+        versionInfo.insert( PropertyMap::value_type( "platform", STR_INFO_PLATFORM ) );
+
+        // set authentication domain and load users' list
+        adminServer.SetAuthDomain( appConfig->AuthDomain( ) );
+        adminServer.LoadUsersFromFile( appConfig->UsersFileName( ) );
+
+        // configure web server and handler
+        adminServer.SetPort( adminPort ).
+                    AddHandler( make_shared<XObjectInformationRequestHandler>( "/version", make_shared<XObjectInformationMap>( versionInfo ) ), UserGroup::Admin ).
+                    AddHandler( make_shared<XObjectConfigurationRequestHandler>( "/status", streamingStatus ), UserGroup::Admin );
+
+#ifdef _DEBUG
+        // load web content from files in debug builds
+        adminServer.SetDocumentRoot( "./web/" );
+#else
+        // web content is embeded in release builds to get single executable
+        adminServer.AddHandler( make_shared<XEmbeddedContentHandler>( "/", &web_admin_html ), UserGroup::Admin ).
+            AddHandler( make_shared<XEmbeddedContentHandler>( "index.html", &web_admin_html ), UserGroup::Admin ).
+            AddHandler( make_shared<XEmbeddedContentHandler>( "styles.css", &web_styles_css ), UserGroup::Admin ).
+                    AddHandler( make_shared<XEmbeddedContentHandler>( "cam2web.png", &web_cam2web_png ) ).
+                    AddHandler( make_shared<XEmbeddedContentHandler>( "cam2web_white.png", &web_cam2web_white_png ) ).
+                    AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.js", &web_jquery_js ), UserGroup::Admin ).
+                    AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.js", &web_jquery_mobile_js ), UserGroup::Admin ).
+                    AddHandler( make_shared<XEmbeddedContentHandler>( "jquery.mobile.css", &web_jquery_mobile_css ), UserGroup::Admin );
+#endif
+
+        if ( !adminServer.Start( ) )
+        {
+            MessageBox( hwndMain, TEXT( "Failed starting administration web server." ), STR_ERROR, MB_OK | MB_ICONERROR );
+        }
+    }
+}
+
+// Set property of streaming status
+XError StreamingStatusController::SetProperty( const string& propertyName, const string& value )
+{
+    XError ret = XError::Success;
+    int    numericValue;
+
+    // currently all setting are numeric, so scan it
+    int scannedCount = sscanf( value.c_str( ), "%d", &numericValue );
+
+    if ( scannedCount != 1 )
+    {
+        ret = XError::InvalidPropertyValue;
+    }
+    else if ( propertyName == STR_RUNNING )
+    {
+        bool newStatus = ( numericValue == 1 );
+
+        if ( newStatus != streamingInProgress )
+        {
+            // toggle streaming
+            PostMessage( gData->hwndMain, WM_COMMAND, MAKELONG( IDC_BUTTON_START, BN_CLICKED ), 0 );
+        }
+    }
+    else
+    {
+        ret = XError::UnknownProperty;
+    }
+
+    return ret;
+}
+
+// Get property of streaming status
+XError StreamingStatusController::GetProperty( const string& propertyName, string& value ) const
+{
+    XError ret = XError::Success;
+    int    numericValue = 0;
+
+    if ( propertyName == STR_RUNNING )
+    {
+        numericValue = ( streamingInProgress ) ? 1 : 0;
+    }
+    else
+    {
+        ret = XError::UnknownProperty;
+    }
+
+    if ( ret == XError::Success )
+    {
+        char buffer[32];
+
+        sprintf( buffer, "%d", numericValue );
+        value = buffer;
+    }
+
+    return ret;
+}
+
+// Get all properties of streaming status controller
+map<string, string> StreamingStatusController::GetAllProperties( ) const
+{
+    map<string, string> properties;
+
+    properties.insert( pair<string, string>( STR_RUNNING, ( streamingInProgress ) ? "1" : "0" ) );
+
+    return properties;
 }

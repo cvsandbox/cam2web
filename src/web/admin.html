@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+    <link rel="stylesheet" type="text/css" href="jquery.mobile.css" />
+    <link rel="icon" type="image/png" href="cam2web.png" />
+    <script src="jquery.js"></script>
+    <script>
+    $(document).bind('mobileinit', function () {
+        $.mobile.activeBtnClass = 'unused';
+    });
+    </script>
+    <script src="jquery.mobile.js"></script>
+</head>
+<body>
+
+<div data-role="page">
+
+<div data-role="header" data-theme="b">
+    <img width="32" height="32" src="cam2web_white.png" style="float:left;display:inline;margin-left:10px;margin-top:5px"/>
+    <h1 id="title">cam2web Administration</h1>
+</div>
+
+<div data-role="content">
+
+<div id="statuscontainer">
+
+<button type="button" id="statusButton" onclick="switchStreaming()">Start streaming</button> 
+
+</div>
+ 
+</div>
+
+<div data-role="footer" data-theme="b">
+    <div id="copyright"><a href="https://github.com/cvsandbox/cam2web" target="_blank">cam2web - camera web streamer</a><span id="version"></span> :: Copyright © 2017-2018 cvsandbox<div>
+</div>
+
+</div>
+
+<script>
+var isStreaming = false;
+
+function getVersionInfo( )
+{
+    $.ajax( {
+        type        : "GET",
+        url         : "/version",
+        contentType : "application/json; charset=utf-8",
+        async       : true,
+        success: function( data )
+        {
+            if ( ( data.status == "OK" ) && ( data.config.version ) )
+            {
+                $('#version').html( " :: " + data.config.version );
+            }
+        }
+    } );
+}
+
+function getStreamingStatus( )
+{
+    $.ajax( {
+        type        : "GET",
+        url         : "/status",
+        contentType : "application/json; charset=utf-8",
+        async       : true,
+        success: function( data )
+        {
+            if ( ( data.status == "OK" ) && ( data.config.running ) )
+            {
+                var newStatus = ( data.config.running == "1" );
+                
+                if ( newStatus != isStreaming )
+                {
+                    isStreaming = newStatus;
+                    
+                    $('#statusButton').text( ( isStreaming ) ? "Stop streaming" : "Start streaming" );
+                }
+            }
+        }
+    } );
+}
+
+function updateStreamingStatus( )
+{
+    getStreamingStatus( );
+    setTimeout( updateStreamingStatus, 1000 );
+}
+
+// get version of the streamer and monitor for status updates
+getVersionInfo( );
+updateStreamingStatus( );
+
+function switchStreaming( )
+{
+    var variablesMap = { };
+    variablesMap["running"] = ( isStreaming ) ? 0 : 1;
+    
+    $.ajax( {
+        type        : "POST",
+        url         : "/status",
+        data        : JSON.stringify( variablesMap ),
+        contentType : "application/json; charset=utf-8",
+        dataType    : "json",
+        async       : true,
+        success: function( data )
+        {
+            if ( data.status != "OK" )
+            {
+                console.log( "Failed switching camera streaming" );
+            }
+        },
+        failure: function( errMsg )
+        {
+            console.log( errMsg );
+        }
+    } );}
+
+
+</script>
+</body>
+</html>

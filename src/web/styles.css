@@ -44,6 +44,11 @@
     width: 660px;
 }
 
+#statuscontainer {
+    float: left;
+    width: 300px;
+}
+
 #cameraproperties {
     margin-left: 680px;
     width: 300px;

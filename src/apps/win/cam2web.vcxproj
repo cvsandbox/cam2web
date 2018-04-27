@@ -177,6 +177,8 @@ xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.js" "$(ProjectDir)..\..\..\bu
 xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.css" "$(ProjectDir)..\..\..\build\msvc\release\include\"
 
 "$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\index.html" -o "$(ProjectDir)..\..\..\build\msvc\release\include\index.html.h"
+"$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\admin.html" -o "$(ProjectDir)..\..\..\build\msvc\release\include\admin.html.h"
+
 "$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\styles.css" -o "$(ProjectDir)..\..\..\build\msvc\release\include\styles.css.h"
 "$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\cam2web.png" -o "$(ProjectDir)..\..\..\build\msvc\release\include\cam2web.png.h"
 "$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\cam2web_white.png" -o "$(ProjectDir)..\..\..\build\msvc\release\include\cam2web_white.png.h"
@@ -226,6 +228,8 @@ xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.js" "$(ProjectDir)..\..\..\bu
 xcopy /Y "$(ProjectDir)..\..\..\externals\jquery\*.css" "$(ProjectDir)..\..\..\build\msvc\release\include\"
 
 "$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\index.html" -o "$(ProjectDir)..\..\..\build\msvc\release\include\index.html.h"
+"$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\admin.html" -o "$(ProjectDir)..\..\..\build\msvc\release\include\admin.html.h"
+
 "$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\styles.css" -o "$(ProjectDir)..\..\..\build\msvc\release\include\styles.css.h"
 "$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\cam2web.png" -o "$(ProjectDir)..\..\..\build\msvc\release\include\cam2web.png.h"
 "$(ProjectDir)..\..\..\build\msvc\release\bin\web2h.exe" -i "$(ProjectDir)..\..\..\build\msvc\release\include\cam2web_white.png" -o "$(ProjectDir)..\..\..\build\msvc\release\include\cam2web_white.png.h"
