@@ -1,6 +1,21 @@
+cam2web 1.2.0 release notes
+-------------------------------------------
+xx.xx.xxxx (beta)
+
+Version updates and fixes:
+
+* Fixed HTTP digest authentication, so it works with bogus clients like .NET HttpWebRequest,
+  which calculates HA2 digest part without using query string.
+* Windows: Added second instance of web server, which allows to perform some administration
+  tasks (start/stop camera streaming for now). The administration interface is only accessible
+  by users from Admin group. The admin web server is only started when application is run
+  with /adminport:<number> option.
+
+
+
 cam2web 1.1.0 release notes
 -------------------------------------------
-30.08.2017.
+30.08.2017
 
 Version updates and fixes:
 
@@ -25,7 +40,7 @@ Version updates and fixes:
 
 cam2web 1.0.0 release notes
 -------------------------------------------
-30.07.2017.
+30.07.2017
 
 * The first public release of the application.
 
