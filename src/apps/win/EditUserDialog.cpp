@@ -127,15 +127,15 @@ INT_PTR CALLBACK EditUserDialogProc( HWND hDlg, UINT message, WPARAM wParam, LPA
 
                 if ( std::find( pUserInfo->ExistingUserNames.begin( ), pUserInfo->ExistingUserNames.end( ), userName ) != pUserInfo->ExistingUserNames.end( ) )
                 {
-                    MessageBox( hDlg, L"A user with the specified name already exists.", STR_ERROR, MB_OK | MB_ICONERROR );
+                    CenteredMessageBox( hDlg, L"A user with the specified name already exists.", STR_ERROR, MB_OK | MB_ICONERROR );
                 }
                 else if ( password1 != password2 )
                 {
-                    MessageBox( hDlg, L"The two passwords don't match.", STR_ERROR, MB_OK | MB_ICONERROR );
+                    CenteredMessageBox( hDlg, L"The two passwords don't match.", STR_ERROR, MB_OK | MB_ICONERROR );
                 }
                 else if ( userName.find( ':' ) != string::npos )
                 {
-                    MessageBox( hDlg, L"User names are not allowed to contain colon character (':').", STR_ERROR, MB_OK | MB_ICONERROR );
+                    CenteredMessageBox( hDlg, L"User names are not allowed to contain colon character (':').", STR_ERROR, MB_OK | MB_ICONERROR );
                 }
                 else
                 {

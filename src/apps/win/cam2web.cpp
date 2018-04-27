@@ -823,11 +823,11 @@ static bool StartVideoStreaming( )
 
         if ( !gData->camera->Start( ) )
         {
-            MessageBox( gData->hwndMain, TEXT( "Failed starting video source." ), STR_ERROR, MB_OK | MB_ICONERROR );
+            CenteredMessageBox( gData->hwndMain, TEXT( "Failed starting video source." ), STR_ERROR, MB_OK | MB_ICONERROR );
         }
         else if ( !gData->server.Start( ) )
         {
-            MessageBox( gData->hwndMain, TEXT( "Failed starting web server." ), STR_ERROR, MB_OK | MB_ICONERROR );
+            CenteredMessageBox( gData->hwndMain, TEXT( "Failed starting web server." ), STR_ERROR, MB_OK | MB_ICONERROR );
             gData->camera->SignalToStop( );
             gData->camera->WaitForStop( );
         }

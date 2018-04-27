@@ -1,7 +1,7 @@
 /*
     cam2web - streaming camera to web
 
-    Copyright (C) 2017, cvsandbox, cvsandbox@gmail.com
+    Copyright (C) 2017-2018, cvsandbox, cvsandbox@gmail.com
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -404,7 +404,7 @@ INT_PTR CALLBACK AccessRightsDialogProc( HWND hDlg, UINT message, WPARAM wParam,
             {
                 if ( data->ChangesDetected )
                 {
-                    if ( MessageBox( hDlg, L"Are you sure you would like to leave the dialog discarding all changes?", STR_CONFIRMATION, MB_YESNO | MB_DEFBUTTON2 | MB_ICONEXCLAMATION ) == IDNO )
+                    if ( CenteredMessageBox( hDlg, L"Are you sure you would like to leave the dialog discarding all changes?", STR_CONFIRMATION, MB_YESNO | MB_DEFBUTTON2 | MB_ICONEXCLAMATION ) == IDNO )
                     {
                         allFine = false;
                     }
@@ -507,7 +507,7 @@ INT_PTR CALLBACK AccessRightsDialogProc( HWND hDlg, UINT message, WPARAM wParam,
             }
             else if ( wmId == IDC_DELETE_USER_BUTTON )
             {
-                if ( MessageBox( hDlg, L"Are you sure you would like to delete the selected user?", STR_CONFIRMATION, MB_YESNO | MB_DEFBUTTON2 | MB_ICONEXCLAMATION ) == IDYES )
+                if ( CenteredMessageBox( hDlg, L"Are you sure you would like to delete the selected user?", STR_CONFIRMATION, MB_YESNO | MB_DEFBUTTON2 | MB_ICONEXCLAMATION ) == IDYES )
                 {
                     data->Users.erase( UserKey( GetSelectedUserName( hwndUsersList ), data->AuthDomain ) );
                     ListView_DeleteItem( hwndUsersList, ListView_GetNextItem( hwndUsersList, -1, LVNI_SELECTED ) );

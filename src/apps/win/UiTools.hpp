@@ -1,7 +1,7 @@
 /*
     cam2web - streaming camera to web
 
-    Copyright (C) 2017, cvsandbox, cvsandbox@gmail.com
+    Copyright (C) 2017-2018, cvsandbox, cvsandbox@gmail.com
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,6 +30,8 @@ void CenterWindowTo( HWND hWnd, HWND hWndRef );
 void ResizeWindowToClientSize( HWND hWnd, LONG width, LONG height );
 // Make sure the specified window is within desktop area
 void EnsureWindowVisible( HWND hWnd );
+// Display a standard WinAPI MessageBox, but centered to its parent
+int CenteredMessageBox( HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType );
 
 // Initialize up/down control and its buddy control
 void InitUpDownControl( HWND hwndUpDown, HWND hwndBuddy, uint16_t min, uint16_t max, uint16_t value );

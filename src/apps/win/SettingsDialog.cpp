@@ -1,7 +1,7 @@
 /*
     cam2web - streaming camera to web
 
-    Copyright (C) 2017, cvsandbox, cvsandbox@gmail.com
+    Copyright (C) 2017-2018, cvsandbox, cvsandbox@gmail.com
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -202,7 +202,7 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
                 }
                 else
                 {
-                    MessageBox( hDlg, L"Invalid folder was selected.", L"Error", MB_OK | MB_ICONERROR );
+                    CenteredMessageBox( hDlg, L"Invalid folder was selected.", L"Error", MB_OK | MB_ICONERROR );
                 }
             }
         }

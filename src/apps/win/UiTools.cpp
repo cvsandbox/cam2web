@@ -1,7 +1,7 @@
 /*
     cam2web - streaming camera to web
 
-    Copyright (C) 2017, cvsandbox, cvsandbox@gmail.com
+    Copyright (C) 2017-2018, cvsandbox, cvsandbox@gmail.com
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,6 +31,9 @@
 #include "Tools.hpp"
 
 using namespace std;
+
+HHOOK   hookMsgBoxCenter = NULL;
+LRESULT CALLBACK CenterMessageBoxHookHandler( int, WPARAM, LPARAM );
 
 // Center the given window relative to the reference window
 void CenterWindowTo( HWND hWnd, HWND hWndRef )
@@ -106,6 +109,30 @@ void EnsureWindowVisible( HWND hWnd )
     }
 
     SetWindowPos( hWnd, HWND_TOP, newX, newY, 0, 0, SWP_NOSIZE );
+}
+
+// Display a standard WinAPI MessageBox, but centered to its parent
+int CenteredMessageBox( HWND hWnd, LPCWSTR lpText, LPCWSTR lpCaption, UINT uType )
+{
+    hookMsgBoxCenter = SetWindowsHookEx( WH_CBT, CenterMessageBoxHookHandler, NULL, ::GetCurrentThreadId( ) );
+    return MessageBox( hWnd, lpText, lpCaption, uType );
+}
+
+// A hook handler to center message box to its parent
+LRESULT CALLBACK CenterMessageBoxHookHandler( int code, WPARAM wParam, LPARAM lParam )
+{
+    if ( ( code != HCBT_ACTIVATE ) || ( code == -1 ) )
+    {
+        // only when HCBT_ACTIVATE 
+        return CallNextHookEx( hookMsgBoxCenter, code, wParam, lParam );
+    }
+
+    UnhookWindowsHookEx( hookMsgBoxCenter );
+
+    HWND hWnd = (HWND) wParam;
+    CenterWindowTo( hWnd, GetWindow( hWnd, GW_OWNER ) );
+
+    return CallNextHookEx( hookMsgBoxCenter, code, wParam, lParam );
 }
 
 // Initialize up/down control and its buddy control
