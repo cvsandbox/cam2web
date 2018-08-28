@@ -59,7 +59,8 @@ LIBS = -lmmal_core -lmmal_util -lmmal_vc_client -lvcos -lbcm_host -ljpeg
 LIBDIR = -L/opt/vc/lib
 
 # Enable threads in Mongoose
-CFLAGS += -DMG_ENABLE_THREADS
+mongoose.o: CFLAGS += -DMG_ENABLE_THREADS
+XWebServer.o: CFLAGS += -DMG_ENABLE_THREADS
 
 ifneq "$(findstring debug, $(MAKECMDGOALS))" ""
 # "Debug" build - no optimization and add debugging symbols 

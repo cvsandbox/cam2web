@@ -52,7 +52,8 @@ INCLUDE = -I../../../externals/mongoose/ \
 LIBS = -ljpeg
 
 # Enable threads in Mongoose
-CFLAGS += -DMG_ENABLE_THREADS
+mongoose.o: CFLAGS += -DMG_ENABLE_THREADS
+XWebServer.o: CFLAGS += -DMG_ENABLE_THREADS
 
 ifneq "$(findstring debug, $(MAKECMDGOALS))" ""
 # "Debug" build - no optimization and add debugging symbols 
