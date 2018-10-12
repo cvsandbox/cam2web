@@ -138,8 +138,8 @@ void SetDefaultSettings( )
 // Parse command line and override default settings
 bool ParseCommandLine( int argc, char* argv[] )
 {
-    static const uint32_t SupportedWidth[]  = { 320, 480, 640, 800, 1120 };
-    static const uint32_t SupportedHeight[] = { 240, 360, 480, 600, 840 };
+    static const uint32_t SupportedWidth[]  = { 320, 480, 640, 800, 960, 1120, 1600, 1920, 2048, 2592, 3264, 3840, 4224 };
+    static const uint32_t SupportedHeight[] = { 240, 360, 480, 600, 720, 840,  1200, 1080, 1536, 1944, 2448, 2160, 3156 };
     static const map<string, UserGroup> SupportedUserGroups =
     {
         { "any",    UserGroup::Anyone   },
@@ -180,13 +180,18 @@ bool ParseCommandLine( int argc, char* argv[] )
         }
         else if ( key == "size" )
         {
-            int v = value[0] - '0';
+            int size_index;
 
-            if ( ( v < 0 ) || ( v > 4 ) )
+            int scanned = sscanf( value.c_str( ), "%u", &size_index );
+
+            if ( scanned != 1 )
                 break;
 
-            Settings.FrameWidth  = SupportedWidth[v];
-            Settings.FrameHeight = SupportedHeight[v];
+            if ( ( size_index < 0 ) || ( size_index > 12 ) )
+                break;
+
+            Settings.FrameWidth  = SupportedWidth[size_index];
+            Settings.FrameHeight = SupportedHeight[size_index];
         }
         else if ( key == "fps" )
         {
@@ -289,39 +294,47 @@ bool ParseCommandLine( int argc, char* argv[] )
         printf( "cam2web - streaming camera to web \n" );
         printf( "Version: %s \n\n", STR_INFO_VERSION );
         printf( "Available command line options: \n" );
-        printf( "  -dev:<num>  Sets video device number to use. \n" );
-        printf( "              Default is 0. \n" );
-        printf( "  -size:<0-4> Sets video size to one from the list below: \n" );
-        printf( "              0: 320x240 \n" );
-        printf( "              1: 640x360 \n" );
-        printf( "              2: 640x480 (default) \n" );
-        printf( "              3: 848x480 \n" );
-        printf( "              4: 1280x720 \n" );
-        printf( "              Note: video device may switch to a different frame size, \n" );
-        printf( "                    the one it supports. \n" );
-        printf( "  -fps:<1-30> Sets camera frame rate. Same is used for MJPEG stream. \n" );
-        printf( "              Default is 30. \n" );
-        printf( "  -port:<num> Port number for web server to listen on. \n" );
-        printf( "              Default is 8000. \n" );
-        printf( "  -realm:<?>  HTTP digest authentication domain. \n" );
-        printf( "              Default is 'cam2web'. \n" );
-        printf( "  -htpass:<?> htdigest file containing list of users to access the camera. \n" );
-        printf( "              Note: only users for the specified/default realm are loaded. \n" );
-        printf( "              Note: if users file is specified, then by default only users \n" );
-        printf( "                    from that list are allowed to view camera and only \n" );
-        printf( "                    'admin' user is allowed to change its settings. \n" );
-        printf( "  -viewer:<?> Group of users allowed to view camera: any, user, admin. \n" );
-        printf( "              Default is 'any' if users file is not specified, \n" );
-        printf( "              or 'user' otherwise. \n" );
-        printf( "  -config:<?> Group of users allowed to change camera settings. \n" );
-        printf( "              Default is 'any' if users file is not specified, \n" );
-        printf( "              or 'admin' otherwise. \n" );
-        printf( "  -fcfg:<?>   Name of the file to store camera settings in. \n" );
-        printf( "              Default is '~/.cam_config'. \n" );
-        printf( "  -web:<?>    Name of the folder to serve custom web content. \n" );
-        printf( "              By default embedded web files are used. \n" );
-        printf( "  -title:<?>  Name of the camera to be shown in WebUI. \n" );
-        printf( "              Use double quotes if the name contains spaces. \n" );
+        printf( "  -dev:<num>   Sets video device number to use. \n" );
+        printf( "               Default is 0. \n" );
+        printf( "  -size:<0-12> Sets video size to one from the list below: \n" );
+        printf( "               0: 320x240 \n" );
+        printf( "               1: 480x360 \n" );
+        printf( "               2: 640x480 (default) \n" );
+        printf( "               3: 800x600 \n" );
+        printf( "               4: 960x720 \n" );
+        printf( "               5: 1120x840 \n" );
+        printf( "               6: 1600x1200 \n" );
+        printf( "               7: 1920x1080 \n" );
+        printf( "               8: 2048x1536 \n" );
+        printf( "               9: 2592x1944 \n" );
+        printf( "               10: 3264x2448 \n" );
+        printf( "               11: 3840x2160 \n" );
+        printf( "               12: 4224x3156 \n" );
+        printf( "               Note: video device may switch to a different frame size, \n" );
+        printf( "                     the one it supports. \n" );
+        printf( "  -fps:<1-30>  Sets camera frame rate. Same is used for MJPEG stream. \n" );
+        printf( "               Default is 30. \n" );
+        printf( "  -port:<num>  Port number for web server to listen on. \n" );
+        printf( "               Default is 8000. \n" );
+        printf( "  -realm:<?>   HTTP digest authentication domain. \n" );
+        printf( "               Default is 'cam2web'. \n" );
+        printf( "  -htpass:<?>  htdigest file containing list of users to access the camera. \n" );
+        printf( "               Note: only users for the specified/default realm are loaded. \n" );
+        printf( "               Note: if users file is specified, then by default only users \n" );
+        printf( "                     from that list are allowed to view camera and only \n" );
+        printf( "                     'admin' user is allowed to change its settings. \n" );
+        printf( "  -viewer:<?>  Group of users allowed to view camera: any, user, admin. \n" );
+        printf( "               Default is 'any' if users file is not specified, \n" );
+        printf( "               or 'user' otherwise. \n" );
+        printf( "  -config:<?>  Group of users allowed to change camera settings. \n" );
+        printf( "               Default is 'any' if users file is not specified, \n" );
+        printf( "               or 'admin' otherwise. \n" );
+        printf( "  -fcfg:<?>    Name of the file to store camera settings in. \n" );
+        printf( "               Default is '~/.cam_config'. \n" );
+        printf( "  -web:<?>     Name of the folder to serve custom web content. \n" );
+        printf( "               By default embedded web files are used. \n" );
+        printf( "  -title:<?>   Name of the camera to be shown in WebUI. \n" );
+        printf( "               Use double quotes if the name contains spaces. \n" );
         printf( "\n" );
 
         ret = false;
