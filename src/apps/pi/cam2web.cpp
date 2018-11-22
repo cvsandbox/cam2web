@@ -139,8 +139,8 @@ void SetDefaultSettings( )
 // Parse command line and override default settings
 bool ParseCommandLine( int argc, char* argv[] )
 {
-    static const uint32_t SupportedWidth[]  = { 320, 480, 640, 800, 1120 };
-    static const uint32_t SupportedHeight[] = { 240, 360, 480, 600, 840 };
+    static const uint32_t SupportedWidth[]  = { 320, 480, 640, 800, 1120, 720, 1280, 1920 };
+    static const uint32_t SupportedHeight[] = { 240, 360, 480, 600, 840, 405, 720, 1080 };
     static const map<string, UserGroup> SupportedUserGroups =
     {
         { "any",    UserGroup::Anyone   },
@@ -176,7 +176,7 @@ bool ParseCommandLine( int argc, char* argv[] )
         {
             int v = value[0] - '0';
 
-            if ( ( v < 0 ) || ( v > 4 ) )
+            if ( ( v < 0 ) || ( v > 7 ) )
                 break;
 
             Settings.FrameWidth  = SupportedWidth[v];
@@ -295,12 +295,15 @@ bool ParseCommandLine( int argc, char* argv[] )
         printf( "cam2web - streaming camera to web \n" );
         printf( "Version: %s \n\n", STR_INFO_VERSION );
         printf( "Available command line options: \n" );
-        printf( "  -size:<0-4> Sets video size to one from the list below: \n" );
+        printf( "  -size:<0-7> Sets video size to one from the list below: \n" );
         printf( "              0: 320x240 \n" );
         printf( "              1: 480x360 \n" );
         printf( "              2: 640x480 (default) \n" );
         printf( "              3: 800x600 \n" );
         printf( "              4: 1120x840 \n" );
+        printf( "              5: 720x405 \n" );
+        printf( "              6: 1280x720 \n" );
+        printf( "              7: 1920x1080 \n" );
         printf( "  -fps:<1-30> Sets camera frame rate. Same is used for MJPEG stream. \n" );
         printf( "              Default is 30. \n" );
         printf( "  -jpeg:<num> JPEG quantization factor (quality). \n" );
