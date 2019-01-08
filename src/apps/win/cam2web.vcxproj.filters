@@ -25,6 +25,9 @@
     <Filter Include="Externals\mongoose">
       <UniqueIdentifier>{21f350a1-76e1-499b-b6f0-d76c637888d1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Icons">
+      <UniqueIdentifier>{c168b316-5961-4ffc-baaa-bcae17a1f35c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -192,53 +195,53 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="cam2web.ico">
-      <Filter>Resource Files</Filter>
+    <Image Include="Icons\about.ico">
+      <Filter>Resource Files\Icons</Filter>
     </Image>
-    <Image Include="settings.ico">
-      <Filter>Resource Files</Filter>
+    <Image Include="Icons\access.ico">
+      <Filter>Resource Files\Icons</Filter>
     </Image>
-    <Image Include="admin.ico">
-      <Filter>Resource Files</Filter>
+    <Image Include="Icons\admin.ico">
+      <Filter>Resource Files\Icons</Filter>
     </Image>
-    <Image Include="user.ico">
-      <Filter>Resource Files</Filter>
+    <Image Include="Icons\cam2web.ico">
+      <Filter>Resource Files\Icons</Filter>
     </Image>
-    <Image Include="about.ico">
-      <Filter>Resource Files</Filter>
+    <Image Include="Icons\cam2web_green.ico">
+      <Filter>Resource Files\Icons</Filter>
     </Image>
-    <Image Include="access.ico">
-      <Filter>Resource Files</Filter>
+    <Image Include="Icons\cam2web_orange.ico">
+      <Filter>Resource Files\Icons</Filter>
     </Image>
-    <Image Include="family.ico">
-      <Filter>Resource Files</Filter>
+    <Image Include="Icons\cam2web_red.ico">
+      <Filter>Resource Files\Icons</Filter>
     </Image>
-    <Image Include="password.ico">
-      <Filter>Resource Files</Filter>
+    <Image Include="Icons\camera_active_blue.ico">
+      <Filter>Resource Files\Icons</Filter>
     </Image>
-    <Image Include="camera_active_blue.ico">
-      <Filter>Resource Files</Filter>
+    <Image Include="Icons\camera_active_green.ico">
+      <Filter>Resource Files\Icons</Filter>
     </Image>
-    <Image Include="folder.ico">
-      <Filter>Resource Files</Filter>
+    <Image Include="Icons\camera_active_orange.ico">
+      <Filter>Resource Files\Icons</Filter>
     </Image>
-    <Image Include="cam2web_green.ico">
-      <Filter>Resource Files</Filter>
+    <Image Include="Icons\camera_active_red.ico">
+      <Filter>Resource Files\Icons</Filter>
     </Image>
-    <Image Include="cam2web_orange.ico">
-      <Filter>Resource Files</Filter>
+    <Image Include="Icons\family.ico">
+      <Filter>Resource Files\Icons</Filter>
     </Image>
-    <Image Include="cam2web_red.ico">
-      <Filter>Resource Files</Filter>
+    <Image Include="Icons\folder.ico">
+      <Filter>Resource Files\Icons</Filter>
     </Image>
-    <Image Include="camera_active_green.ico">
-      <Filter>Resource Files</Filter>
+    <Image Include="Icons\password.ico">
+      <Filter>Resource Files\Icons</Filter>
     </Image>
-    <Image Include="camera_active_orange.ico">
-      <Filter>Resource Files</Filter>
+    <Image Include="Icons\settings.ico">
+      <Filter>Resource Files\Icons</Filter>
     </Image>
-    <Image Include="camera_active_red.ico">
-      <Filter>Resource Files</Filter>
+    <Image Include="Icons\user.ico">
+      <Filter>Resource Files\Icons</Filter>
     </Image>
   </ItemGroup>
 </Project>

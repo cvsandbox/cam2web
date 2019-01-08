@@ -315,22 +315,22 @@ del "$(ProjectDir)..\..\..\build\msvc\release\include\*.js"
     <ResourceCompile Include="cam2web.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="about.ico" />
-    <Image Include="access.ico" />
-    <Image Include="admin.ico" />
-    <Image Include="cam2web.ico" />
-    <Image Include="cam2web_green.ico" />
-    <Image Include="cam2web_orange.ico" />
-    <Image Include="cam2web_red.ico" />
-    <Image Include="camera_active_blue.ico" />
-    <Image Include="camera_active_green.ico" />
-    <Image Include="camera_active_orange.ico" />
-    <Image Include="camera_active_red.ico" />
-    <Image Include="family.ico" />
-    <Image Include="folder.ico" />
-    <Image Include="password.ico" />
-    <Image Include="settings.ico" />
-    <Image Include="user.ico" />
+    <Image Include="Icons\about.ico" />
+    <Image Include="Icons\access.ico" />
+    <Image Include="Icons\admin.ico" />
+    <Image Include="Icons\cam2web.ico" />
+    <Image Include="Icons\cam2web_green.ico" />
+    <Image Include="Icons\cam2web_orange.ico" />
+    <Image Include="Icons\cam2web_red.ico" />
+    <Image Include="Icons\camera_active_blue.ico" />
+    <Image Include="Icons\camera_active_green.ico" />
+    <Image Include="Icons\camera_active_orange.ico" />
+    <Image Include="Icons\camera_active_red.ico" />
+    <Image Include="Icons\family.ico" />
+    <Image Include="Icons\folder.ico" />
+    <Image Include="Icons\password.ico" />
+    <Image Include="Icons\settings.ico" />
+    <Image Include="Icons\user.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
