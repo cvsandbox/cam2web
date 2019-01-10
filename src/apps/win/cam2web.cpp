@@ -852,6 +852,28 @@ static bool StartVideoStreaming( )
             SetTimer( gData->hwndMain, TIMER_ID_FPS_UPDATE, 1000, NULL );
             // setup timer to monitor for web server activity
             SetTimer( gData->hwndMain, TIMER_ID_ACTIVITY_CHECK, 1000, NULL );
+
+#ifdef _DEBUG
+            {
+                gData->camera->WaitForDeviceRunning( 15000 );
+
+                int min, max, step, def;
+                bool isAuto;
+                WCHAR buffer[256];
+
+                if ( gData->camera->GetCameraPropertyRange( XCameraProperty::Exposure, &min, &max, &step, &def, &isAuto ) == XError::Success )
+                {
+                    swprintf( buffer, L"- %s, min: %d, max: %d, step: %d, def: %d, auto: %d \n", L"exposure", min, max, step, def, ( int ) isAuto );
+                    OutputDebugStringW( buffer );
+
+                    gData->camera->SetCameraProperty( XCameraProperty::Exposure, def, false );
+                }
+                else
+                {
+                    OutputDebugStringW( L"- failed: zoom \n" );
+                }
+            }
+#endif
             
             ret = true;
         }

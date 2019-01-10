@@ -48,6 +48,17 @@ enum class XVideoProperty
     Gain
 };
 
+enum class XCameraProperty
+{
+    Pan = 0,
+    Tilt,
+    Roll,
+    Zoom,
+    Exposure,
+    Iris,
+    Focus
+};
+
 // Class which provides access to local video devices available through DirectShow interface
 class XLocalVideoDevice : public IVideoSource, private Uncopyable
 {
@@ -111,6 +122,17 @@ public:
     XError GetVideoProperty( XVideoProperty property, int32_t* value, bool* automatic = nullptr ) const;
     // Get range of values supported by the specified video property
     XError GetVideoPropertyRange( XVideoProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* default, bool* isAutomaticSupported ) const;
+
+    // Check if camera configuration is supported (device must be running)
+    bool IsCameraConfigSupported( ) const;
+
+    // Set the specified camera property. The device does not have to be running. If it is not,
+    // the setting will be cached and applied as soon as the device gets running.
+    XError SetCameraProperty( XCameraProperty property, int32_t value, bool automatic = false );
+    // Get current value if the specified camera property. The device must be running.
+    XError GetCameraProperty( XCameraProperty property, int32_t* value, bool* automatic = nullptr ) const;
+    // Get range of values supported by the specified camera property
+    XError GetCameraPropertyRange( XCameraProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* default, bool* isAutomaticSupported ) const;
 
 private:
     Private::XLocalVideoDeviceData* mData;

@@ -96,9 +96,11 @@ namespace Private
         XManualResetEvent           DeviceIsRunningEvent;
         bool                        DeviceIsRunning;
         IAMVideoProcAmp*            VideoProcAmp;
+        IAMCameraControl*           CameraControl;
 
-        typedef pair<uint32_t, bool> PropValue;
-        map<XVideoProperty, PropValue> PropertiesToSet;
+        typedef pair<uint32_t, bool>    PropValue;
+        map<XVideoProperty, PropValue>  VideoPropertiesToSet;
+        map<XCameraProperty, PropValue> CameraPropertiesToSet;
 
         friend class SampleGrabber;
         
@@ -108,7 +110,8 @@ namespace Private
             Capabilities( ), VideoPins( ), IsCrossbarAvailable( false ), InfoCollectedEvent( ),
             Listener( nullptr ), ExitEvent( ), BackgroundThread( ), Running( false ),
             FramesCounter( 0 ),
-            RunningSync( ), DeviceIsRunningEvent( ), DeviceIsRunning( false ), VideoProcAmp( nullptr ), PropertiesToSet( )
+            RunningSync( ), DeviceIsRunningEvent( ), DeviceIsRunning( false ), VideoProcAmp( nullptr ), CameraControl( nullptr ),
+            VideoPropertiesToSet( ), CameraPropertiesToSet( )
         {
         }
 
@@ -125,12 +128,19 @@ namespace Private
         bool IsDeviceRunning( ) const;
         bool WaitForDeviceRunning( uint32_t msec );
 
-        // Device's video configuration
+        // Device's video acquisition configuration
         bool IsVideoConfigSupported( ) const;
 
         XError SetVideoProperty( XVideoProperty property, int32_t value, bool automatic );
         XError GetVideoProperty( XVideoProperty property, int32_t* value, bool* automatic ) const;
         XError GetVideoPropertyRange( XVideoProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* default, bool* isAutomaticSupported ) const;
+
+        // Camera's control configuration
+        bool IsCameraConfigSupported( ) const;
+
+        XError SetCameraProperty( XCameraProperty property, int32_t value, bool automatic );
+        XError GetCameraProperty( XCameraProperty property, int32_t* value, bool* automatic ) const;
+        XError GetCameraPropertyRange( XCameraProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* default, bool* isAutomaticSupported ) const;
 
     private:
         // Run video loop in a background thread
@@ -571,6 +581,30 @@ XError XLocalVideoDevice::GetVideoPropertyRange( XVideoProperty property, int32_
     return mData->GetVideoPropertyRange( property, min, max, step, default, isAutomaticSupported );
 }
 
+// Check if camera configuration is supported
+bool XLocalVideoDevice::IsCameraConfigSupported( ) const
+{
+    return mData->IsCameraConfigSupported( );
+}
+
+// Set the specified camera property
+XError XLocalVideoDevice::SetCameraProperty( XCameraProperty property, int32_t value, bool automatic )
+{
+    return mData->SetCameraProperty( property, value, automatic );
+}
+
+// Get current value if the specified camera property
+XError XLocalVideoDevice::GetCameraProperty( XCameraProperty property, int32_t* value, bool* automatic ) const
+{
+    return mData->GetCameraProperty( property, value, automatic );
+}
+
+// Get range of values supported by the specified camera property
+XError XLocalVideoDevice::GetCameraPropertyRange( XCameraProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* default, bool* isAutomaticSupported ) const
+{
+    return mData->GetCameraPropertyRange( property, min, max, step, default, isAutomaticSupported );
+}
+
 namespace Private
 {
 
@@ -850,16 +884,35 @@ void XLocalVideoDeviceData::RunVideo( bool run )
                                             {
                                                 bool configOK = true;
 
-                                                // configure all properties, which were set before device got running
-                                                for ( auto property : PropertiesToSet )
+                                                // configure all video properties, which were set before device got running
+                                                for ( auto property : VideoPropertiesToSet )
                                                 {
                                                     configOK &= SetVideoProperty( property.first, property.second.first, property.second.second );
                                                 }
-                                                PropertiesToSet.clear( );
+                                                VideoPropertiesToSet.clear( );
 
                                                 if ( !configOK )
                                                 {
                                                     NotifyError( "Failed applying video configuration" );
+                                                }
+                                            }
+
+                                            // get interface to control camera
+                                            hr = pSourceFilter->QueryInterface( IID_IAMCameraControl, (void**) &CameraControl );
+                                            if ( ( SUCCEEDED( hr ) ) && ( CameraControl != nullptr ) )
+                                            {
+                                                bool configOK = true;
+
+                                                // configure all camera properties, which were set before device got running
+                                                for ( auto property : CameraPropertiesToSet )
+                                                {
+                                                    configOK &= SetCameraProperty( property.first, property.second.first, property.second.second );
+                                                }
+                                                CameraPropertiesToSet.clear( );
+
+                                                if ( !configOK )
+                                                {
+                                                    NotifyError( "Failed applying camera configuration" );
                                                 }
                                             }
                                         }
@@ -902,6 +955,7 @@ void XLocalVideoDeviceData::RunVideo( bool run )
                                         {
                                             lock_guard<recursive_mutex> lock( RunningSync );
                                             RELEASE_COM( VideoProcAmp );
+                                            RELEASE_COM( CameraControl );
                                             DeviceIsRunning = false;
                                             DeviceIsRunningEvent.Reset( );
                                         }
@@ -1013,26 +1067,22 @@ XError XLocalVideoDeviceData::SetVideoProperty( XVideoProperty property, int32_t
     {
         ret = XError::UnknownProperty;
     }
+    else if ( !DeviceIsRunning )
+    {
+        // save property value and try setting it when device gets runnings
+        VideoPropertiesToSet[property] = PropValue( value, automatic );
+    }
+    else if ( VideoProcAmp == nullptr )
+    {
+        ret = XError::ConfigurationNotSupported;
+    }
     else
     {
-        if ( !DeviceIsRunning )
+        HRESULT hr = VideoProcAmp->Set( nativeVideoProperties[static_cast<int>( property )], value, ( automatic ) ? VideoProcAmp_Flags_Auto : VideoProcAmp_Flags_Manual );
+
+        if ( FAILED( hr ) )
         {
-            // save property value and try setting it when device gets runnings
-            PropertiesToSet[property] = PropValue( value, automatic );
-        }
-        else
-        {
-            if ( VideoProcAmp == nullptr )
-            {
-                ret = XError::ConfigurationNotSupported;
-            }
-            else
-            {
-                if ( FAILED( VideoProcAmp->Set( nativeVideoProperties[static_cast<int>( property )], value, ( automatic ) ? VideoProcAmp_Flags_Auto : VideoProcAmp_Flags_Manual ) ) )
-                {
-                    ret = XError::Failed;
-                }
-            }
+            ret = ( hr == E_PROP_ID_UNSUPPORTED ) ? XError::UnsupportedProperty : XError::Failed;
         }
     }
 
@@ -1063,11 +1113,12 @@ XError XLocalVideoDeviceData::GetVideoProperty( XVideoProperty property, int32_t
     }
     else
     {
-        long propValue = 0, propFlags = 0;
+        long    propValue = 0, propFlags = 0;
+        HRESULT hr = VideoProcAmp->Get( nativeVideoProperties[static_cast<int>( property )], &propValue, &propFlags );
 
-        if ( FAILED( VideoProcAmp->Get( nativeVideoProperties[static_cast<int>( property )], &propValue, &propFlags ) ) )
+        if ( FAILED( hr ) )
         {
-            ret = XError::Failed;
+            ret = ( hr == E_PROP_ID_UNSUPPORTED ) ? XError::UnsupportedProperty : XError::Failed;
         }
         else
         {
@@ -1107,11 +1158,12 @@ XError XLocalVideoDeviceData::GetVideoPropertyRange( XVideoProperty property, in
     }
     else
     {
-        long propMin = 0, propMax = 0, propStep = 0, propDef = 0, propFlags = 0;
+        long    propMin = 0, propMax = 0, propStep = 0, propDef = 0, propFlags = 0;
+        HRESULT hr = VideoProcAmp->GetRange( nativeVideoProperties[static_cast<int>( property )], &propMin, &propMax, &propStep, &propDef, &propFlags );
 
-        if ( FAILED( VideoProcAmp->GetRange( nativeVideoProperties[static_cast<int>( property )], &propMin, &propMax, &propStep, &propDef, &propFlags ) ) )
+        if ( FAILED( hr ) )
         {
-            ret = XError::Failed;
+            ret = ( hr == E_PROP_ID_UNSUPPORTED ) ? XError::UnsupportedProperty : XError::Failed;
         }
         else
         {
@@ -1121,6 +1173,147 @@ XError XLocalVideoDeviceData::GetVideoPropertyRange( XVideoProperty property, in
             *default = propDef;
 
             *isAutomaticSupported = ( propFlags & VideoProcAmp_Flags_Auto );
+        }
+    }
+
+    return ret;
+}
+
+// Check if camera configuration is supported
+bool XLocalVideoDeviceData::IsCameraConfigSupported( ) const
+{
+    // user is responsible to make sure device is running
+    lock_guard<recursive_mutex> lock( RunningSync );
+    return ( CameraControl != nullptr );
+}
+
+static const CameraControlProperty nativeCameraProperties[] =
+{
+    CameraControl_Pan,
+    CameraControl_Tilt,
+    CameraControl_Roll,
+    CameraControl_Zoom,
+    CameraControl_Exposure,
+    CameraControl_Iris,
+    CameraControl_Focus
+};
+
+// Set the specified camera property
+XError XLocalVideoDeviceData::SetCameraProperty( XCameraProperty property, int32_t value, bool automatic )
+{
+    lock_guard<recursive_mutex> lock( RunningSync );
+    XError                      ret = XError::Success;
+
+    if ( ( property < XCameraProperty::Pan ) || ( property > XCameraProperty::Focus ) )
+    {
+        ret = XError::UnknownProperty;
+    }
+    else if ( !DeviceIsRunning )
+    {
+        // save property value and try setting it when device gets runnings
+        CameraPropertiesToSet[property] = PropValue( value, automatic );
+    }
+    else if ( CameraControl == nullptr )
+    {
+        ret = XError::ConfigurationNotSupported;
+    }
+    else
+    {
+        HRESULT hr = CameraControl->Set( nativeCameraProperties[static_cast<int>( property )], value, ( automatic ) ? CameraControl_Flags_Auto : CameraControl_Flags_Manual );
+
+        if ( FAILED( hr ) )
+        {
+            ret = ( hr == E_PROP_ID_UNSUPPORTED ) ? XError::UnsupportedProperty : XError::Failed;
+        }
+    }
+
+    return ret;
+}
+
+// Get current value if the specified camera property
+XError XLocalVideoDeviceData::GetCameraProperty( XCameraProperty property, int32_t* value, bool* automatic ) const
+{
+    lock_guard<recursive_mutex> lock( RunningSync );
+    XError                      ret = XError::Success;
+
+    if ( value == nullptr )
+    {
+        ret = XError::NullPointer;
+    }
+    else if ( ( property < XCameraProperty::Pan ) || ( property > XCameraProperty::Focus ) )
+    {
+        ret = XError::UnknownProperty;
+    }
+    else if ( !DeviceIsRunning )
+    {
+        ret = XError::DeivceNotReady;
+    }
+    else if ( CameraControl == nullptr )
+    {
+        ret = XError::ConfigurationNotSupported;
+    }
+    else
+    {
+        long    propValue = 0, propFlags = 0;
+        HRESULT hr = CameraControl->Get( nativeCameraProperties[static_cast<int>( property )], &propValue, &propFlags );
+
+        if ( FAILED( hr ) )
+        {
+            ret = ( hr == E_PROP_ID_UNSUPPORTED ) ? XError::UnsupportedProperty : XError::Failed;
+        }
+        else
+        {
+            *value = propValue;
+
+            if ( automatic != nullptr )
+            {
+                *automatic = ( propFlags == CameraControl_Flags_Auto );
+            }
+        }
+    }
+
+    return ret;
+}
+
+// Get range of values supported by the specified camera property
+XError XLocalVideoDeviceData::GetCameraPropertyRange( XCameraProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* default, bool* isAutomaticSupported ) const
+{
+    lock_guard<recursive_mutex> lock( RunningSync );
+    XError                      ret = XError::Success;
+
+    if ( ( min == nullptr ) || ( max == nullptr ) || ( step == nullptr ) || ( default == nullptr ) || ( isAutomaticSupported == nullptr ) )
+    {
+        ret = XError::NullPointer;
+    }
+    else if ( ( property < XCameraProperty::Pan ) || ( property > XCameraProperty::Focus ) )
+    {
+        ret = XError::UnknownProperty;
+    }
+    else if ( !DeviceIsRunning )
+    {
+        ret = XError::DeivceNotReady;
+    }
+    else if ( CameraControl == nullptr )
+    {
+        ret = XError::ConfigurationNotSupported;
+    }
+    else
+    {
+        long    propMin = 0, propMax = 0, propStep = 0, propDef = 0, propFlags = 0;
+        HRESULT hr = CameraControl->GetRange( nativeCameraProperties[static_cast<int>( property )], &propMin, &propMax, &propStep, &propDef, &propFlags );
+
+        if ( FAILED( hr ) )
+        {
+            ret = ( hr == E_PROP_ID_UNSUPPORTED ) ? XError::UnsupportedProperty : XError::Failed;
+        }
+        else
+        {
+            *min     = propMin;
+            *max     = propMax;
+            *step    = propStep;
+            *default = propDef;
+
+            *isAutomaticSupported = ( propFlags & CameraControl_Flags_Auto );
         }
     }
 

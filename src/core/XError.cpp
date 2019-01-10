@@ -31,6 +31,7 @@ static const char* ErrorMessages[] =
     "Device is not ready",
     "Configuration is not supported",
     "Property is not known",
+    "Property is not supported",
     "Property value is not valid",
     "Property is read only",
     "Pixel format is not supported",

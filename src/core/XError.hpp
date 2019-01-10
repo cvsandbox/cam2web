@@ -38,6 +38,7 @@ public:
         DeivceNotReady,             // Device (whatever it might be) is not ready for the requested action
         ConfigurationNotSupported,  // Configuration is not supported by device/object/whoever
         UnknownProperty,            // Specified property is not known
+        UnsupportedProperty,        // Specified property is not supported by device/object/whoever
         InvalidPropertyValue,       // Specified property value is not valid
         ReadOnlyProperty,           // Specified property is read only
         UnsupportedPixelFormat,     // Pixel format (of an image) is not supported
