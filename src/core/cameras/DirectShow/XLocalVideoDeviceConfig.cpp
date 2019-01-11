@@ -26,13 +26,19 @@
 
 using namespace std;
 
+// Types of properties values
 #define TYPE_INT  (0)
 #define TYPE_BOOL (1)
 
+// Kinds of video source properties
+#define PROP_KIND_VIDEO  (0)
+#define PROP_KIND_CAMERA (1)
+
 typedef struct
 {
-    XVideoProperty  VideoProperty;
-    uint16_t        Type;
+    uint16_t        PropertyKind;
+    int             Property;
+    uint16_t        ValueType;
     uint16_t        Order;
     const char*     Name;
 }
@@ -40,14 +46,16 @@ PropertyInformation;
 
 const static map<string, PropertyInformation> SupportedProperties =
 {
-    { "brightness", { XVideoProperty::Brightness,            TYPE_INT,  0, "Brightness"              } },
-    { "contrast",   { XVideoProperty::Contrast,              TYPE_INT,  1, "Contrast"                } },
-    { "saturation", { XVideoProperty::Saturation,            TYPE_INT,  2, "Saturation"              } },
-    { "hue",        { XVideoProperty::Hue,                   TYPE_INT,  3, "Hue"                     } },
-    { "sharpness",  { XVideoProperty::Sharpness,             TYPE_INT,  4, "Sharpness"               } },
-    { "gamma",      { XVideoProperty::Gamma,                 TYPE_INT,  5, "Gamma"                   } },
-    { "color",      { XVideoProperty::ColorEnable,           TYPE_BOOL, 6, "Color Image"             } },
-    { "blc",        { XVideoProperty::BacklightCompensation, TYPE_BOOL, 7, "Back Light Compensation" } }
+    { "brightness", { PROP_KIND_VIDEO,  (int) XVideoProperty::Brightness,            TYPE_INT,  0, "Brightness"              } },
+    { "contrast",   { PROP_KIND_VIDEO,  (int) XVideoProperty::Contrast,              TYPE_INT,  1, "Contrast"                } },
+    { "saturation", { PROP_KIND_VIDEO,  (int) XVideoProperty::Saturation,            TYPE_INT,  2, "Saturation"              } },
+    { "hue",        { PROP_KIND_VIDEO,  (int) XVideoProperty::Hue,                   TYPE_INT,  3, "Hue"                     } },
+    { "sharpness",  { PROP_KIND_VIDEO,  (int) XVideoProperty::Sharpness,             TYPE_INT,  4, "Sharpness"               } },
+    { "gamma",      { PROP_KIND_VIDEO,  (int) XVideoProperty::Gamma,                 TYPE_INT,  5, "Gamma"                   } },
+    { "exposure",   { PROP_KIND_CAMERA, (int) XCameraProperty::Exposure,             TYPE_INT,  6, "Exposure"                } },
+    { "autoexp",    { PROP_KIND_CAMERA, (int) XCameraProperty::Exposure,             TYPE_BOOL, 7, "Automatic Exposure"      } },
+    { "color",      { PROP_KIND_VIDEO,  (int) XVideoProperty::ColorEnable,           TYPE_BOOL, 8, "Color Image"             } },
+    { "blc",        { PROP_KIND_VIDEO,  (int) XVideoProperty::BacklightCompensation, TYPE_BOOL, 9, "Back Light Compensation" } }
 };
 
 // ------------------------------------------------------------------------------------------
@@ -80,7 +88,31 @@ XError XLocalVideoDeviceConfig::SetProperty( const string& propertyName, const s
         }
         else
         {
-            ret = mCamera->SetVideoProperty( itSupportedProperty->second.VideoProperty, propValue, false );
+            if ( itSupportedProperty->second.PropertyKind == PROP_KIND_VIDEO )
+            {
+                ret = mCamera->SetVideoProperty( static_cast<XVideoProperty>( itSupportedProperty->second.Property ), propValue, false );
+            }
+            else
+            {
+                XCameraProperty cameraProperty = static_cast<XCameraProperty>( itSupportedProperty->second.Property );
+                int32_t         currentPropValue;
+                bool            isAuto;
+
+                // get current property value including automatic control
+                ret = mCamera->GetCameraProperty( cameraProperty, &currentPropValue, &isAuto );
+
+                if ( ret )
+                {
+                    if ( itSupportedProperty->second.ValueType == TYPE_INT )
+                    {
+                        ret = mCamera->SetCameraProperty( cameraProperty, propValue, isAuto );
+                    }
+                    else
+                    {
+                        ret = mCamera->SetCameraProperty( cameraProperty, currentPropValue, ( propValue != 0 ) );
+                    }
+                }
+            }
         }
     }
 
@@ -104,7 +136,29 @@ XError XLocalVideoDeviceConfig::GetProperty( const string& propertyName, string&
     else
     {
         // get the property value itself
-        ret = mCamera->GetVideoProperty( itSupportedProperty->second.VideoProperty, &propValue );
+        if ( itSupportedProperty->second.PropertyKind == PROP_KIND_VIDEO )
+        {
+            ret = mCamera->GetVideoProperty( static_cast<XVideoProperty>( itSupportedProperty->second.Property ), &propValue );
+        }
+        else
+        {
+            int32_t currentPropValue;
+            bool    isAuto;
+
+            ret = mCamera->GetCameraProperty( static_cast<XCameraProperty>( itSupportedProperty->second.Property ), &currentPropValue, &isAuto );
+
+            if ( ret )
+            {
+                if ( itSupportedProperty->second.ValueType == TYPE_INT )
+                {
+                    propValue = currentPropValue;
+                }
+                else
+                {
+                    propValue = ( isAuto ) ? 1 : 0;
+                }
+            }
+        }
     }
 
     if ( ret )
@@ -154,15 +208,29 @@ XError XLocalVideoDevicePropsInfo::GetProperty( const std::string& propertyName,
     }
     else
     {
-        int32_t min, max, step, default;
+        int32_t min = 0, max = 0, step = 0, default = 0;
         bool    isAutoSupported;
 
         // get property features - min/max/default/etc
-        ret = mCamera->GetVideoPropertyRange( itSupportedProperty->second.VideoProperty, &min, &max, &step, &default, &isAutoSupported );
+        if ( itSupportedProperty->second.PropertyKind == PROP_KIND_VIDEO )
+        {
+            ret = mCamera->GetVideoPropertyRange( static_cast<XVideoProperty>( itSupportedProperty->second.Property ), &min, &max, &step, &default, &isAutoSupported );
+        }
+        else
+        {
+            if ( itSupportedProperty->second.ValueType == TYPE_INT )
+            {
+                ret = mCamera->GetCameraPropertyRange( static_cast< XCameraProperty >( itSupportedProperty->second.Property ), &min, &max, &step, &default, &isAutoSupported );
+            }
+            else
+            {
+                default = true;
+            }
+        }
 
         if ( ret )
         {
-            if ( itSupportedProperty->second.Type == TYPE_INT )
+            if ( itSupportedProperty->second.ValueType == TYPE_INT )
             {
                 sprintf( buffer, "{\"min\":%d,\"max\":%d,\"def\":%d,\"type\":\"int\",\"order\":%d,\"name\":\"%s\"}",
                          min, max, default, itSupportedProperty->second.Order, itSupportedProperty->second.Name );
