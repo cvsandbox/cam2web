@@ -1,7 +1,7 @@
 /*
     cam2web - streaming camera to web
 
-    Copyright (C) 2017, cvsandbox, cvsandbox@gmail.com
+    Copyright (C) 2017-2019, cvsandbox, cvsandbox@gmail.com
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -1221,7 +1221,14 @@ XError XLocalVideoDeviceData::SetCameraProperty( XCameraProperty property, int32
     {
         HRESULT hr = CameraControl->Set( nativeCameraProperties[static_cast<int>( property )], value, ( automatic ) ? CameraControl_Flags_Auto : CameraControl_Flags_Manual );
 
-        if ( FAILED( hr ) )
+        // !!! NEED MORE DIGING !!!
+        // Error 0x8007001F - A device attached to the system is not functioning
+        //
+        // Don't treat 0x8007001 as error. Found that setting camera property (exposure) to
+        // automatic control always generates this error, but the setting is accepted and is
+        // controlled automatically then. Setting same property to manual control does not generate
+        // this error code. Might be camera/driver specific.
+        if ( ( static_cast<uint32_t>( hr ) != 0x8007001F ) && ( FAILED( hr ) ) )
         {
             ret = ( hr == E_PROP_ID_UNSUPPORTED ) ? XError::UnsupportedProperty : XError::Failed;
         }
