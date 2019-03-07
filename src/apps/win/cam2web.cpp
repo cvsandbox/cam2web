@@ -1,7 +1,7 @@
 /*
     cam2web - streaming camera to web
 
-    Copyright (C) 2017-2018, cvsandbox, cvsandbox@gmail.com
+    Copyright (C) 2017-2019, cvsandbox, cvsandbox@gmail.com
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -1036,7 +1036,7 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
                 EnableWindow( gData->hwndCamerasCombo, FALSE );
                 EnableWindow( gData->hwndResolutionsCombo, FALSE );
 
-                std::async( ToggleStreaming );
+                std::thread( ToggleStreaming ).detach( );
             }
             break;
 

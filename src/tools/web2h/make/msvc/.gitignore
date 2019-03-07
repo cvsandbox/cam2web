@@ -2,3 +2,4 @@ Debug
 Release
 *.sdf
 *.suo
+*.VC.db
