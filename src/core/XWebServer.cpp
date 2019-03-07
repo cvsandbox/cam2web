@@ -1,7 +1,7 @@
 /*
     cam2web - streaming camera to web
 
-    Copyright (C) 2017-2018, cvsandbox, cvsandbox@gmail.com
+    Copyright (C) 2017-2019, cvsandbox, cvsandbox@gmail.com
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -496,7 +496,7 @@ bool XWebServerData::Start( )
     char strPort[16];
 
     {
-        lock_guard<recursive_mutex> lock( DataSync );
+        lock_guard<recursive_mutex> dataLock( DataSync );
 
         sprintf( strPort, "%u", Port );
 
