@@ -1,7 +1,7 @@
 /*
     cam2web - streaming camera to web
 
-    Copyright (C) 2017, cvsandbox, cvsandbox@gmail.com
+    Copyright (C) 2017-2019, cvsandbox, cvsandbox@gmail.com
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,6 +30,7 @@ const static string  PROP_SATURATION          = "saturation";
 const static string  PROP_SHARPNESS           = "sharpness";
 const static string  PROP_HFLIP               = "hflip";
 const static string  PROP_VFLIP               = "vflip";
+const static string  PROP_ROTATION            = "rotation";
 const static string  PROP_VIDEO_STABILISATION = "videostabilisation";
 
 const static string  PROP_AWBMODE             = "awb";
@@ -43,7 +44,7 @@ const static map<string, string> SupportedProperties =
     { PROP_CONTRAST,   "{\"min\":-100,\"max\":100,\"def\":0,\"type\":\"int\",\"order\":1,\"name\":\"Contrast\"}"    },
     { PROP_SATURATION, "{\"min\":-100,\"max\":100,\"def\":0,\"type\":\"int\",\"order\":2,\"name\":\"Saturation\"}"  },
     { PROP_SHARPNESS,  "{\"min\":-100,\"max\":100,\"def\":0,\"type\":\"int\",\"order\":3,\"name\":\"Sharpness\"}"   },
-    
+
     { PROP_AWBMODE, "{\"def\":\"Auto\",\"type\":\"select\",\"order\":4,\"name\":\"White Balance\","
                     "\"choices\":[[\"Off\",\"Off\"],[\"Auto\",\"Auto\"],[\"Sunlight\",\"Sunlight\"],"
                     "[\"Cloudy\",\"Cloudy\"],[\"Shade\",\"Shade\"],[\"Tungsten\",\"Tungsten\"],"
@@ -65,10 +66,12 @@ const static map<string, string> SupportedProperties =
                     "[\"Blur\",\"Blur\"],[\"Saturation\",\"Saturation\"],[\"ColorSwap\",\"Color Swap\"],"
                     "[\"WashedOut\",\"Washed Out\"],[\"Posterise\",\"Posterise\"],[\"ColorPoint\",\"Color Point\"],"
                     "[\"ColorBalance\",\"Color Balance\"],[\"Cartoon\",\"Cartoon\"]]}" },
-                    
-    { PROP_HFLIP, "{\"def\":0,\"type\":\"bool\",\"order\":8,\"name\":\"Horizontal Flip\"}"   },
-    { PROP_VFLIP, "{\"def\":0,\"type\":\"bool\",\"order\":9,\"name\":\"Vertical Flip\"}"   },
-    { PROP_VIDEO_STABILISATION, "{\"def\":0,\"type\":\"bool\",\"order\":10,\"name\":\"Video Stabilisation\"}"   },
+
+    { PROP_ROTATION, "{\"def\":\"0\",\"type\":\"select\",\"order\":8,\"name\":\"Rotation\","
+                     "\"choices\":[[\"0\",\"0\"],[\"90\",\"90\"],[\"180\",\"180\"],[\"270\",\"270\"]]}" },
+    { PROP_HFLIP, "{\"def\":0,\"type\":\"bool\",\"order\":9,\"name\":\"Horizontal Flip\"}"   },
+    { PROP_VFLIP, "{\"def\":0,\"type\":\"bool\",\"order\":10,\"name\":\"Vertical Flip\"}"   },
+    { PROP_VIDEO_STABILISATION, "{\"def\":0,\"type\":\"bool\",\"order\":11,\"name\":\"Video Stabilisation\"}"   },
 };
 
 const static map<string, AwbMode> SupportedAwbModes =
@@ -166,6 +169,17 @@ XError XRaspiCameraConfig::SetProperty( const string& propertyName, const string
 
         propStatus = mCamera->SetCameraFlip( hflip, vflip );
     }
+    else if ( propertyName == PROP_ROTATION )
+    {
+        if ( scannedCount == 1 )
+        {
+            propStatus = mCamera->SetImageRotation( numericValue );
+        }
+        else
+        {
+            ret = XError::InvalidPropertyValue;
+        }
+    }
     else if ( propertyName == PROP_VIDEO_STABILISATION )
     {
         propStatus = mCamera->SetVideoStabilisation( ( value == "1" ) || ( value == "true" ) );
@@ -201,7 +215,7 @@ XError XRaspiCameraConfig::SetProperty( const string& propertyName, const string
         else
         {
             ret = XError::InvalidPropertyValue;
-        }    
+        }
     }
     else if ( propertyName == PROP_SATURATION )
     {
@@ -217,7 +231,7 @@ XError XRaspiCameraConfig::SetProperty( const string& propertyName, const string
     else if ( propertyName == PROP_AWBMODE )
     {
         map<string, AwbMode>::const_iterator itMode = SupportedAwbModes.find( value );
-        
+
         if ( itMode == SupportedAwbModes.end( ) )
         {
             ret = XError::InvalidPropertyValue;
@@ -230,7 +244,7 @@ XError XRaspiCameraConfig::SetProperty( const string& propertyName, const string
     else if ( propertyName == PROP_EXPMODE )
     {
         map<string, ExposureMode>::const_iterator itMode = SupportedExposureModes.find( value );
-        
+
         if ( itMode == SupportedExposureModes.end( ) )
         {
             ret = XError::InvalidPropertyValue;
@@ -243,7 +257,7 @@ XError XRaspiCameraConfig::SetProperty( const string& propertyName, const string
     else if ( propertyName == PROP_EXPMETERINGMODE )
     {
         map<string, ExposureMeteringMode>::const_iterator itMode = SupportedExposureMeteringModes.find( value );
-        
+
         if ( itMode == SupportedExposureMeteringModes.end( ) )
         {
             ret = XError::InvalidPropertyValue;
@@ -251,12 +265,12 @@ XError XRaspiCameraConfig::SetProperty( const string& propertyName, const string
         else
         {
             propStatus = mCamera->SetExposureMeteringMode( itMode->second );
-        }            
+        }
     }
     else if ( propertyName == PROP_EFFECT )
     {
         map<string, ImageEffect>::const_iterator itMode = SupportedImageEffects.find( value );
-        
+
         if ( itMode == SupportedImageEffects.end( ) )
         {
             ret = XError::InvalidPropertyValue;
@@ -264,7 +278,7 @@ XError XRaspiCameraConfig::SetProperty( const string& propertyName, const string
         else
         {
             propStatus = mCamera->SetImageEffect( itMode->second );
-        }            
+        }
     }
     else
     {
@@ -289,6 +303,11 @@ XError XRaspiCameraConfig::GetProperty( const string& propertyName, string& valu
     if ( propertyName == PROP_HFLIP )
     {
         value = ( mCamera->GetHorizontalFlip( ) ) ? "1" : "0";
+    }
+    else if ( propertyName == PROP_ROTATION )
+    {
+        numericValue   = static_cast<int>( mCamera->GetImageRotation( ) );
+        valueIsANumber = true;
     }
     else if ( propertyName == PROP_VFLIP )
     {

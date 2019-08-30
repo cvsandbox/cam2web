@@ -1,7 +1,7 @@
 /*
     cam2web - streaming camera to web
 
-    Copyright (C) 2017, cvsandbox, cvsandbox@gmail.com
+    Copyright (C) 2017-2019, cvsandbox, cvsandbox@gmail.com
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -58,9 +58,9 @@ namespace Private
         MMAL_PORT_T*            VideoPort;
         MMAL_PORT_T*            VideoBufferPort;
         MMAL_POOL_T*            VideoBufferPool;
-    
+
         static bool             HostInitDone;
-        
+
     public:
         uint32_t                FramesReceived;
         uint32_t                FrameWidth;
@@ -71,6 +71,7 @@ namespace Private
         bool                    HorizontalFlip;
         bool                    VerticalFlip;
         bool                    VideoStabilisation;
+        uint32_t                ImageRotation;
         int32_t                 Sharpness;
         int32_t                 Contrast;
         int32_t                 Brightness;
@@ -89,7 +90,7 @@ namespace Private
             VideoPort( nullptr ), VideoBufferPort( nullptr ), VideoBufferPool( nullptr ),
             FramesReceived( 0 ),
             FrameWidth( 640 ), FrameHeight( 480 ), FrameRate( 30 ), JpegQuality( 10 ), JpegEncoding( true ),
-            HorizontalFlip( false ), VerticalFlip( false ), VideoStabilisation( false ),
+            HorizontalFlip( false ), VerticalFlip( false ), VideoStabilisation( false ), ImageRotation( 0 ),
             Sharpness( 0 ), Contrast( 0 ), Brightness( 50 ), Saturation( 0 ),
             WhiteBalanceMode( AwbMode::Auto ), CameraExposureMode( ExposureMode::Auto ),
             CameraExposureMeteringMode( ExposureMeteringMode::Average ),
@@ -97,16 +98,16 @@ namespace Private
             TextAnnotation( ), TextBlackBackground( true )
         {
         }
-                
+
         bool Start( );
         void SignalToStop( );
         void WaitForStop( );
         bool IsRunning( );
         IVideoSourceListener* SetListener( IVideoSourceListener* listener );
-        
+
         void NotifyNewImage( const std::shared_ptr<const XImage>& image );
         void NotifyError( const string& errorMessage, bool fatal = false );
-        
+
         bool Init( );
         void Cleanup( );
 
@@ -116,6 +117,7 @@ namespace Private
         void SetJpegQuality( uint32_t jpegQuality );
 
         bool SetCameraFlip( bool horizontal, bool vertical );
+        bool SetImageRotation( uint32_t rotation );
         bool SetVideoStabilisation( bool enabled );
         bool SetSharpness( int32_t sharpness );
         bool SetContrast( int32_t contrast );
@@ -126,12 +128,12 @@ namespace Private
         bool SetExposureMeteringMode( ExposureMeteringMode mode );
         bool SetImageEffect( ImageEffect effect );
         bool SetTextTextAnnotation( const string& text, bool blackBackground );
-        
+
         static void ControlThreadHanlder( XRaspiCameraData* me );
         static void CameraControlCallback( MMAL_PORT_T* port, MMAL_BUFFER_HEADER_T* buffer );
         static void VideoBufferCallback( MMAL_PORT_T* port, MMAL_BUFFER_HEADER_T* buffer );
     };
-    
+
     bool XRaspiCameraData::HostInitDone = false;
 }
 
@@ -242,6 +244,16 @@ bool XRaspiCamera::GetVerticalFlip( ) const
 bool XRaspiCamera::SetCameraFlip( bool horizontal, bool vertical )
 {
     return mData->SetCameraFlip( horizontal, vertical );
+}
+
+// Get/Set camera's image rotation, (0, 90, 180, 270)
+uint32_t XRaspiCamera::GetImageRotation( ) const
+{
+    return mData->ImageRotation;
+}
+bool XRaspiCamera::SetImageRotation( uint32_t rotation )
+{
+    return mData->SetImageRotation( rotation );
 }
 
 // Get/Set video stabilisation flag
@@ -355,16 +367,16 @@ namespace Private
 bool XRaspiCameraData::Start( )
 {
     lock_guard<recursive_mutex> lock( Sync );
-    
+
     if ( !IsRunning( ) )
     {
         NeedToStop.Reset( );
         Running = true;
         FramesReceived = 0;
-        
+
         ControlThread = thread( ControlThreadHanlder, this );
     }
-    
+
     return true;
 }
 
@@ -372,7 +384,7 @@ bool XRaspiCameraData::Start( )
 void XRaspiCameraData::SignalToStop( )
 {
     lock_guard<recursive_mutex> lock( Sync );
-    
+
     if ( IsRunning( ) )
     {
         NeedToStop.Signal( );
@@ -383,7 +395,7 @@ void XRaspiCameraData::SignalToStop( )
 void XRaspiCameraData::WaitForStop( )
 {
     SignalToStop( );
-    
+
     if ( ( IsRunning( ) ) || ( ControlThread.joinable( ) ) )
     {
         ControlThread.join( );
@@ -399,10 +411,10 @@ bool XRaspiCameraData::IsRunning( )
     {
         ControlThread.join( );
     }
-    
+
     return Running;
 }
-        
+
 // Set video source listener
 IVideoSourceListener* XRaspiCameraData::SetListener( IVideoSourceListener* listener )
 {
@@ -418,12 +430,12 @@ IVideoSourceListener* XRaspiCameraData::SetListener( IVideoSourceListener* liste
 void XRaspiCameraData::NotifyNewImage( const std::shared_ptr<const XImage>& image )
 {
     IVideoSourceListener* myListener;
-    
+
     {
         lock_guard<recursive_mutex> lock( Sync );
         myListener = Listener;
     }
-    
+
     if ( myListener != nullptr )
     {
         myListener->OnNewImage( image );
@@ -434,12 +446,12 @@ void XRaspiCameraData::NotifyNewImage( const std::shared_ptr<const XImage>& imag
 void XRaspiCameraData::NotifyError( const string& errorMessage, bool fatal )
 {
     IVideoSourceListener* myListener;
-    
+
     {
         lock_guard<recursive_mutex> lock( Sync );
         myListener = Listener;
     }
-    
+
     if ( myListener != nullptr )
     {
         myListener->OnError( errorMessage, fatal );
@@ -457,7 +469,7 @@ bool XRaspiCameraData::Init( )
         bcm_host_init( );
         HostInitDone = true;
     }
-    
+
     status = mmal_component_create( MMAL_COMPONENT_DEFAULT_CAMERA, &Camera );
     if ( status != MMAL_SUCCESS )
     {
@@ -473,7 +485,7 @@ bool XRaspiCameraData::Init( )
             NotifyError( "Failed enabling camera's control port", true );
         }
     }
-    
+
     if ( status == MMAL_SUCCESS )
     {
         //  set-up the camera configuration
@@ -498,12 +510,12 @@ bool XRaspiCameraData::Init( )
             NotifyError( "Failed setting camera's configuration", true );
         }
     }
-    
+
     if ( status == MMAL_SUCCESS )
     {
         // set-up video port format
         MMAL_ES_FORMAT_T* format = VideoPort->format;
-        
+
         format->encoding                 = ( JpegEncoding ) ? MMAL_ENCODING_I420 : MMAL_ENCODING_RGB24;
         format->encoding_variant         = format->encoding;
         format->es->video.width          = FrameWidth;
@@ -514,7 +526,7 @@ bool XRaspiCameraData::Init( )
         format->es->video.crop.height    = FrameHeight;
         format->es->video.frame_rate.num = FrameRate;
         format->es->video.frame_rate.den = 1;
-        
+
         status = mmal_port_format_commit( VideoPort );
         if ( status != MMAL_SUCCESS )
         {
@@ -549,20 +561,20 @@ bool XRaspiCameraData::Init( )
             // set JPEG encoder's input/output ports' format
             MMAL_PORT_T* inputPort  = JpegEncoder->input[0];
             MMAL_PORT_T* outputPort = JpegEncoder->output[0];
-    
+
             mmal_format_copy( inputPort->format, VideoPort->format );
-    
+
             status = mmal_port_format_commit( inputPort );
             if ( status != MMAL_SUCCESS )
             {
                 NotifyError( "Failed setting JPEG encoder's input port format", true );
-            }    
+            }
             else
             {
                 mmal_format_copy( outputPort->format, inputPort->format );
-    
+
                 outputPort->format->encoding = MMAL_ENCODING_JPEG;
-    
+
                 status = mmal_port_format_commit( outputPort );
                 if ( status != MMAL_SUCCESS )
                 {
@@ -572,7 +584,7 @@ bool XRaspiCameraData::Init( )
                 {
                     outputPort->buffer_size = outputPort->buffer_size_recommended;
                     outputPort->buffer_num  = outputPort->buffer_num_recommended;
-    
+
                     if ( outputPort->buffer_size < outputPort->buffer_size_min )
                     {
                         outputPort->buffer_size = outputPort->buffer_size_min;
@@ -584,7 +596,7 @@ bool XRaspiCameraData::Init( )
 
                     // set JPEG quality
                     status = mmal_port_parameter_set_uint32( outputPort, MMAL_PARAMETER_JPEG_Q_FACTOR, JpegQuality );
-    
+
                     if ( status != MMAL_SUCCESS )
                     {
                         NotifyError( "Failed setting JPEG quality" );
@@ -592,7 +604,7 @@ bool XRaspiCameraData::Init( )
                 }
             }
         }
-    
+
         if ( status == MMAL_SUCCESS )
         {
             // connect video port to JPEG encoder
@@ -603,7 +615,7 @@ bool XRaspiCameraData::Init( )
                 NotifyError( "Failed connecting video port to JPEG encoder", true );
             }
         }
-    
+
         if ( status == MMAL_SUCCESS )
         {
             // enable the JPEG encoder connection
@@ -643,7 +655,7 @@ bool XRaspiCameraData::Init( )
             NotifyError( "Failed enabling video buffer port", true );
         }
     }
-    
+
     if ( status == MMAL_SUCCESS )
     {
         // send all buffers to the video buffer port
@@ -659,27 +671,28 @@ bool XRaspiCameraData::Init( )
             }
             else
             {
-                status = mmal_port_send_buffer( VideoBufferPort, buffer ); 
+                status = mmal_port_send_buffer( VideoBufferPort, buffer );
             }
         }
-        
+
         if ( status != MMAL_SUCCESS )
         {
             NotifyError( "Failed configuring video buffer pool", true );
         }
     }
-    
+
     if ( status == MMAL_SUCCESS )
     {
         // apply all configuration
         if ( ( !SetCameraFlip( HorizontalFlip, VerticalFlip ) ) ||
+             ( !SetImageRotation( ImageRotation ) ) ||
              ( !SetVideoStabilisation( VideoStabilisation ) ) ||
              ( !SetSharpness( Sharpness ) ) ||
-             ( !SetContrast( Contrast ) ) || 
+             ( !SetContrast( Contrast ) ) ||
              ( !SetBrightness( Brightness ) ) ||
-             ( !SetSaturation( Saturation ) ) || 
+             ( !SetSaturation( Saturation ) ) ||
              ( !SetWhiteBalanceMode( WhiteBalanceMode ) ) ||
-             ( !SetExposureMode( CameraExposureMode ) ) || 
+             ( !SetExposureMode( CameraExposureMode ) ) ||
              ( !SetExposureMeteringMode( CameraExposureMeteringMode ) ) ||
              ( !SetImageEffect( CameraImageEffect ) ) ||
              ( !SetTextTextAnnotation( TextAnnotation, TextBlackBackground ) ) )
@@ -696,7 +709,7 @@ bool XRaspiCameraData::Init( )
             NotifyError( "Failed starting video capture", true );
         }
     }
-    
+
     return ( status == MMAL_SUCCESS );
 }
 
@@ -714,7 +727,7 @@ void XRaspiCameraData::Cleanup( )
     {
         mmal_port_disable( VideoBufferPort );
     }
-    
+
     if ( JpegEncoderConnection != nullptr )
     {
         mmal_connection_disable( JpegEncoderConnection );
@@ -727,7 +740,7 @@ void XRaspiCameraData::Cleanup( )
         mmal_port_pool_destroy( VideoPort, VideoBufferPool );
         VideoBufferPool = nullptr;
     }
-        
+
     if ( JpegEncoder != nullptr )
     {
         mmal_component_destroy( JpegEncoder );
@@ -739,7 +752,7 @@ void XRaspiCameraData::Cleanup( )
         mmal_component_destroy( Camera );
         Camera = nullptr;
     }
-    
+
     VideoPort = nullptr;
     VideoBufferPort = nullptr;
 }
@@ -748,7 +761,7 @@ void XRaspiCameraData::Cleanup( )
 void XRaspiCameraData::SetVideoSize( uint32_t width, uint32_t height )
 {
     lock_guard<recursive_mutex> lock( ConfigSync );
-    
+
     if ( !IsRunning( ) )
     {
         FrameWidth  = width;
@@ -760,7 +773,7 @@ void XRaspiCameraData::SetVideoSize( uint32_t width, uint32_t height )
 void XRaspiCameraData::SetFrameRate( uint32_t frameRate )
 {
     lock_guard<recursive_mutex> lock( ConfigSync );
-    
+
     if ( !IsRunning( ) )
     {
         FrameRate = frameRate;
@@ -771,18 +784,18 @@ void XRaspiCameraData::SetFrameRate( uint32_t frameRate )
 void XRaspiCameraData::EnableJpegEncoding( bool enable )
 {
     lock_guard<recursive_mutex> lock( ConfigSync );
-    
+
     if ( !IsRunning( ) )
     {
         JpegEncoding = enable;
-    }    
+    }
 }
 
 // Set quality of provided JPEG images
 void XRaspiCameraData::SetJpegQuality( uint32_t jpegQuality )
 {
     lock_guard<recursive_mutex> lock( ConfigSync );
-    
+
     if ( !IsRunning( ) )
     {
         JpegQuality = jpegQuality;
@@ -821,11 +834,30 @@ bool XRaspiCameraData::SetCameraFlip( bool horizontal, bool vertical )
     return ret;
 }
 
+// Set camera's image rotation
+bool XRaspiCameraData::SetImageRotation( uint32_t rotation )
+{
+    lock_guard<recursive_mutex> lock( ConfigSync );
+    bool                        ret = true;
+
+    ImageRotation = ( ( rotation % 360 ) / 90 ) * 90;
+
+    if ( VideoPort != nullptr )
+    {
+        ret = ( mmal_port_parameter_set_int32( VideoPort, MMAL_PARAMETER_ROTATION,
+                static_cast<int32_t>( ImageRotation ) ) == MMAL_SUCCESS );
+    }
+
+    return ret;
+}
+
 // Set video stabilisation flag
 bool XRaspiCameraData::SetVideoStabilisation( bool enabled )
 {
     lock_guard<recursive_mutex> lock( ConfigSync );
     bool                        ret = true;
+
+    VideoStabilisation = enabled;
 
     if ( Camera != nullptr )
     {
@@ -940,18 +972,18 @@ bool XRaspiCameraData::SetWhiteBalanceMode( AwbMode mode )
     bool                        ret = true;
 
     WhiteBalanceMode = mode;
-    
+
     if ( Camera != nullptr )
     {
         int imode = static_cast<int>( mode );
         MMAL_PARAM_AWBMODE_T nativeMode = ( ( imode < 0 ) || ( imode >= sizeof( modes ) / sizeof( modes[0] ) ) ) ?
                                             MMAL_PARAM_AWBMODE_AUTO : modes[imode];
-    
+
         MMAL_PARAMETER_AWBMODE_T param = { { MMAL_PARAMETER_AWB_MODE, sizeof( param ) }, nativeMode };
-        
+
         ret = ( mmal_port_parameter_set( Camera->control, &param.hdr ) == MMAL_SUCCESS );
     }
-    
+
     return ret;
 }
 
@@ -977,20 +1009,20 @@ bool XRaspiCameraData::SetExposureMode( ExposureMode mode )
 
     lock_guard<recursive_mutex> lock( ConfigSync );
     bool                        ret = true;
-    
+
     CameraExposureMode = mode;
-    
+
     if ( Camera != nullptr )
     {
         int imode = static_cast<int>( mode );
         MMAL_PARAM_EXPOSUREMODE_T nativeMode = ( ( imode < 0 ) || ( imode >= sizeof( modes ) / sizeof( modes[0] ) ) ) ?
                                                 MMAL_PARAM_EXPOSUREMODE_AUTO : modes[imode];
-                                            
+
         MMAL_PARAMETER_EXPOSUREMODE_T param = { { MMAL_PARAMETER_EXPOSURE_MODE, sizeof( param ) }, nativeMode };
-        
+
         ret = ( mmal_port_parameter_set( Camera->control, &param.hdr ) == MMAL_SUCCESS );
     }
-    
+
     return ret;
 }
 
@@ -1004,12 +1036,12 @@ bool XRaspiCameraData::SetExposureMeteringMode( ExposureMeteringMode mode )
         MMAL_PARAM_EXPOSUREMETERINGMODE_BACKLIT,
         MMAL_PARAM_EXPOSUREMETERINGMODE_MATRIX
     };
-    
+
     lock_guard<recursive_mutex> lock( ConfigSync );
     bool                        ret = true;
 
     CameraExposureMeteringMode = mode;
-    
+
     if ( Camera != nullptr )
     {
         int imode = static_cast<int>( mode );
@@ -1017,10 +1049,10 @@ bool XRaspiCameraData::SetExposureMeteringMode( ExposureMeteringMode mode )
                                                         MMAL_PARAM_EXPOSUREMETERINGMODE_AVERAGE : modes[imode];
 
         MMAL_PARAMETER_EXPOSUREMETERINGMODE_T param = { { MMAL_PARAMETER_EXP_METERING_MODE, sizeof( param ) }, nativeMode };
-        
+
         ret = ( mmal_port_parameter_set( Camera->control, &param.hdr ) == MMAL_SUCCESS );
     }
-    
+
     return ret;
 }
 
@@ -1058,7 +1090,7 @@ bool XRaspiCameraData::SetImageEffect( ImageEffect effect )
     bool                        ret = true;
 
     CameraImageEffect = effect;
-    
+
     if ( Camera != nullptr )
     {
         int ieffect = static_cast<int>( effect );
@@ -1069,7 +1101,7 @@ bool XRaspiCameraData::SetImageEffect( ImageEffect effect )
 
         ret = ( mmal_port_parameter_set( Camera->control, &param.hdr ) == MMAL_SUCCESS );
     }
-    
+
     return ret;
 }
 
@@ -1106,16 +1138,16 @@ bool XRaspiCameraData::SetTextTextAnnotation( const string& text, bool blackBack
 
 // Background control thread - does not do much other than init, clean-up and wait in between
 void XRaspiCameraData::ControlThreadHanlder( XRaspiCameraData* me )
-{    
+{
     if ( me->Init( ) )
     {
         while ( !me->NeedToStop.Wait( 1000 ) )
         {
         }
     }
-    
+
     me->Cleanup( );
-    
+
     {
         lock_guard<recursive_mutex> lock( me->Sync );
         me->Running = false;
@@ -1131,7 +1163,7 @@ void XRaspiCameraData::CameraControlCallback( MMAL_PORT_T* port, MMAL_BUFFER_HEA
 void XRaspiCameraData::VideoBufferCallback( MMAL_PORT_T* port, MMAL_BUFFER_HEADER_T* buffer )
 {
     XRaspiCameraData* me = reinterpret_cast<XRaspiCameraData*>( port->userdata );
-    
+
     if ( buffer->length != 0 )
     {
         mmal_buffer_header_mem_lock( buffer );
@@ -1140,7 +1172,7 @@ void XRaspiCameraData::VideoBufferCallback( MMAL_PORT_T* port, MMAL_BUFFER_HEADE
             shared_ptr<XImage> image = ( !me->JpegEncoding ) ?
                 XImage::Create( buffer->data + buffer->offset, me->FrameWidth, me->FrameHeight, me->FrameWidth * 3, XPixelFormat::RGB24 ) :
                 XImage::Create( buffer->data + buffer->offset, buffer->length, 1, buffer->length, XPixelFormat::JPEG );
-                
+
             me->FramesReceived++;
 
             if ( image )
@@ -1157,18 +1189,18 @@ void XRaspiCameraData::VideoBufferCallback( MMAL_PORT_T* port, MMAL_BUFFER_HEADE
     }
 
     mmal_buffer_header_release( buffer );
-    
+
     if ( port->is_enabled )
     {
         MMAL_BUFFER_HEADER_T* newBuffer;
         MMAL_STATUS_T         status;
-        
+
         newBuffer = mmal_queue_get( me->VideoBufferPool->queue );
-		if ( newBuffer )
+        if ( newBuffer )
         {
             status = mmal_port_send_buffer( port, newBuffer );
         }
-        
+
         if ( ( !newBuffer ) || ( status != MMAL_SUCCESS ) )
         {
             me->NotifyError( "Unable to return buffer to video port" );

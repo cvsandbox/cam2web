@@ -1,7 +1,7 @@
 /*
     cam2web - streaming camera to web
 
-    Copyright (C) 2017, cvsandbox, cvsandbox@gmail.com
+    Copyright (C) 2017-2019, cvsandbox, cvsandbox@gmail.com
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -96,7 +96,7 @@ enum class ImageEffect
     ColorBalance,
     Cartoon
 };
-    
+
 class XRaspiCamera : public IVideoSource, private Uncopyable
 {
 protected:
@@ -123,25 +123,29 @@ public:
     IVideoSourceListener* SetListener( IVideoSourceListener* listener );
 
 public: // Camera configuration to be done before starting it
-    
+
     // Get/Set video size
     uint32_t Width( ) const;
     uint32_t Height( ) const;
     void SetVideoSize( uint32_t width, uint32_t height );
-    
+
     // Get/Set frame rate
     uint32_t FrameRate( ) const;
     void SetFrameRate( uint32_t frameRate );
-    
+
     // Enable/Disable JPEG encoding
     bool IsJpegEncodingEnabled( ) const;
     void EnableJpegEncoding( bool enable );
-    
+
     // Get/Set JPEG quality
     uint32_t JpegQuality( ) const;
     void SetJpegQuality( uint32_t jpegQuality );
 
 public: // Different settings of the video source (can be changed at run time)
+
+    // Get/Set camera's image rotation, (0, 90, 180, 270)
+    uint32_t GetImageRotation( ) const;
+    bool SetImageRotation( uint32_t rotation );
 
     // Get/Set camera's horizontal/vertical flip
     bool GetHorizontalFlip( ) const;
@@ -167,19 +171,19 @@ public: // Different settings of the video source (can be changed at run time)
     // Get/Set camera's saturation value, [-100, 100]
     int32_t GetSaturation( ) const;
     bool SetSaturation( int32_t saturation );
-    
+
     // Get/Set camera's Automatic White Balance mode
     AwbMode GetWhiteBalanceMode( ) const;
     bool SetWhiteBalanceMode( AwbMode mode );
-    
+
     // Get/Set camera's exposure mode
     ExposureMode GetExposureMode( ) const;
     bool SetExposureMode( ExposureMode mode );
-    
+
     // Get/Set camera's exposure metering mode
     ExposureMeteringMode GetExposureMeteringMode( ) const;
     bool SetExposureMeteringMode( ExposureMeteringMode mode );
-    
+
     // Get/Set camera's image effect
     ImageEffect GetImageEffect( ) const;
     bool SetImageEffect( ImageEffect effect );
