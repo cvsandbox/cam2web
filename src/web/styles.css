@@ -34,9 +34,9 @@
 
 .ui-page .ui-content {
     padding: 20px !important;
-    margin-bottom: 30px !important;
-    width: 100% !important;
-    overflow: hidden !important;
+    margin-bottom: 40px !important;
+    overflow-x: auto !important;
+    white-space: nowrap;
 }
 
 #cameracontainer {
