@@ -1,7 +1,7 @@
 /*
     cam2web - streaming camera to web
 
-    Copyright (C) 2017, cvsandbox, cvsandbox@gmail.com
+    Copyright (C) 2017-2019, cvsandbox, cvsandbox@gmail.com
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,6 +43,31 @@ enum
     GreenIndex = 1,
     BlueIndex  = 2
 };
+
+// Definition of ARGB color type
+typedef union
+{
+    uint32_t argb;
+    struct
+    {
+        uint8_t b;
+        uint8_t g;
+        uint8_t r;
+        uint8_t a;
+    }
+    components;
+}
+xargb;
+
+// A very close approximation of the famous BT709 Grayscale coefficients: (0.2125, 0.7154, 0.0721)
+// Pre-multiplied by 0x10000, so integer grayscaling could be done
+#define GRAY_COEF_RED   (0x3666)
+#define GRAY_COEF_GREEN (0xB724)
+#define GRAY_COEF_BLUE  (0x1276)
+
+// A macro to get gray value (intensity) out of RGB values
+#define RGB_TO_GRAY(r, g, b) ((uint32_t) ( GRAY_COEF_RED * (r) + GRAY_COEF_GREEN * (g) + GRAY_COEF_BLUE * (b) ) >> 16 )
+
 
 // Class encapsulating image data
 class XImage : private Uncopyable
