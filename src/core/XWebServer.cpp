@@ -803,6 +803,14 @@ static void http_send_digest_auth_request( struct mg_connection* c, const char *
         "realm=\"%s\", nonce=\"%lx\"\r\n"
         "Content-Length: 0\r\n\r\n",
         domain, (unsigned long) mg_time( ) );
+
+    /*
+    mg_printf( c,
+        "HTTP/1.1 401 Unauthorized\r\n"
+        "WWW-Authenticate: Basic realm=\"%s\"\r\n"
+        "Content-Length: 0\r\n\r\n",
+        domain );
+    */
 }
 
 static bool check_nonce( const char* nonce )
@@ -821,79 +829,120 @@ UserGroup XWebServerData::CheckDigestAuth( struct http_message* msg )
     char            expectedResponse1[33];
     char            expectedResponse2[33];
 
-    /* parse "Authorization:" header */
-    if ( ( msg != nullptr ) &&
-         ( ( hdr = mg_get_http_header( msg, "Authorization" ) ) != nullptr ) &&
-         ( mg_http_parse_header( hdr, "username", user, sizeof( user ) ) != 0 ) &&
-         ( mg_http_parse_header( hdr, "cnonce", cnonce, sizeof( cnonce ) ) != 0 ) &&
-         ( mg_http_parse_header( hdr, "response", response, sizeof( response ) ) != 0 ) &&
-         ( mg_http_parse_header( hdr, "uri", uri, sizeof( uri ) ) != 0 ) &&
-         ( mg_http_parse_header( hdr, "qop", qop, sizeof( qop ) ) != 0 ) &&
-         ( mg_http_parse_header( hdr, "nc", nc, sizeof( nc ) ) != 0 ) &&
-         ( mg_http_parse_header( hdr, "nonce", nonce, sizeof( nonce ) ) != 0 ) )
+    if ( ( msg != nullptr ) && ( ( hdr = mg_get_http_header( msg, "Authorization" ) ) != nullptr ) )
     {
-        // got some authentication data to check
-        if ( check_nonce( nonce ) )
+        if ( mg_strncmp( *hdr, mg_mk_str( "Basic " ), 6 ) == 0 )
         {
-            lock_guard<recursive_mutex> lock( DataSync );
+            char* buffer = static_cast<char*>( calloc( hdr->len, 1 ) );
 
-            // first find the user
-            UsersMap::const_iterator itUser = Users.find( user );
-
-            if ( itUser != Users.end( ) )
+            if ( buffer )
             {
-                char ha2[33];
+                string user, password;
+                char*  ptrDel = nullptr;
 
-                // HA2 = MD5( method:digestURI )
-                cs_md5( ha2, msg->method.p, static_cast<size_t>( msg->method.len ),
-                             ":", static_cast<size_t>( 1 ),
-                             msg->uri.p, static_cast<size_t>( msg->uri.len + ( msg->query_string.len ? msg->query_string.len + 1 : 0 ) ),
-                             nullptr );
+                cs_base64_decode( (unsigned char*) hdr->p + 6, hdr->len, buffer, NULL );
+                ptrDel = strchr( buffer, ':' );
 
-                // response = MD5( HA1:nonce:nonceCount:cnonce:qop:HA2 )
-                cs_md5( expectedResponse1, 
-                        itUser->second.first.c_str( ), itUser->second.first.length( ), // HA1 of the user
-                        ":", static_cast<size_t>( 1 ),
-                        nonce, strlen( nonce ),
-                        ":", static_cast<size_t>( 1 ),
-                        nc, strlen( nc ),
-                        ":", static_cast<size_t>( 1 ),
-                        cnonce, strlen( cnonce ),
-                        ":", static_cast<size_t>( 1 ),
-                        qop, strlen( qop ),
-                        ":", static_cast<size_t>( 1 ),
-                        ha2, static_cast<size_t>( 32 ),
-                        nullptr );
-
-                if ( msg->query_string.len != 0 )
+                if ( ptrDel )
                 {
-                    // Found some clients (like .NET's HttpWebRequest), which calculate HA2 using URI without query part.
-                    // So need to calculate both variant, to make all clients happy.
-
-                    cs_md5( ha2, msg->method.p, static_cast<size_t>( msg->method.len ),
-                            ":", static_cast<size_t>( 1 ),
-                            msg->uri.p, static_cast<size_t>( msg->uri.len ),
-                            nullptr );
-
-                    cs_md5( expectedResponse2,
-                            itUser->second.first.c_str( ), itUser->second.first.length( ), // HA1 of the user
-                            ":", static_cast<size_t>( 1 ),
-                            nonce, strlen( nonce ),
-                            ":", static_cast<size_t>( 1 ),
-                            nc, strlen( nc ),
-                            ":", static_cast<size_t>( 1 ),
-                            cnonce, strlen( cnonce ),
-                            ":", static_cast<size_t>( 1 ),
-                            qop, strlen( qop ),
-                            ":", static_cast<size_t>( 1 ),
-                            ha2, static_cast<size_t>( 32 ),
-                            nullptr );
+                    user     = string( buffer, ptrDel - buffer );
+                    password = string( ptrDel + 1 );
                 }
 
-                if ( ( strcmp( response, expectedResponse1 ) == 0 ) ||
-                     ( ( msg->query_string.len != 0 ) && ( strcmp( response, expectedResponse2 ) == 0 ) ) )
+                free( buffer );
+
+                if ( ( !user.empty( ) ) && ( !password.empty( ) ) )
                 {
-                    userGroup = itUser->second.second;
+                    string digestHa1 = XWebServer::CalculateDigestAuthHa1( user, AuthDomain, password );
+                    lock_guard<recursive_mutex> lock( DataSync );
+
+                    // first find the user
+                    UsersMap::const_iterator itUser = Users.find( user );
+
+                    if ( itUser != Users.end( ) )
+                    {
+                        if ( itUser->second.first == digestHa1 )
+                        {
+                            userGroup = itUser->second.second;
+                        }
+                    }
+                }
+            }
+        }
+        else if ( mg_strncmp( *hdr, mg_mk_str( "Digest " ), 6 ) == 0 )
+        {
+            if ( ( mg_http_parse_header( hdr, "username", user, sizeof( user ) ) != 0 ) &&
+                 ( mg_http_parse_header( hdr, "cnonce", cnonce, sizeof( cnonce ) ) != 0 ) &&
+                 ( mg_http_parse_header( hdr, "response", response, sizeof( response ) ) != 0 ) &&
+                 ( mg_http_parse_header( hdr, "uri", uri, sizeof( uri ) ) != 0 ) &&
+                 ( mg_http_parse_header( hdr, "qop", qop, sizeof( qop ) ) != 0 ) &&
+                 ( mg_http_parse_header( hdr, "nc", nc, sizeof( nc ) ) != 0 ) &&
+                 ( mg_http_parse_header( hdr, "nonce", nonce, sizeof( nonce ) ) != 0 ) )
+            {
+                // got some authentication data to check
+                if ( check_nonce( nonce ) )
+                {
+                    lock_guard<recursive_mutex> lock( DataSync );
+
+                    // first find the user
+                    UsersMap::const_iterator itUser = Users.find( user );
+
+                    if ( itUser != Users.end( ) )
+                    {
+                        char ha2[33];
+
+                        // HA2 = MD5( method:digestURI )
+                        cs_md5( ha2, msg->method.p, static_cast<size_t>( msg->method.len ),
+                                     ":", static_cast<size_t>( 1 ),
+                                     msg->uri.p, static_cast<size_t>( msg->uri.len + ( msg->query_string.len ? msg->query_string.len + 1 : 0 ) ),
+                                     nullptr );
+
+                        // response = MD5( HA1:nonce:nonceCount:cnonce:qop:HA2 )
+                        cs_md5( expectedResponse1, 
+                                itUser->second.first.c_str( ), itUser->second.first.length( ), // HA1 of the user
+                                ":", static_cast<size_t>( 1 ),
+                                nonce, strlen( nonce ),
+                                ":", static_cast<size_t>( 1 ),
+                                nc, strlen( nc ),
+                                ":", static_cast<size_t>( 1 ),
+                                cnonce, strlen( cnonce ),
+                                ":", static_cast<size_t>( 1 ),
+                                qop, strlen( qop ),
+                                ":", static_cast<size_t>( 1 ),
+                                ha2, static_cast<size_t>( 32 ),
+                                nullptr );
+
+                        if ( msg->query_string.len != 0 )
+                        {
+                            // Found some clients (like .NET's HttpWebRequest), which calculate HA2 using URI without query part.
+                            // So need to calculate both variant, to make all clients happy.
+
+                            cs_md5( ha2, msg->method.p, static_cast<size_t>( msg->method.len ),
+                                    ":", static_cast<size_t>( 1 ),
+                                    msg->uri.p, static_cast<size_t>( msg->uri.len ),
+                                    nullptr );
+
+                            cs_md5( expectedResponse2,
+                                    itUser->second.first.c_str( ), itUser->second.first.length( ), // HA1 of the user
+                                    ":", static_cast<size_t>( 1 ),
+                                    nonce, strlen( nonce ),
+                                    ":", static_cast<size_t>( 1 ),
+                                    nc, strlen( nc ),
+                                    ":", static_cast<size_t>( 1 ),
+                                    cnonce, strlen( cnonce ),
+                                    ":", static_cast<size_t>( 1 ),
+                                    qop, strlen( qop ),
+                                    ":", static_cast<size_t>( 1 ),
+                                    ha2, static_cast<size_t>( 32 ),
+                                    nullptr );
+                        }
+
+                        if ( ( strcmp( response, expectedResponse1 ) == 0 ) ||
+                             ( ( msg->query_string.len != 0 ) && ( strcmp( response, expectedResponse2 ) == 0 ) ) )
+                        {
+                            userGroup = itUser->second.second;
+                        }
+                    }
                 }
             }
         }
