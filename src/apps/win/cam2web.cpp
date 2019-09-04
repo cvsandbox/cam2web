@@ -1094,11 +1094,10 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         case NM_RETURN:
             {
                 PNMLINK pNMLink = (PNMLINK) lParam;
-                LITEM   item    = pNMLink->item;
 
-                if ( ( ( (LPNMHDR) lParam )->hwndFrom == gData->hwndStatusLink ) && ( item.iLink == 0 ) )
+                if ( ( ( (LPNMHDR) lParam )->hwndFrom == gData->hwndStatusLink ) && ( pNMLink->item.iLink == 0 ) )
                 {
-                    ShellExecute( NULL, L"open", item.szUrl, NULL, NULL, SW_SHOW );
+                    ShellExecute( NULL, L"open", pNMLink->item.szUrl, NULL, NULL, SW_SHOW );
                 }
             }
             break;
