@@ -1,7 +1,7 @@
 /*
     cam2web - streaming camera to web
 
-    Copyright (C) 2017-2018, cvsandbox, cvsandbox@gmail.com
+    Copyright (C) 2017-2019, cvsandbox, cvsandbox@gmail.com
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -35,6 +35,8 @@
 #include "AppConfig.hpp"
 
 using namespace std;
+
+#define STR_ERROR   TEXT( "Error" )
 
 static int CALLBACK BrowseFolderCallback( HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData );
 
@@ -106,6 +108,15 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
                 wstring strCameraTitle = Utf8to16( appConfig->CameraTitle( ) );
                 SetWindowText( GetDlgItem( hDlg, IDC_CAMERA_TITLE_EDIT ), strCameraTitle.c_str( ) );
 
+                SendMessage( GetDlgItem( hDlg, IDC_OVERLAY_TIMESTAMP ), BM_SETCHECK, ( appConfig->TimestampOverlay( ) ) ? BST_CHECKED : BST_UNCHECKED, 0 );
+                SendMessage( GetDlgItem( hDlg, IDC_OVERLAY_TITLE ), BM_SETCHECK, ( appConfig->CameraTitleOverlay( ) ) ? BST_CHECKED : BST_UNCHECKED, 0 );
+
+                string strOverlayTextColor = XargbToString( appConfig->OverlayTextColor( ) );
+                SetWindowTextA( GetDlgItem( hDlg, IDC_OVERLAY_TEXT_COLOR ), strOverlayTextColor.c_str( ) );
+
+                string strOverlayBgColor = XargbToString( appConfig->OverlayBackgroundColor( ) );
+                SetWindowTextA( GetDlgItem( hDlg, IDC_OVERLAY_BG_COLOR ), strOverlayBgColor.c_str( ) );
+
                 SendMessage( GetDlgItem( hDlg, IDC_SYS_TRAY_CHECK ), BM_SETCHECK, ( appConfig->MinimizeToSystemTray( ) ) ? BST_CHECKED : BST_UNCHECKED, 0 );
 
                 iconColor = appConfig->WindowIconIndex( );
@@ -136,6 +147,8 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
 
         if ( ( wmId == IDOK ) || ( wmId == IDCANCEL ) )
         {
+            bool allFine = true;
+
             if ( wmId == IDOK )
             {
                 if ( appConfig )
@@ -153,10 +166,41 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
                     StringReplace( cameraTitle, ">", "&gt;" );
 
                     appConfig->SetCameraTitle( cameraTitle );
+
+                    appConfig->SetTimestampOverlay( SendMessage( GetDlgItem( hDlg, IDC_OVERLAY_TIMESTAMP ), BM_GETCHECK, 0, 0 ) == BST_CHECKED );
+                    appConfig->SetCameraTitleOverlay( SendMessage( GetDlgItem( hDlg, IDC_OVERLAY_TITLE ), BM_GETCHECK, 0, 0 ) == BST_CHECKED );
+
+                    string strOverlayTextColor = GetWindowString( GetDlgItem( hDlg, IDC_OVERLAY_TEXT_COLOR ), true );
+                    string strOverlayBgColor   = GetWindowString( GetDlgItem( hDlg, IDC_OVERLAY_BG_COLOR ), true );
+                    xargb  overlayTextColor    = { 0xFF000000 };
+                    xargb  overlayBgColor      = { 0xFF000000 };
+
+                    if ( StringToXargb( strOverlayTextColor, &overlayTextColor ) )
+                    {
+                        appConfig->SetOverlayTextColor( overlayTextColor );
+                    }
+                    else
+                    {
+                        CenteredMessageBox( hDlg, L"Invalid overlay text color. Must be 6 or 8 HEX string (HTML format).", STR_ERROR, MB_OK | MB_ICONERROR );
+                        allFine = false;
+                    }
+
+                    if ( StringToXargb( strOverlayBgColor, &overlayBgColor ) )
+                    {
+                        appConfig->SetOverlayBackgroundColor( overlayBgColor );
+                    }
+                    else
+                    {
+                        CenteredMessageBox( hDlg, L"Invalid overlay background color. Must be 6 or 8 HEX string (HTML format).", STR_ERROR, MB_OK | MB_ICONERROR );
+                        allFine = false;
+                    }
                 }
             }
 
-            EndDialog( hDlg, wmId );
+            if ( allFine )
+            {
+                EndDialog( hDlg, wmId );
+            }
             return (INT_PTR) TRUE;
         }
         else if ( wmEvent == EN_CHANGE )

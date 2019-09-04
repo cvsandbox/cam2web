@@ -1,7 +1,7 @@
 /*
     cam2web - streaming camera to web
 
-    Copyright (C) 2017, cvsandbox, cvsandbox@gmail.com
+    Copyright (C) 2017-2019, cvsandbox, cvsandbox@gmail.com
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 #define APP_CONFIG_HPP
 
 #include <IObjectConfigurator.hpp>
+#include <XImage.hpp>
 #include <stdint.h>
 
 class AppConfig : public IObjectConfigurator
@@ -65,6 +66,22 @@ public:
     std::string CameraTitle( ) const;
     void SetCameraTitle( const std::string& title );
 
+    // Get/Set if timestamp should be overlayed on camera images
+    bool TimestampOverlay( ) const;
+    void SetTimestampOverlay( bool enabled );
+
+    // Get/Set if camera's title should be overlayed on its images
+    bool CameraTitleOverlay( ) const;
+    void SetCameraTitleOverlay( bool enabled );
+
+    // Get/Set overlay text color
+    xargb OverlayTextColor( ) const;
+    void SetOverlayTextColor( xargb color );
+
+    // Get/Set overlay background color
+    xargb OverlayBackgroundColor( ) const;
+    void SetOverlayBackgroundColor( xargb color );
+
     // Get/Set last used video resolution
     void GetLastVideoResolution( uint16_t* width, uint16_t* height, uint16_t* bpp, uint16_t* fps ) const;
     void SetLastVideoResolution( uint16_t  width, uint16_t  height, uint16_t  bpp, uint16_t  fps );
@@ -107,6 +124,10 @@ private:
     std::string customWebContent;
     std::string cameraMoniker;
     std::string cameraTitle;
+    bool        addTimestampOverlay;
+    bool        addCameraTitleOverlay;
+    xargb       overlayTextColor;
+    xargb       overlayBackgroundColor;
     uint16_t    cameraWidth;
     uint16_t    cameraHeight;
     uint16_t    cameraBpp;

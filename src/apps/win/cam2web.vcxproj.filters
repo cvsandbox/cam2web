@@ -114,6 +114,12 @@
     <ClInclude Include="..\..\core\XStringTools.hpp">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\core\XImageDrawing.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\XVideoFrameDecorator.hpp">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cam2web.cpp">
@@ -186,6 +192,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\core\XStringTools.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\XImageDrawing.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\core\XVideoFrameDecorator.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>

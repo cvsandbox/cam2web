@@ -1,7 +1,7 @@
 /*
     cam2web - streaming camera to web
 
-    Copyright (C) 2017, cvsandbox, cvsandbox@gmail.com
+    Copyright (C) 2017-2019, cvsandbox, cvsandbox@gmail.com
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 
 #include <string>
 #include <stdint.h>
+#include <XImage.hpp>
 
 // Convert specfied UTF8 string to wide character string
 std::wstring Utf8to16( const std::string& utf8string );
@@ -34,5 +35,10 @@ std::string GetMd5Hash( const uint8_t* buffer, int bufferLength );
 
 // Get local IP address as string (if a single valid IP found). Returns empty string if fails to resolve.
 std::string GetLocalIpAddress( );
+
+// Convert xargb to string
+std::string XargbToString( xargb color );
+// Parse xargb from string
+bool StringToXargb( const std::string& str, xargb* color );
 
 #endif // UI_TOOLS_HPP

@@ -1,7 +1,7 @@
 /*
     cam2web - streaming camera to web
 
-    Copyright (C) 2017, cvsandbox, cvsandbox@gmail.com
+    Copyright (C) 2017-2019, cvsandbox, cvsandbox@gmail.com
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 #include <map>
 
 #include "AppConfig.hpp"
+#include "Tools.hpp"
 
 using namespace std;
 
@@ -36,6 +37,10 @@ using namespace std;
 #define PROP_CUSTOM_WEB     "customWeb"
 #define PROP_CAMERA_MONIKER "cameraMoniker"
 #define PROP_CAMERA_TITLE   "cameraTitle"
+#define PROP_TIMESTAMP_OVR  "timestampOverlay"
+#define PROP_TITLE_OVR      "cameraTitleOverlay"
+#define PROP_OVR_TEXT_COLOR "overlayTextColor"
+#define PROP_OVR_BG_COLOR   "overlayBgColor"
 #define PROP_CAMERA_WIDTH   "cameraWidth"
 #define PROP_CAMERA_HEIGHT  "cameraHeight"
 #define PROP_CAMERA_BPP     "cameraBpp"
@@ -61,6 +66,10 @@ const static map<string, int> SupportedProperties =
     { PROP_CUSTOM_WEB,     TYPE_STR },
     { PROP_CAMERA_MONIKER, TYPE_STR },
     { PROP_CAMERA_TITLE,   TYPE_STR },
+    { PROP_TIMESTAMP_OVR,  TYPE_INT },
+    { PROP_TITLE_OVR,      TYPE_INT },
+    { PROP_OVR_TEXT_COLOR, TYPE_STR },
+    { PROP_OVR_BG_COLOR,   TYPE_STR },
     { PROP_CAMERA_WIDTH,   TYPE_INT },
     { PROP_CAMERA_HEIGHT,  TYPE_INT },
     { PROP_CAMERA_BPP,     TYPE_INT },
@@ -82,6 +91,10 @@ AppConfig::AppConfig( ) :
     customWebContent( ),
     cameraMoniker( ),
     cameraTitle( ),
+    addTimestampOverlay( false ),
+    addCameraTitleOverlay( false ),
+    overlayTextColor( { 0xFF000000 } ),
+    overlayBackgroundColor( { 0xFFFFFFFF } ),
     cameraWidth( 0 ),
     cameraHeight( 0 ),
     cameraBpp( 0 ),
@@ -183,6 +196,46 @@ string AppConfig::CameraTitle( ) const
 void AppConfig::SetCameraTitle( const string& title )
 {
     cameraTitle = title;
+}
+
+// Get/Set if timestamp should be overlayed on camera images
+bool AppConfig::TimestampOverlay( ) const
+{
+    return addTimestampOverlay;
+}
+void AppConfig::SetTimestampOverlay( bool enabled )
+{
+    addTimestampOverlay = enabled;
+}
+
+// Get/Set if camera's title should be overlayed on its images
+bool AppConfig::CameraTitleOverlay( ) const
+{
+    return addCameraTitleOverlay;
+}
+void AppConfig::SetCameraTitleOverlay( bool enabled )
+{
+    addCameraTitleOverlay = enabled;
+}
+
+// Get/Set overlay text color
+xargb AppConfig::OverlayTextColor( ) const
+{
+    return overlayTextColor;
+}
+void AppConfig::SetOverlayTextColor( xargb color )
+{
+    overlayTextColor = color;
+}
+
+// Get/Set overlay background color
+xargb AppConfig::OverlayBackgroundColor( ) const
+{
+    return overlayBackgroundColor;
+}
+void AppConfig::SetOverlayBackgroundColor( xargb color )
+{
+    overlayBackgroundColor = color;
 }
 
 // Get/Set last used video resolution
@@ -317,6 +370,22 @@ XError AppConfig::SetProperty( const string& propertyName, const string& value )
             {
                 cameraTitle = value;
             }
+            else if ( propertyName == PROP_TIMESTAMP_OVR )
+            {
+                addTimestampOverlay = ( intValue != 0 );
+            }
+            else if ( propertyName == PROP_TITLE_OVR )
+            {
+                addCameraTitleOverlay = ( intValue != 0 );
+            }
+            else if ( propertyName == PROP_OVR_TEXT_COLOR )
+            {
+                StringToXargb( value, &overlayTextColor );
+            }
+            else if ( propertyName == PROP_OVR_BG_COLOR )
+            {
+                StringToXargb( value, &overlayBackgroundColor );
+            }
             else if ( propertyName == PROP_CAMERA_WIDTH )
             {
                 cameraWidth = static_cast<uint16_t>( intValue );
@@ -409,6 +478,22 @@ XError AppConfig::GetProperty( const string& propertyName, string& value ) const
         else if ( propertyName == PROP_CAMERA_TITLE )
         {
             value = cameraTitle;
+        }
+        else if ( propertyName == PROP_TIMESTAMP_OVR )
+        {
+            intValue = ( addTimestampOverlay ) ? 1 : 0;
+        }
+        else if ( propertyName == PROP_TITLE_OVR )
+        {
+            intValue = ( addCameraTitleOverlay ) ? 1 : 0;
+        }
+        else if ( propertyName == PROP_OVR_TEXT_COLOR )
+        {
+            value = XargbToString( overlayTextColor );
+        }
+        else if ( propertyName == PROP_OVR_BG_COLOR )
+        {
+            value = XargbToString( overlayBackgroundColor );
         }
         else if ( propertyName == PROP_CAMERA_WIDTH )
         {

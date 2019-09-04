@@ -3,7 +3,7 @@
 // Used by cam2web.rc
 //
 
-#define ID_MAX                  156
+#define ID_MAX                  160
 
 #define IDS_APP_TITLE           103
 
@@ -43,6 +43,10 @@
 #define IDC_CUSTOM_WEB_EDIT     119
 #define IDC_CUSTOM_WEB_BUTTON   148
 #define IDC_CAMERA_TITLE_EDIT   147
+#define IDC_OVERLAY_TIMESTAMP   157
+#define IDC_OVERLAY_TITLE       158
+#define IDC_OVERLAY_TEXT_COLOR  159
+#define IDC_OVERLAY_BG_COLOR    160
 #define IDC_SYS_TRAY_CHECK      145
 #define IDC_ICON_COLOR_COMBO    156
 #define IDC_LINK_HOME_PAGE      120

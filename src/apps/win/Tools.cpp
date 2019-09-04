@@ -1,7 +1,7 @@
 /*
     cam2web - streaming camera to web
 
-    Copyright (C) 2017, cvsandbox, cvsandbox@gmail.com
+    Copyright (C) 2017-2019, cvsandbox, cvsandbox@gmail.com
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,6 +29,9 @@
 #include "Tools.hpp"
 
 using namespace std;
+
+static const char* STR_ARGB_FORMAT32 = "%08X";
+static const char* STR_ARGB_FORMAT24 = "%06X";
 
 // Convert specfied UTF8 string to wide character string
 wstring Utf8to16( const string& utf8string )
@@ -175,4 +178,51 @@ string GetLocalIpAddress( )
     }
 
     return localIp;
+}
+
+// Convert xargb to string
+std::string XargbToString( xargb color )
+{
+    char buffer[16];
+
+    if ( color.components.a != 0xFF )
+    {
+        sprintf( buffer, STR_ARGB_FORMAT32, color.argb );
+    }
+    else
+    {
+        color.components.a = 0;
+        sprintf( buffer, STR_ARGB_FORMAT24, color.argb );
+    }
+
+    return string( buffer );
+}
+
+// Parse xargb from string
+bool StringToXargb( const string& str, xargb* color )
+{
+    size_t len      = str.length( );
+    xargb  newColor = { 0xFF000000 };
+    bool   parsed   = false;
+
+    if ( len == 8 )
+    {
+        parsed = ( sscanf( str.c_str( ), STR_ARGB_FORMAT32, &newColor.argb ) == 1 );
+    }
+    else if ( len == 6 )
+    {
+        // in the case if only 6 hex numbers present, suppose it is RGB value with alpha set to FF
+        if ( sscanf( str.c_str( ), STR_ARGB_FORMAT24, &newColor.argb ) == 1 )
+        {
+            newColor.components.a = 0xFF;
+            parsed = true;
+        }
+    }
+
+    if ( ( color != nullptr ) && ( parsed ) )
+    {
+        *color = newColor;
+    }
+
+    return parsed;
 }

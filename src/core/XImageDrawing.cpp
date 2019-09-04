@@ -558,7 +558,7 @@ XError XImageDrawing::PutText( const shared_ptr<const XImage>& image, const stri
     else
     {
         int32_t len        = static_cast<int32_t>( text.length( ) );
-        int32_t borderSize = ( addBorder ) ? 1 : 0;
+        int32_t borderSize = ( addBorder ) ? 2 : 0;
         int32_t b;
 
         // do nothing if ...

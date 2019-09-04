@@ -44,6 +44,7 @@
 #include "XLocalVideoDeviceConfig.hpp"
 #include "XWebServer.hpp"
 #include "XVideoSourceToWeb.hpp"
+#include "XVideoFrameDecorator.hpp"
 #include "XObjectConfigurationSerializer.hpp"
 #include "XObjectConfigurationRequestHandler.hpp"
 #include "AppConfig.hpp"
@@ -192,6 +193,7 @@ public:
     string                          lastVideoSourceError;
 
     XVideoSourceListenerChain       listenerChain;
+    XVideoFrameDecorator            videoDecorator;
     CameraErrorListener             cameraErrorListener;
 
     uint32_t                        lastFramesGot;
@@ -209,7 +211,7 @@ public:
         streamingStatus( make_shared<StreamingStatusController>( ) ),
         appFolder( ".\\" ), appConfigFile( "cam2web.cfg" ),
         appConfigSerializer( ), cameraConfigSerializer( ), lastVideoSourceError( ),
-        listenerChain( ), cameraErrorListener( )
+        listenerChain( ), videoDecorator( ), cameraErrorListener( )
     {
         // find user' home folder to store settings
         WCHAR homeFolder[MAX_PATH];
@@ -815,7 +817,16 @@ static bool StartVideoStreaming( )
 #endif
         }
 
+        // configure video frame decorator
+        gData->videoDecorator.SetCameraTitle( gData->appConfig->CameraTitle( ) );
+        gData->videoDecorator.SetTimestampOverlay( gData->appConfig->TimestampOverlay( ) );
+        gData->videoDecorator.SetCameraTitleOverlay( gData->appConfig->CameraTitleOverlay( ) );
+        gData->videoDecorator.SetOverlayTextColor( gData->appConfig->OverlayTextColor( ) );
+        gData->videoDecorator.SetOverlayBackgroundColor( gData->appConfig->OverlayBackgroundColor( ) );
+
+        // set video source listeners' chain
         gData->listenerChain.Clear( );
+        gData->listenerChain.Add( &gData->videoDecorator );
         gData->listenerChain.Add( gData->video2web.VideoSourceListener( ) );
         gData->listenerChain.Add( &gData->cameraErrorListener );
 
