@@ -43,7 +43,8 @@ static int CALLBACK BrowseFolderCallback( HWND hwnd, UINT uMsg, LPARAM lParam, L
 // Message handler for Settings dialog box
 INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam )
 {
-    static const WCHAR* iconColors[] = { L"Blue", L"Green", L"Orange", L"Red" };
+    static const WCHAR* iconColors[]  = { L"Blue", L"Green", L"Orange", L"Red" };
+    static const WCHAR* authMethods[] = { L"Basic", L"Digest" };
 
     static AppConfig* appConfig   = nullptr;
     static HICON      hIcon       = NULL;
@@ -56,6 +57,7 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
     case WM_INITDIALOG:
         {
             uint16_t iconColor = 0;
+            uint16_t authMethodIndex = 1;
 
             // load icons
             if ( hIcon == NULL )
@@ -91,6 +93,14 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
                 SendMessage( hwndIconColorCombo, CB_ADDSTRING, 0, (LPARAM) iconColors[i] );
             }
 
+            // configure auth methods combo box
+            HWND hwndAuthMethodCombo = GetDlgItem( hDlg, IDC_AUTH_METHOD_COMBO );
+
+            for ( int i = 0; i < sizeof( authMethods ) / sizeof( authMethods[0] ); i++ )
+            {
+                SendMessage( hwndAuthMethodCombo, CB_ADDSTRING, 0, ( LPARAM ) authMethods[i] );
+            }
+
             CenterWindowTo( hDlg, GetParent( hDlg ) );
 
             // get current configuration
@@ -124,9 +134,12 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
                 {
                     iconColor = 0;
                 }
+
+                authMethodIndex = ( appConfig->AuthenticationMethod( ) == "basic" ) ? 0 : 1;
             }
 
             SendMessage( hwndIconColorCombo, CB_SETCURSEL, iconColor, 0 );
+            SendMessage( hwndAuthMethodCombo, CB_SETCURSEL, authMethodIndex, 0 );
 
             return (INT_PTR) TRUE;
         }
@@ -158,6 +171,7 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
                     appConfig->SetHttpPort( (uint16_t) SendMessage( GetDlgItem( hDlg, IDC_HTTP_PORT_SPIN ), UDM_GETPOS32, 0, 0 ) );
                     appConfig->SetMinimizeToSystemTray( SendMessage( GetDlgItem( hDlg, IDC_SYS_TRAY_CHECK ), BM_GETCHECK, 0, 0 ) == BST_CHECKED );
                     appConfig->SetWindowIconIndex( (uint16_t) SendMessage( GetDlgItem( hDlg, IDC_ICON_COLOR_COMBO ), CB_GETCURSEL, 0, 0 ) );
+                    appConfig->SetAuthenticationMethod( ( SendMessage( GetDlgItem( hDlg, IDC_AUTH_METHOD_COMBO ), CB_GETCURSEL, 0, 0 ) == 0 ) ? "basic" : "digest" );
 
                     appConfig->SetCustomWebContent( GetWindowString( GetDlgItem( hDlg, IDC_CUSTOM_WEB_EDIT ), true ) );
 

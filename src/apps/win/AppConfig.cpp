@@ -34,6 +34,7 @@ using namespace std;
 #define PROP_VIEWERS        "viewers"
 #define PROP_CONFIGURATORS  "configurators"
 #define PROP_AUTH_DOMAIN    "authDomain"
+#define PROP_AUTH_METHOD    "authMethod"
 #define PROP_CUSTOM_WEB     "customWeb"
 #define PROP_CAMERA_MONIKER "cameraMoniker"
 #define PROP_CAMERA_TITLE   "cameraTitle"
@@ -63,6 +64,7 @@ const static map<string, int> SupportedProperties =
     { PROP_VIEWERS,        TYPE_INT },
     { PROP_CONFIGURATORS,  TYPE_INT },
     { PROP_AUTH_DOMAIN,    TYPE_STR },
+    { PROP_AUTH_METHOD,    TYPE_STR },
     { PROP_CUSTOM_WEB,     TYPE_STR },
     { PROP_CAMERA_MONIKER, TYPE_STR },
     { PROP_CAMERA_TITLE,   TYPE_STR },
@@ -88,6 +90,7 @@ AppConfig::AppConfig( ) :
     viewersGroup( 0 ),
     configuratorsGroup( 0 ),
     authDomain( "cam2web" ),
+    authMethod( "digest" ),
     customWebContent( ),
     cameraMoniker( ),
     cameraTitle( ),
@@ -166,6 +169,16 @@ string AppConfig::AuthDomain( ) const
 void AppConfig::SetAuthDomain( const string& domain )
 {
     authDomain = domain;
+}
+
+// Get/Set HTTP authentication method
+string AppConfig::AuthenticationMethod( ) const
+{
+    return authMethod;
+}
+void AppConfig::SetAuthenticationMethod( const string& method )
+{
+    authMethod = method;
 }
 
 // Get/Set path to the folder with custom web content
@@ -358,6 +371,10 @@ XError AppConfig::SetProperty( const string& propertyName, const string& value )
             {
                 authDomain = value;
             }
+            else if ( propertyName == PROP_AUTH_METHOD )
+            {
+                authMethod = ( value == "basic" ) ? value : "digest";
+            }
             else if ( propertyName == PROP_CUSTOM_WEB )
             {
                 customWebContent = value;
@@ -466,6 +483,10 @@ XError AppConfig::GetProperty( const string& propertyName, string& value ) const
         else if ( propertyName == PROP_AUTH_DOMAIN )
         {
             value = authDomain;
+        }
+        else if ( propertyName == PROP_AUTH_METHOD )
+        {
+            value = authMethod;
         }
         else if ( propertyName == PROP_CUSTOM_WEB )
         {

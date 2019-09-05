@@ -3,7 +3,7 @@
 // Used by cam2web.rc
 //
 
-#define ID_MAX                  160
+#define ID_MAX                  161
 
 #define IDS_APP_TITLE           103
 
@@ -42,6 +42,7 @@
 #define IDC_HTTP_PORT_SPIN      118
 #define IDC_CUSTOM_WEB_EDIT     119
 #define IDC_CUSTOM_WEB_BUTTON   148
+#define IDC_AUTH_METHOD_COMBO   161
 #define IDC_CAMERA_TITLE_EDIT   147
 #define IDC_OVERLAY_TIMESTAMP   157
 #define IDC_OVERLAY_TITLE       158

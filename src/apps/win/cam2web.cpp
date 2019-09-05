@@ -780,6 +780,8 @@ static bool StartVideoStreaming( )
 
         // set authentication domain and load users' list
         gData->server.SetAuthDomain( gData->appConfig->AuthDomain( ) );
+        gData->server.SetAuthenticationMethod( ( gData->appConfig->AuthenticationMethod( ) == "basic" ) ?
+                                               Authentication::Basic : Authentication::Digest );
         gData->server.LoadUsersFromFile( gData->appConfig->UsersFileName( ) );
 
         // configure web server and handler
@@ -1384,6 +1386,8 @@ void AppData::StartAdminServer( )
 
         // set authentication domain and load users' list
         adminServer.SetAuthDomain( appConfig->AuthDomain( ) );
+        adminServer.SetAuthenticationMethod( ( appConfig->AuthenticationMethod( ) == "basic" ) ?
+                                             Authentication::Basic : Authentication::Digest );
         adminServer.LoadUsersFromFile( appConfig->UsersFileName( ) );
 
         // configure web server and handler

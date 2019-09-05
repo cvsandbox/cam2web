@@ -239,6 +239,7 @@ namespace Private
         recursive_mutex           DataSync;
         string                    DocumentRoot;
         string                    AuthDomain;
+        Authentication            AuthMethod;
         uint16_t                  Port;
 
         steady_clock::time_point  LastAccessTime;
@@ -250,6 +251,7 @@ namespace Private
 
         char*                     ActiveDocumentRoot;
         string                    ActiveAuthDomain;
+        Authentication            ActiveAuthMethod;
 
         XManualResetEvent         NeedToStop;
         XManualResetEvent         IsStopped;
@@ -271,10 +273,10 @@ namespace Private
 
     public:
         XWebServerData( const string& documentRoot, uint16_t port ) :
-            DataSync( ), DocumentRoot( documentRoot ), AuthDomain( DEFAULT_AUTH_DOMAIN ), Port( port ),
+            DataSync( ), DocumentRoot( documentRoot ), AuthDomain( DEFAULT_AUTH_DOMAIN ), AuthMethod( Authentication::Digest ), Port( port ),
             LastAccessTime( ), WasAccessed( false ),
             EventManager( { 0 } ), ServerOptions( { 0 } ),
-            ActiveDocumentRoot( nullptr ), ActiveAuthDomain( ),
+            ActiveDocumentRoot( nullptr ), ActiveAuthDomain( ), ActiveAuthMethod( Authentication::Digest ),
             NeedToStop( ), IsStopped( ), StartSync( ), IsRunning( false )
         {
             ServerOptions.enable_directory_listing = "no";
@@ -299,7 +301,8 @@ namespace Private
         uint32_t LoadUsersFromFile( const string& fileName );
         void ClearUsers( );
 
-        UserGroup CheckDigestAuth( struct http_message* msg );
+        void SendAuthenticationRequest( struct mg_connection* con );
+        UserGroup CheckAuthentication( struct http_message* msg );
 
         static void* pollHandler( void* param );
         static void eventHandler( struct mg_connection* connection, int event, void* param );
@@ -381,6 +384,18 @@ XWebServer& XWebServer::SetAuthDomain( const std::string& authDomain )
 {
     lock_guard<recursive_mutex> lock( mData->DataSync );
     mData->AuthDomain = authDomain;
+    return *this;
+}
+
+// Get/Set authentication method (default Digest)
+Authentication XWebServer::AuthenticationMethod( ) const
+{
+    return mData->AuthMethod;
+}
+XWebServer& XWebServer::SetAuthenticationMethod( Authentication authMethod )
+{
+    lock_guard<recursive_mutex> lock( mData->DataSync );
+    mData->AuthMethod = authMethod;
     return *this;
 }
 
@@ -513,6 +528,7 @@ bool XWebServerData::Start( )
         ActiveFileHandlers   = FileHandlers;
         ActiveFolderHandlers = FolderHandlers;
         ActiveAuthDomain     = AuthDomain;
+        ActiveAuthMethod     = AuthMethod;
     }
 
     mg_mgr_init( &EventManager, this );
@@ -795,22 +811,26 @@ void* XWebServerData::pollHandler( void* param )
     return nullptr;
 }
 
-static void http_send_digest_auth_request( struct mg_connection* c, const char *domain )
+// Send HTTP authentication request (basic or digest)
+void XWebServerData::SendAuthenticationRequest( struct mg_connection* con )
 {
-    mg_printf( c,
-        "HTTP/1.1 401 Unauthorized\r\n"
-        "WWW-Authenticate: Digest qop=\"auth\", "
-        "realm=\"%s\", nonce=\"%lx\"\r\n"
-        "Content-Length: 0\r\n\r\n",
-        domain, (unsigned long) mg_time( ) );
-
-    /*
-    mg_printf( c,
-        "HTTP/1.1 401 Unauthorized\r\n"
-        "WWW-Authenticate: Basic realm=\"%s\"\r\n"
-        "Content-Length: 0\r\n\r\n",
-        domain );
-    */
+    if ( ActiveAuthMethod == Authentication::Basic )
+    {
+        mg_printf( con,
+            "HTTP/1.1 401 Unauthorized\r\n"
+            "WWW-Authenticate: Basic realm=\"%s\"\r\n"
+            "Content-Length: 0\r\n\r\n",
+            ActiveAuthDomain.c_str( ) );
+    }
+    else
+    {
+        mg_printf( con,
+            "HTTP/1.1 401 Unauthorized\r\n"
+            "WWW-Authenticate: Digest qop=\"auth\", "
+            "realm=\"%s\", nonce=\"%lx\"\r\n"
+            "Content-Length: 0\r\n\r\n",
+            ActiveAuthDomain.c_str( ), ( unsigned long ) mg_time( ) );
+    }
 }
 
 static bool check_nonce( const char* nonce )
@@ -820,19 +840,17 @@ static bool check_nonce( const char* nonce )
     return ( now >= val ) && ( now - val < 3600 );
 }
 
-// Check digest authentication and resolve group of the incoming user
-UserGroup XWebServerData::CheckDigestAuth( struct http_message* msg )
+// Check authentication (basic/digest) and resolve group of the incoming user
+UserGroup XWebServerData::CheckAuthentication( struct http_message* msg )
 {
     UserGroup       userGroup = UserGroup::Anyone;
     struct mg_str*  hdr;
-    char            user[50], cnonce[45], response[40], uri[200], qop[20], nc[20], nonce[30];
-    char            expectedResponse1[33];
-    char            expectedResponse2[33];
 
     if ( ( msg != nullptr ) && ( ( hdr = mg_get_http_header( msg, "Authorization" ) ) != nullptr ) )
     {
         if ( mg_strncmp( *hdr, mg_mk_str( "Basic " ), 6 ) == 0 )
         {
+            // HTTP Basic authentication
             char* buffer = static_cast<char*>( calloc( hdr->len, 1 ) );
 
             if ( buffer )
@@ -840,7 +858,7 @@ UserGroup XWebServerData::CheckDigestAuth( struct http_message* msg )
                 string user, password;
                 char*  ptrDel = nullptr;
 
-                cs_base64_decode( (unsigned char*) hdr->p + 6, hdr->len, buffer, NULL );
+                cs_base64_decode( (unsigned char*) hdr->p + 6, static_cast<int>( hdr->len ), buffer, NULL );
                 ptrDel = strchr( buffer, ':' );
 
                 if ( ptrDel )
@@ -871,6 +889,11 @@ UserGroup XWebServerData::CheckDigestAuth( struct http_message* msg )
         }
         else if ( mg_strncmp( *hdr, mg_mk_str( "Digest " ), 6 ) == 0 )
         {
+            // HTTP Digest authentication
+            char user[50], cnonce[45], response[40], uri[200], qop[20], nc[20], nonce[30];
+            char expectedResponse1[33];
+            char expectedResponse2[33];
+
             if ( ( mg_http_parse_header( hdr, "username", user, sizeof( user ) ) != 0 ) &&
                  ( mg_http_parse_header( hdr, "cnonce", cnonce, sizeof( cnonce ) ) != 0 ) &&
                  ( mg_http_parse_header( hdr, "response", response, sizeof( response ) ) != 0 ) &&
@@ -915,7 +938,7 @@ UserGroup XWebServerData::CheckDigestAuth( struct http_message* msg )
                         if ( msg->query_string.len != 0 )
                         {
                             // Found some clients (like .NET's HttpWebRequest), which calculate HA2 using URI without query part.
-                            // So need to calculate both variant, to make all clients happy.
+                            // So need to calculate both variants, to make all clients happy.
 
                             cs_md5( ha2, msg->method.p, static_cast<size_t>( msg->method.len ),
                                     ":", static_cast<size_t>( 1 ),
@@ -964,7 +987,7 @@ void XWebServerData::eventHandler( struct mg_connection* connection, int event, 
         MangooseWebRequest   request( message );
         MangooseWebResponse  response( connection );
         string               uri = request.Uri( );
-        UserGroup            authUserGroup = self->CheckDigestAuth( message );
+        UserGroup            authUserGroup = self->CheckAuthentication( message );
 
         // make sure nothing finishes with / except the root
         while ( ( uri.back( ) == '/' ) && ( uri.length( ) != 1 ) )
@@ -979,7 +1002,7 @@ void XWebServerData::eventHandler( struct mg_connection* connection, int event, 
         {
             if ( static_cast<int>( authUserGroup ) < static_cast<int>( handlerData->AllowedUserGroup ) )
             {
-                http_send_digest_auth_request( connection, self->ActiveAuthDomain.c_str( ) );
+                self->SendAuthenticationRequest( connection );
             }
             else
             {

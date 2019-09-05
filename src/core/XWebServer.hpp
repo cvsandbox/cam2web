@@ -1,7 +1,7 @@
 /*
     cam2web - streaming camera to web
 
-    Copyright (C) 2017, cvsandbox, cvsandbox@gmail.com
+    Copyright (C) 2017-2019, cvsandbox, cvsandbox@gmail.com
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,6 +40,12 @@ enum class UserGroup
     User   = 1,
     Power  = 2,
     Admin  = 3
+};
+
+enum class Authentication
+{
+    Basic  = 0,
+    Digest = 1
 };
 
 /* ================================================================= */
@@ -160,6 +166,10 @@ public:
     // Get/Set authentication domain
     std::string AuthDomain( ) const;
     XWebServer& SetAuthDomain( const std::string& authDomain );
+
+    // Get/Set authentication method (default Digest)
+    Authentication AuthenticationMethod( ) const;
+    XWebServer& SetAuthenticationMethod( Authentication authMethod );
 
     // Get/Set port
     uint16_t Port( ) const;

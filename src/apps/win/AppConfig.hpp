@@ -54,6 +54,10 @@ public:
     std::string AuthDomain( ) const;
     void SetAuthDomain( const std::string& authDomain );
 
+    // Get/Set HTTP authentication method
+    std::string AuthenticationMethod( ) const;
+    void SetAuthenticationMethod( const std::string& method );
+
     // Get/Set path to the folder with custom web content
     std::string CustomWebContent( ) const;
     void SetCustomWebContent( const std::string& path );
@@ -121,6 +125,7 @@ private:
     uint16_t    viewersGroup;
     uint16_t    configuratorsGroup;
     std::string authDomain;
+    std::string authMethod;
     std::string customWebContent;
     std::string cameraMoniker;
     std::string cameraTitle;
