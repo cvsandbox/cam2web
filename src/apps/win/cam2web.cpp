@@ -104,6 +104,11 @@ using namespace std::chrono;
 #define STR_INFO_VERSION        "1.2.0"
 #define STR_INFO_PLATFORM       "Windows"
 
+// Default names of some configuration files/folders
+#define STR_CONFIG_FOLDER       "cam2web";
+#define STR_CONFIG_FILE         "cam2web.cfg"
+#define STR_USERS_FILE          "users.txt"
+
 // Available application icons
 static const int AppIconIds[]       = { IDI_CAM2WEB, IDI_CAM2WEB_GREEN, IDI_CAM2WEB_ORANGE, IDI_CAM2WEB_RED };
 static const int AppActiveIconIds[] = { IDI_CAMERA_ACTIVE_BLUE, IDI_CAMERA_ACTIVE_GREEN, IDI_CAMERA_ACTIVE_ORANGE, IDI_CAMERA_ACTIVE_RED };
@@ -209,7 +214,7 @@ public:
         devices( ), cameraCapabilities( ), camera( ), selectedDeviceName( ), selectedResolutuion( ),
         cameraConfig( ), appConfig( new AppConfig( ) ), server( ), adminServer( ), video2web( ),
         streamingStatus( make_shared<StreamingStatusController>( ) ),
-        appFolder( ".\\" ), appConfigFile( "cam2web.cfg" ),
+        appFolder( ".\\" ), appConfigFile( STR_CONFIG_FILE ),
         appConfigSerializer( ), cameraConfigSerializer( ), lastVideoSourceError( ),
         listenerChain( ), videoDecorator( ), cameraErrorListener( )
     {
@@ -219,14 +224,16 @@ public:
         if ( SUCCEEDED( SHGetFolderPathW( NULL, CSIDL_PROFILE, NULL, 0, homeFolder ) ) )
         {
             appFolder = Utf16to8( homeFolder );
-            appFolder += "\\cam2web\\";
+            appFolder += '\\';
+            appFolder += STR_CONFIG_FOLDER;
+            appFolder += '\\';
         }
 
-        appConfigFile = appFolder + "app.cfg";
+        appConfigFile = appFolder + STR_CONFIG_FILE;
 
         CreateDirectory( Utf8to16( appFolder ).c_str( ), nullptr );
 
-        appConfig->SetUsersFileName( appFolder + "users.txt" );
+        appConfig->SetUsersFileName( appFolder + STR_USERS_FILE );
     }
 
     void LoadAppIcons( );
