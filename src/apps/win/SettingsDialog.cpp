@@ -26,8 +26,6 @@
 #include <commctrl.h>
 #include <shlobj.h>
 
-#include <XStringTools.hpp>
-
 #include "resource.h"
 #include "SettingsDialog.hpp"
 #include "Tools.hpp"
@@ -174,12 +172,7 @@ INT_PTR CALLBACK SettingsDlgProc( HWND hDlg, UINT message, WPARAM wParam, LPARAM
                     appConfig->SetAuthenticationMethod( ( SendMessage( GetDlgItem( hDlg, IDC_AUTH_METHOD_COMBO ), CB_GETCURSEL, 0, 0 ) == 0 ) ? "basic" : "digest" );
 
                     appConfig->SetCustomWebContent( GetWindowString( GetDlgItem( hDlg, IDC_CUSTOM_WEB_EDIT ), true ) );
-
-                    string cameraTitle = GetWindowString( GetDlgItem( hDlg, IDC_CAMERA_TITLE_EDIT ), true );
-                    StringReplace( cameraTitle, "<", "&lt;" );
-                    StringReplace( cameraTitle, ">", "&gt;" );
-
-                    appConfig->SetCameraTitle( cameraTitle );
+                    appConfig->SetCameraTitle( GetWindowString( GetDlgItem( hDlg, IDC_CAMERA_TITLE_EDIT ), true ) );
 
                     appConfig->SetTimestampOverlay( SendMessage( GetDlgItem( hDlg, IDC_OVERLAY_TIMESTAMP ), BM_GETCHECK, 0, 0 ) == BST_CHECKED );
                     appConfig->SetCameraTitleOverlay( SendMessage( GetDlgItem( hDlg, IDC_OVERLAY_TITLE ), BM_GETCHECK, 0, 0 ) == BST_CHECKED );

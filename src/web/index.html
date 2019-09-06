@@ -74,7 +74,7 @@ function getCameraInfo( )
                 $('#cameracontainer').width( cameraWidth + 20 );
                 $('#cameraproperties').css( { 'margin-left' : cameraWidth + 40 } );
 
-                $('#title').html( title );
+                $('#title').html( title.replace( "<", "&lt;" ).replace( ">", "&gt;" ) );
                 document.title = 'web2cam :: ' + title;
             }
         },

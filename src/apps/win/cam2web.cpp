@@ -34,19 +34,19 @@
 #include <chrono>
 #include <numeric>
 
+#include <XLocalVideoDevice.hpp>
+#include <XLocalVideoDeviceConfig.hpp>
+#include <XWebServer.hpp>
+#include <XVideoSourceToWeb.hpp>
+#include <XVideoFrameDecorator.hpp>
+#include <XObjectConfigurationSerializer.hpp>
+#include <XObjectConfigurationRequestHandler.hpp>
+
 #include "resource.h"
 #include "Tools.hpp"
 #include "UiTools.hpp"
 #include "SettingsDialog.hpp"
 #include "AccessRightsDialog.hpp"
-
-#include "XLocalVideoDevice.hpp"
-#include "XLocalVideoDeviceConfig.hpp"
-#include "XWebServer.hpp"
-#include "XVideoSourceToWeb.hpp"
-#include "XVideoFrameDecorator.hpp"
-#include "XObjectConfigurationSerializer.hpp"
-#include "XObjectConfigurationRequestHandler.hpp"
 #include "AppConfig.hpp"
 
 // Release build embeds web resources into executable
@@ -757,18 +757,18 @@ static bool StartVideoStreaming( )
         // prepare some read-only informational properties of the camera
         PropertyMap cameraInfo;
         char        strVideoSize[32];
-        string      cameraTite = gData->appConfig->CameraTitle( );
+        string      cameraTitle = gData->appConfig->CameraTitle( );
 
-        if ( cameraTite.empty( ) )
+        if ( cameraTitle.empty( ) )
         {
-            cameraTite = gData->selectedDeviceName.Name( );
+            cameraTitle = gData->selectedDeviceName.Name( );
         }
 
         sprintf( strVideoSize,      "%d", gData->selectedResolutuion.Width( ) );
         sprintf( strVideoSize + 16, "%d", gData->selectedResolutuion.Height( ) );
 
         cameraInfo.insert( PropertyMap::value_type( "device", gData->selectedDeviceName.Name( ) ) );
-        cameraInfo.insert( PropertyMap::value_type( "title",  cameraTite ) );
+        cameraInfo.insert( PropertyMap::value_type( "title",  cameraTitle ) );
         cameraInfo.insert( PropertyMap::value_type( "width",  strVideoSize ) );
         cameraInfo.insert( PropertyMap::value_type( "height", strVideoSize + 16 ) );
 
