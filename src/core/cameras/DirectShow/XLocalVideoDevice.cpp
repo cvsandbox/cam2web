@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <mutex>
 #include <thread>
+#include <intrin.h>
 
 // Include DirectShow relate headers
 #include <dshow.h>
