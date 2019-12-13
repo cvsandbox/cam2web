@@ -64,6 +64,7 @@ XManualResetEvent ExitEvent;
 struct
 {
     uint32_t DeviceNumber;
+    bool     JpegEncoding;
     uint32_t FrameWidth;
     uint32_t FrameHeight;
     uint32_t FrameRate;
@@ -107,6 +108,7 @@ public:
 void SetDefaultSettings( )
 {
     Settings.DeviceNumber = 0;
+    Settings.JpegEncoding = true;
     Settings.FrameWidth   = 640;
     Settings.FrameHeight  = 480;
     Settings.FrameRate    = 30;
@@ -265,6 +267,10 @@ bool ParseCommandLine( int argc, char* argv[] )
         {
             Settings.CameraTitle = value;
         }
+        else if ( key == "type" )
+        {
+            Settings.JpegEncoding = ( value != "yuyv" );
+        }
         else
         {
             break;
@@ -296,6 +302,7 @@ bool ParseCommandLine( int argc, char* argv[] )
         printf( "Available command line options: \n" );
         printf( "  -dev:<num>   Sets video device number to use. \n" );
         printf( "               Default is 0. \n" );
+        printf( "  -type:<jpeg|yuyv>   Sets video device encoding type to use. \n" );
         printf( "  -size:<0-12> Sets video size to one from the list below: \n" );
         printf( "               0: 320x240 \n" );
         printf( "               1: 480x360 \n" );
@@ -408,6 +415,7 @@ int main( int argc, char* argv[] )
     xcamera->SetVideoDevice( Settings.DeviceNumber );
     xcamera->SetVideoSize( Settings.FrameWidth, Settings.FrameHeight );
     xcamera->SetFrameRate( Settings.FrameRate );
+    xcamera->EnableJpegEncoding( Settings.JpegEncoding );
 
     // restore camera settings
     serializer.LoadConfiguration( );
