@@ -1,7 +1,7 @@
 /*
     cam2web - streaming camera to web
 
-    Copyright (C) 2017-2019, cvsandbox, cvsandbox@gmail.com
+    Copyright (C) 2017-2020, cvsandbox, cvsandbox@gmail.com
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -160,7 +160,7 @@ public:
 
     bool        autoStartStreaming;
     bool        minimizeWindowOnStart;
-	bool		showNoUI;
+    bool        showNoUI;
     uint16_t    adminPort;
 
     HWND        hwndMain;
@@ -346,17 +346,17 @@ static bool ParseCommandLine( int argc, WCHAR* argv[], AppData* appData )
                 }
             }
         }
-		else if (key == L"noui" )
-		{
-			if ( value.empty( ) )
-			{
-				appData->showNoUI = true;
-			}
-			else
-			{
-				break;
-			}
-		}
+        else if (key == L"noui" )
+        {
+            if ( value.empty( ) )
+            {
+                appData->showNoUI = true;
+            }
+            else
+            {
+                break;
+            }
+        }
         else
         {
             break;
@@ -481,10 +481,10 @@ static BOOL CreateMainWindow( HINSTANCE hInstance, int nCmdShow )
         EnsureWindowVisible( hwndMain );
     }
 
-    if (!gData->showNoUI)
+    if ( !gData->showNoUI )
     {
-        ShowWindow(hwndMain, nCmdShow);
-        UpdateWindow(hwndMain);
+        ShowWindow( hwndMain, nCmdShow );
+        UpdateWindow( hwndMain );
     }
 
     return TRUE;
