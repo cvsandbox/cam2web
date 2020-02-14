@@ -160,6 +160,7 @@ public:
 
     bool        autoStartStreaming;
     bool        minimizeWindowOnStart;
+	bool		showNoUI;
     uint16_t    adminPort;
 
     HWND        hwndMain;
@@ -208,7 +209,7 @@ public:
 
     AppData( ) :
         hInst( NULL ), hwndMain( NULL ), hwndCamerasCombo( NULL ),
-        autoStartStreaming( false ), minimizeWindowOnStart( false ), adminPort( 0 ),
+        autoStartStreaming( false ), minimizeWindowOnStart( false ), showNoUI( false ), adminPort( 0 ),
         hwndResolutionsCombo( NULL ), hwndStartButton( NULL ), hwndStatusLink( NULL ), hwndStatusBar( NULL ),
         hiconAppIcon( NULL ), hiconAppActiveIcon( NULL ), hiconTrayIcon( NULL ), hiconTrayActiveIcon( NULL ),
         devices( ), cameraCapabilities( ), camera( ), selectedDeviceName( ), selectedResolutuion( ),
@@ -345,6 +346,17 @@ static bool ParseCommandLine( int argc, WCHAR* argv[], AppData* appData )
                 }
             }
         }
+		else if (key == L"noui" )
+		{
+			if ( value.empty( ) )
+			{
+				appData->showNoUI = true;
+			}
+			else
+			{
+				break;
+			}
+		}
         else
         {
             break;
@@ -469,8 +481,11 @@ static BOOL CreateMainWindow( HINSTANCE hInstance, int nCmdShow )
         EnsureWindowVisible( hwndMain );
     }
 
-    ShowWindow( hwndMain, nCmdShow );
-    UpdateWindow( hwndMain );
+    if (!gData->showNoUI)
+    {
+        ShowWindow(hwndMain, nCmdShow);
+        UpdateWindow(hwndMain);
+    }
 
     return TRUE;
 }
@@ -513,7 +528,9 @@ int APIENTRY _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
                                   L"/start\n"
                                   L"\tAuto-start camera streaming on application start.\n\n"
                                   L"/minimize\n"
-                                  L"\tMinimize application's window on start.\n",
+                                  L"\tMinimize application's window on start.\n"
+                                  L"/noui\n"
+                                  L"\tStart application with no UI",
                             gData->szTitle, MB_OK | MB_ICONINFORMATION );
             }
         }
