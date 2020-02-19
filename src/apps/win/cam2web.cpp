@@ -547,6 +547,9 @@ int APIENTRY _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
     // create main window of the application
     if ( CreateMainWindow( hInstance, ( gData->minimizeWindowOnStart ) ? SW_MINIMIZE : nCmdShow ) )
     {
+        // Register for Connected Suspend Events
+        RegisterSuspendResumeNotification( gData->hwndMain, DEVICE_NOTIFY_WINDOW_HANDLE );
+
         HACCEL hAccelTable = LoadAccelerators( hInstance, MAKEINTRESOURCE( IDC_CAM2WEB ) );
         MSG    msg;
 
@@ -1002,6 +1005,15 @@ void RestoreFromTray( HWND hwnd )
     SetForegroundWindow( hwnd );
 }
 
+void RestartStream( )
+{
+    StopVideoStreaming( );
+    gData->streamingStatus->SetStreamingStatus( false );
+
+    StartVideoStreaming( );
+    gData->streamingStatus->SetStreamingStatus( true );
+}
+
 // Main window's message handler
 LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
@@ -1172,7 +1184,10 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             }
 
             SetWindowText( gData->hwndStartButton, startButtonText );
+        if ( !gData->showNoUI )
+         {
             ShowWindow( gData->hwndStatusLink, showStatusLink );
+         }
             EnableWindow( gData->hwndCamerasCombo, enableCameraSelection );
             EnableWindow( gData->hwndResolutionsCombo, enableCameraSelection );
             EnableWindow( gData->hwndFrameRateEdit, enableFrameRateSelection );
@@ -1233,6 +1248,13 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
     case WM_SETTEXT:
         UpdateTrayTip( hWnd, (WCHAR*) lParam );
         return DefWindowProc( hWnd, message, wParam, lParam );
+
+    case WM_POWERBROADCAST:
+        if ( wParam == PBT_APMRESUMEAUTOMATIC )
+        {
+            std::thread( RestartStream ).detach( );
+        }
+        break;
 
     default:
         return DefWindowProc( hWnd, message, wParam, lParam );
