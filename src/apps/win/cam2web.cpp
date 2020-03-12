@@ -548,7 +548,17 @@ int APIENTRY _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
     if ( CreateMainWindow( hInstance, ( gData->minimizeWindowOnStart ) ? SW_MINIMIZE : nCmdShow ) )
     {
         // Register for Connected Suspend Events
-        RegisterSuspendResumeNotification( gData->hwndMain, DEVICE_NOTIFY_WINDOW_HANDLE );
+        typedef int( __cdecl* MYPROC )( HWND, int );
+        HINSTANCE hinstLib = LoadLibrary( L"User32.dll" );
+        if ( hinstLib != NULL )
+        {
+            MYPROC ProcAddr = ( MYPROC ) GetProcAddress( hinstLib, "RegisterSuspendResumeNotification" );
+            if ( ProcAddr != NULL )
+            {
+                ( ProcAddr )( gData->hwndMain, DEVICE_NOTIFY_WINDOW_HANDLE );
+            }
+            FreeLibrary(hinstLib);
+        }
 
         HACCEL hAccelTable = LoadAccelerators( hInstance, MAKEINTRESOURCE( IDC_CAM2WEB ) );
         MSG    msg;
