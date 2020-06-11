@@ -387,9 +387,17 @@ void XVideoSourceToWebData::EncodeCameraImage( )
             }
             else
             {
+                uint8_t* oldJpegBuffer = JpegBuffer;
+
                 // encode image as JPEG (buffer is re-allocated if too small by encoder)
                 JpegSize      = JpegBufferSize;
                 InternalError = JpegEncoder.EncodeToMemory( CameraImage, &JpegBuffer, &JpegSize );
+
+                if ( JpegSize > JpegBufferSize )
+                {
+                    JpegBufferSize = JpegSize;
+                    free( oldJpegBuffer );
+                }
             }
         }
 
