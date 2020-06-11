@@ -547,6 +547,20 @@ int APIENTRY _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
     // create main window of the application
     if ( CreateMainWindow( hInstance, ( gData->minimizeWindowOnStart ) ? SW_MINIMIZE : nCmdShow ) )
     {
+        // register for Connected Suspend Events
+        typedef int( __cdecl* MYPROC )( HWND, int );
+        HINSTANCE hinstLib = LoadLibrary( L"User32.dll" );
+
+        if ( hinstLib != NULL )
+        {
+            MYPROC registerSuspendResumeProcAddr = ( MYPROC ) GetProcAddress( hinstLib, "RegisterSuspendResumeNotification" );
+            if ( registerSuspendResumeProcAddr != NULL )
+            {
+                ( registerSuspendResumeProcAddr )( gData->hwndMain, DEVICE_NOTIFY_WINDOW_HANDLE );
+            }
+            FreeLibrary( hinstLib );
+        }
+
         HACCEL hAccelTable = LoadAccelerators( hInstance, MAKEINTRESOURCE( IDC_CAM2WEB ) );
         MSG    msg;
 
@@ -1002,6 +1016,16 @@ void RestoreFromTray( HWND hwnd )
     SetForegroundWindow( hwnd );
 }
 
+// Restart camera streaming
+void RestartStreaming( )
+{
+    StopVideoStreaming( );
+    gData->streamingStatus->SetStreamingStatus( false );
+
+    StartVideoStreaming( );
+    gData->streamingStatus->SetStreamingStatus( true );
+}
+
 // Main window's message handler
 LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
@@ -1172,7 +1196,12 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             }
 
             SetWindowText( gData->hwndStartButton, startButtonText );
-            ShowWindow( gData->hwndStatusLink, showStatusLink );
+            
+            if ( !gData->showNoUI )
+            {
+                ShowWindow( gData->hwndStatusLink, showStatusLink );
+            }
+
             EnableWindow( gData->hwndCamerasCombo, enableCameraSelection );
             EnableWindow( gData->hwndResolutionsCombo, enableCameraSelection );
             EnableWindow( gData->hwndFrameRateEdit, enableFrameRateSelection );
@@ -1233,6 +1262,13 @@ LRESULT CALLBACK MainWndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
     case WM_SETTEXT:
         UpdateTrayTip( hWnd, (WCHAR*) lParam );
         return DefWindowProc( hWnd, message, wParam, lParam );
+
+    case WM_POWERBROADCAST:
+        if ( ( wParam == PBT_APMRESUMEAUTOMATIC ) && ( gData->streamingStatus->IsStreaming( ) ) )
+        {
+            std::thread( RestartStreaming ).detach( );
+        }
+        break;
 
     default:
         return DefWindowProc( hWnd, message, wParam, lParam );
