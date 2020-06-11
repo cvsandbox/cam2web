@@ -55,10 +55,11 @@ function getCameraInfo( )
         {
             if ( data.status == "OK" )
             {
-                var title       = "";
-                var config      = data.config;
-                var cameraWidth = parseInt( config.width );
-
+                var title        = "";
+                var config       = data.config;
+                var cameraWidth  = parseInt( config.width );
+                var cameraHeight = parseInt( config.height );
+                
                 if ( ( config.title ) && ( config.title.length != 0 ) )
                 {
                     title = config.title;
@@ -67,9 +68,18 @@ function getCameraInfo( )
                 {
                     title = config.device;
                 }
+                
+                // make sure image element is not too big
+                if ( cameraWidth > 1024 )
+                {
+                    var ratio = cameraWidth / cameraHeight;
+                    
+                    cameraWidth  = 1024;
+                    cameraHeight = Math.floor( cameraWidth / ratio ); 
+                }
 
-                $('#camera').width( config.width );
-                $('#camera').height( config.height );
+                $('#camera').width( cameraWidth );
+                $('#camera').height( cameraHeight );
 
                 $('#cameracontainer').width( cameraWidth + 20 );
                 $('#cameraproperties').css( { 'margin-left' : cameraWidth + 40 } );
