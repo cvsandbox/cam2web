@@ -5,7 +5,7 @@
  * Copyright (C) 1991-1997, Thomas G. Lane.
  * Modified 1997-2009 by Guido Vollbeding.
  * libjpeg-turbo Modifications:
- * Copyright (C) 2009, 2011, 2014-2015, D. R. Commander.
+ * Copyright (C) 2009, 2011, 2014-2015, 2018, D. R. Commander.
  * For conditions of distribution and use, see the accompanying README.ijg
  * file.
  *
@@ -17,9 +17,9 @@
 
 /*
  * Maximum number of components (color channels) allowed in JPEG image.
- * To meet the letter of the JPEG spec, set this to 255.  However, darn
- * few applications need more than 4 channels (maybe 5 for CMYK + alpha
- * mask).  We recommend 10 as a reasonable compromise; use 4 if you are
+ * To meet the letter of Rec. ITU-T T.81 | ISO/IEC 10918-1, set this to 255.
+ * However, darn few applications need more than 4 channels (maybe 5 for CMYK +
+ * alpha mask).  We recommend 10 as a reasonable compromise; use 4 if you are
  * really short on memory.  (Each allowed component costs a hundred or so
  * bytes of storage, whether actually used in an image or not.)
  */
@@ -315,10 +315,10 @@ typedef int boolean;
  * with it.  In reality, few people ever did this, because there were some
  * severe restrictions involved (cjpeg and djpeg no longer worked properly,
  * compressing/decompressing RGB JPEGs no longer worked properly, and the color
- * quantizer wouldn't work with pixel sizes other than 3.)  Further, since all
- * of the O/S-supplied versions of libjpeg were built with the default values
- * of RGB_RED, RGB_GREEN, RGB_BLUE, and RGB_PIXELSIZE, many applications have
- * come to regard these values as immutable.
+ * quantizer wouldn't work with pixel sizes other than 3.)  Furthermore, since
+ * all of the O/S-supplied versions of libjpeg were built with the default
+ * values of RGB_RED, RGB_GREEN, RGB_BLUE, and RGB_PIXELSIZE, many applications
+ * have come to regard these values as immutable.
  *
  * The libjpeg-turbo colorspace extensions provide a much cleaner way of
  * compressing from/decompressing to buffers with arbitrary component orders
