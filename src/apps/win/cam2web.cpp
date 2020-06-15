@@ -705,6 +705,9 @@ static void CreateDeviceAndGetResolutions( )
 
             SendMessage( gData->hwndResolutionsCombo, CB_SETCURSEL, ( foundExactMatch ) ? exactMatchIndex : closeMatchIndex, 0 );
             GetFrameRateRange( );
+
+            // if camera supports MJPEG, lets use it
+            gData->camera->PreferJpegEncoding( true );
         }
     }
 }

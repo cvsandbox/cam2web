@@ -145,6 +145,12 @@ XError XImage::CopyData( const shared_ptr<XImage>& copyTo ) const
             srcPtr += mStride;
             dstPtr += dstStride;
         }
+
+        if ( mFormat == XPixelFormat::JPEG )
+        {
+            // set correct size of destionation JPEG image
+            copyTo->mWidth = mWidth;
+        }
     }
 
     return ret;

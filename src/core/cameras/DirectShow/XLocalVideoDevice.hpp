@@ -91,6 +91,14 @@ public:
     // Set video input of the device
     void SetVideoInput( const XDevicePinInfo& input );
 
+    // Get/Set JPEG encoding preference. Not guaranteed as device/driver may not support it.
+    bool IsJpegEncodingPreferred( ) const;
+    void PreferJpegEncoding( bool prefer );
+    // Check if running device was configured to provide JPEG images. Always returns
+    // false for not running devices. NOTE: provided image pixel format already will indicate
+    // this, but having extra property may be handy.
+    bool IsJpegEncodingEnabled( ) const;
+
     // Get capabilities of the device (resolutions and frame rates)
     const std::vector<XDeviceCapabilities> GetCapabilities( );
     // Get available video pins of the device if any
