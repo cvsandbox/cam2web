@@ -548,7 +548,7 @@ int APIENTRY _tWinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpC
     if ( CreateMainWindow( hInstance, ( gData->minimizeWindowOnStart ) ? SW_MINIMIZE : nCmdShow ) )
     {
         // register for Connected Suspend Events
-        typedef int( __cdecl* MYPROC )( HWND, int );
+        typedef int( WINAPI* MYPROC )( HWND, int );
         HINSTANCE hinstLib = LoadLibrary( L"User32.dll" );
 
         if ( hinstLib != NULL )
