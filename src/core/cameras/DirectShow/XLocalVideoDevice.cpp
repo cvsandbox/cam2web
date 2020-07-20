@@ -1640,7 +1640,7 @@ bool IsJpegEncodingAvailable( IBaseFilter* pBaseFilter )
 
     if ( SUCCEEDED( pBaseFilter->EnumPins( &pPinEnum ) ) )
     {
-        while ( SUCCEEDED( pPinEnum->Next( 1, &pPin, 0 ) ) && ( !ret ) )
+        while ( pPinEnum->Next( 1, &pPin, 0 ) == S_OK && ( !ret ) )
         {
             PIN_DIRECTION pinDir;
 
@@ -1652,7 +1652,7 @@ bool IsJpegEncodingAvailable( IBaseFilter* pBaseFilter )
 
                 if ( SUCCEEDED( pPin->EnumMediaTypes( &pMediaEnum ) ) )
                 {
-                    while ( SUCCEEDED( pMediaEnum->Next( 1, &pmt, NULL ) ) && ( !ret ) )
+                    while ( pMediaEnum->Next( 1, &pmt, NULL ) == S_OK && ( !ret ) )
                     {
                         if ( ( pmt->majortype == MEDIATYPE_Video ) && ( pmt->subtype == MEDIASUBTYPE_MJPG ) )
                         {
