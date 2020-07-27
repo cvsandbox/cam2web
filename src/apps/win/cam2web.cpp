@@ -716,6 +716,7 @@ static void CreateDeviceAndGetResolutions( )
 void GetVideoDevices( )
 {
     int indexToSelect = 0;
+    int preferenceIndex = 0;
 
     gData->devices = XLocalVideoDevice::GetAvailableDevices( );
 
@@ -731,6 +732,7 @@ void GetVideoDevices( )
     else
     {
         const string lastUsedCameraMoniker = gData->appConfig->CameraMoniker( );
+        const string devicePreference = gData->appConfig->DevicePreference();
         TCHAR        deviceName[256];
         int          index = 0;
 
@@ -740,6 +742,10 @@ void GetVideoDevices( )
 
             SendMessage( gData->hwndCamerasCombo, CB_ADDSTRING, 0, (LPARAM) deviceName );
 
+            if ( device.Name( ) == devicePreference )
+            {
+                preferenceIndex = index;
+            }
             if ( device.Moniker( ) == lastUsedCameraMoniker )
             {
                 indexToSelect = index;
@@ -749,7 +755,7 @@ void GetVideoDevices( )
         }
     }
 
-    SendMessage( gData->hwndCamerasCombo, CB_SETCURSEL, indexToSelect, 0 );
+    SendMessage( gData->hwndCamerasCombo, CB_SETCURSEL, preferenceIndex != 0 ? preferenceIndex : indexToSelect, 0 );
     CreateDeviceAndGetResolutions( );
 }
 

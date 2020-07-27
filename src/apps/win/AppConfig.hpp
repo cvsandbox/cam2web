@@ -111,6 +111,9 @@ public:
     int32_t MainWindowY( ) const;
     void SetMainWindowXY( int32_t x, int32_t y );
 
+    // Get User device preference
+    std::string DevicePreference( ) const;
+
 public: // IObjectConfigurator interface
 
     virtual XError SetProperty( const std::string& propertyName, const std::string& value );
@@ -129,6 +132,7 @@ private:
     std::string customWebContent;
     std::string cameraMoniker;
     std::string cameraTitle;
+    std::string devicePreference;
     bool        addTimestampOverlay;
     bool        addCameraTitleOverlay;
     xargb       overlayTextColor;

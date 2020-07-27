@@ -28,29 +28,30 @@ using namespace std;
 // Macro to make sure a value is in certain range
 #define XINRANGE(a, min, max) (((a)<(max))?(((a)>(min))?(a):(min)):(max))
 
-#define PROP_JPEG_QUALITY   "jpegQuality"
-#define PROP_MJPEG_RATE     "mjpegRate"
-#define PROP_HTTP_PORT      "httpPort"
-#define PROP_VIEWERS        "viewers"
-#define PROP_CONFIGURATORS  "configurators"
-#define PROP_AUTH_DOMAIN    "authDomain"
-#define PROP_AUTH_METHOD    "authMethod"
-#define PROP_CUSTOM_WEB     "customWeb"
-#define PROP_CAMERA_MONIKER "cameraMoniker"
-#define PROP_CAMERA_TITLE   "cameraTitle"
-#define PROP_TIMESTAMP_OVR  "timestampOverlay"
-#define PROP_TITLE_OVR      "cameraTitleOverlay"
-#define PROP_OVR_TEXT_COLOR "overlayTextColor"
-#define PROP_OVR_BG_COLOR   "overlayBgColor"
-#define PROP_CAMERA_WIDTH   "cameraWidth"
-#define PROP_CAMERA_HEIGHT  "cameraHeight"
-#define PROP_CAMERA_BPP     "cameraBpp"
-#define PROP_CAMERA_FPS     "cameraFps"
-#define PROP_REQUESTED_FPS  "requestedFps"
-#define PROP_MIN_TO_TRAY    "minToTray"
-#define PROP_WINDOW_ICON    "windowIcon"
-#define PROP_MAIN_WIN_X     "mainWinX"
-#define PROP_MAIN_WIN_Y     "mainWinY"
+#define PROP_JPEG_QUALITY       "jpegQuality"
+#define PROP_MJPEG_RATE         "mjpegRate"
+#define PROP_HTTP_PORT          "httpPort"
+#define PROP_VIEWERS            "viewers"
+#define PROP_CONFIGURATORS      "configurators"
+#define PROP_AUTH_DOMAIN        "authDomain"
+#define PROP_AUTH_METHOD        "authMethod"
+#define PROP_CUSTOM_WEB         "customWeb"
+#define PROP_CAMERA_MONIKER     "cameraMoniker"
+#define PROP_CAMERA_TITLE       "cameraTitle"
+#define PROP_DEVICE_PREFERENCE  "devicePreference"
+#define PROP_TIMESTAMP_OVR      "timestampOverlay"
+#define PROP_TITLE_OVR          "cameraTitleOverlay"
+#define PROP_OVR_TEXT_COLOR     "overlayTextColor"
+#define PROP_OVR_BG_COLOR       "overlayBgColor"
+#define PROP_CAMERA_WIDTH       "cameraWidth"
+#define PROP_CAMERA_HEIGHT      "cameraHeight"
+#define PROP_CAMERA_BPP         "cameraBpp"
+#define PROP_CAMERA_FPS         "cameraFps"
+#define PROP_REQUESTED_FPS      "requestedFps"
+#define PROP_MIN_TO_TRAY        "minToTray"
+#define PROP_WINDOW_ICON        "windowIcon"
+#define PROP_MAIN_WIN_X         "mainWinX"
+#define PROP_MAIN_WIN_Y         "mainWinY"
 
 #define TYPE_INT (0)
 #define TYPE_STR (1)
@@ -58,29 +59,30 @@ using namespace std;
 // List of supported properties and their type
 const static map<string, int> SupportedProperties =
 {
-    { PROP_JPEG_QUALITY,   TYPE_INT },
-    { PROP_MJPEG_RATE,     TYPE_INT },
-    { PROP_HTTP_PORT,      TYPE_INT },
-    { PROP_VIEWERS,        TYPE_INT },
-    { PROP_CONFIGURATORS,  TYPE_INT },
-    { PROP_AUTH_DOMAIN,    TYPE_STR },
-    { PROP_AUTH_METHOD,    TYPE_STR },
-    { PROP_CUSTOM_WEB,     TYPE_STR },
-    { PROP_CAMERA_MONIKER, TYPE_STR },
-    { PROP_CAMERA_TITLE,   TYPE_STR },
-    { PROP_TIMESTAMP_OVR,  TYPE_INT },
-    { PROP_TITLE_OVR,      TYPE_INT },
-    { PROP_OVR_TEXT_COLOR, TYPE_STR },
-    { PROP_OVR_BG_COLOR,   TYPE_STR },
-    { PROP_CAMERA_WIDTH,   TYPE_INT },
-    { PROP_CAMERA_HEIGHT,  TYPE_INT },
-    { PROP_CAMERA_BPP,     TYPE_INT },
-    { PROP_CAMERA_FPS,     TYPE_INT },
-    { PROP_REQUESTED_FPS,  TYPE_INT },
-    { PROP_MIN_TO_TRAY,    TYPE_INT },
-    { PROP_WINDOW_ICON,    TYPE_INT },
-    { PROP_MAIN_WIN_X,     TYPE_INT },
-    { PROP_MAIN_WIN_Y,     TYPE_INT }
+    { PROP_JPEG_QUALITY,        TYPE_INT },
+    { PROP_MJPEG_RATE,          TYPE_INT },
+    { PROP_HTTP_PORT,           TYPE_INT },
+    { PROP_VIEWERS,             TYPE_INT },
+    { PROP_CONFIGURATORS,       TYPE_INT },
+    { PROP_AUTH_DOMAIN,         TYPE_STR },
+    { PROP_AUTH_METHOD,         TYPE_STR },
+    { PROP_CUSTOM_WEB,          TYPE_STR },
+    { PROP_CAMERA_MONIKER,      TYPE_STR },
+    { PROP_CAMERA_TITLE,        TYPE_STR },
+    { PROP_TIMESTAMP_OVR,       TYPE_INT },
+    { PROP_TITLE_OVR,           TYPE_INT },
+    { PROP_OVR_TEXT_COLOR,      TYPE_STR },
+    { PROP_OVR_BG_COLOR,        TYPE_STR },
+    { PROP_CAMERA_WIDTH,        TYPE_INT },
+    { PROP_CAMERA_HEIGHT,       TYPE_INT },
+    { PROP_CAMERA_BPP,          TYPE_INT },
+    { PROP_CAMERA_FPS,          TYPE_INT },
+    { PROP_REQUESTED_FPS,       TYPE_INT },
+    { PROP_MIN_TO_TRAY,         TYPE_INT },
+    { PROP_WINDOW_ICON,         TYPE_INT },
+    { PROP_MAIN_WIN_X,          TYPE_INT },
+    { PROP_MAIN_WIN_Y,          TYPE_INT },
+    { PROP_DEVICE_PREFERENCE,   TYPE_STR }
 };
 
 AppConfig::AppConfig( ) :
@@ -106,7 +108,8 @@ AppConfig::AppConfig( ) :
     minimizeToSystemTray( false ),
     windowIcon( 0 ),
     mainWindowX( 0x0FFFFFFF ), mainWindowY( 0x0FFFFFFF ),
-    usersFileName( "users.txt" )
+    usersFileName( "users.txt" ),
+    devicePreference( )
 {
 
 }
@@ -322,6 +325,12 @@ void AppConfig::SetUsersFileName( const string& fileName )
     usersFileName = fileName;
 }
 
+// Get user camaera device preference
+string AppConfig::DevicePreference() const
+{
+    return devicePreference;
+}
+
 // Set property of the object
 XError AppConfig::SetProperty( const string& propertyName, const string& value )
 {
@@ -439,6 +448,10 @@ XError AppConfig::SetProperty( const string& propertyName, const string& value )
             {
                 mainWindowY = intValue;
             }
+            else if (propertyName == PROP_DEVICE_PREFERENCE)
+            {
+                devicePreference = value;
+            }
         }
     }
 
@@ -551,6 +564,10 @@ XError AppConfig::GetProperty( const string& propertyName, string& value ) const
         else if ( propertyName == PROP_MAIN_WIN_Y )
         {
             intValue = mainWindowY;
+        }
+        else if (propertyName == PROP_DEVICE_PREFERENCE)
+        {
+            value = devicePreference;
         }
 
         if ( type == TYPE_INT )
