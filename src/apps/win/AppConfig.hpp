@@ -111,7 +111,7 @@ public:
     int32_t MainWindowY( ) const;
     void SetMainWindowXY( int32_t x, int32_t y );
 
-    // Get User device preference
+    // Get user camaera device preference
     std::string DevicePreference( ) const;
 
 public: // IObjectConfigurator interface

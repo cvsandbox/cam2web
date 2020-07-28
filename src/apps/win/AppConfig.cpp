@@ -565,7 +565,7 @@ XError AppConfig::GetProperty( const string& propertyName, string& value ) const
         {
             intValue = mainWindowY;
         }
-        else if (propertyName == PROP_DEVICE_PREFERENCE)
+        else if ( propertyName == PROP_DEVICE_PREFERENCE )
         {
             value = devicePreference;
         }
