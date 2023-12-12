@@ -129,7 +129,7 @@ public:
     // Get current value if the specified video property. The device must be running.
     XError GetVideoProperty( XVideoProperty property, int32_t* value, bool* automatic = nullptr ) const;
     // Get range of values supported by the specified video property
-    XError GetVideoPropertyRange( XVideoProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* default, bool* isAutomaticSupported ) const;
+    XError GetVideoPropertyRange(XVideoProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* defaultValue, bool* isAutomaticSupported) const;
 
     // Check if camera configuration is supported (device must be running)
     bool IsCameraConfigSupported( ) const;
@@ -140,7 +140,7 @@ public:
     // Get current value if the specified camera property. The device must be running.
     XError GetCameraProperty( XCameraProperty property, int32_t* value, bool* automatic = nullptr ) const;
     // Get range of values supported by the specified camera property
-    XError GetCameraPropertyRange( XCameraProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* default, bool* isAutomaticSupported ) const;
+    XError GetCameraPropertyRange( XCameraProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* defaultValue, bool* isAutomaticSupported ) const;
 
 private:
     Private::XLocalVideoDeviceData* mData;

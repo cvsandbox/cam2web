@@ -31,7 +31,7 @@
 #include <Dvdmedia.h>
 // Include qedit.h to get ISampleGrabberCB declaration
 #include <qedit.h>
-
+DEFINE_GUID(CLSID_SampleGrabber,0xc1f400a0,0x3f08,0x11d3,0x9f,0x0b,0x00,0x60,0x08,0x03,0x9e,0x37);
 #include "XLocalVideoDevice.hpp"
 #include "XManualResetEvent.hpp"
 
@@ -141,14 +141,14 @@ namespace Private
 
         XError SetVideoProperty( XVideoProperty property, int32_t value, bool automatic );
         XError GetVideoProperty( XVideoProperty property, int32_t* value, bool* automatic ) const;
-        XError GetVideoPropertyRange( XVideoProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* default, bool* isAutomaticSupported ) const;
+        XError GetVideoPropertyRange( XVideoProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* defaultValue, bool* isAutomaticSupported ) const;
 
         // Camera's control configuration
         bool IsCameraConfigSupported( ) const;
 
         XError SetCameraProperty( XCameraProperty property, int32_t value, bool automatic );
         XError GetCameraProperty( XCameraProperty property, int32_t* value, bool* automatic ) const;
-        XError GetCameraPropertyRange( XCameraProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* default, bool* isAutomaticSupported ) const;
+        XError GetCameraPropertyRange( XCameraProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* defaultValue, bool* isAutomaticSupported ) const;
 
     private:
         // Run video loop in a background thread
@@ -619,9 +619,9 @@ XError XLocalVideoDevice::GetVideoProperty( XVideoProperty property, int32_t* va
 }
 
 // Get range of values supported by the specified video property
-XError XLocalVideoDevice::GetVideoPropertyRange( XVideoProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* default, bool* isAutomaticSupported ) const
+XError XLocalVideoDevice::GetVideoPropertyRange( XVideoProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* defaultValue, bool* isAutomaticSupported ) const
 {
-    return mData->GetVideoPropertyRange( property, min, max, step, default, isAutomaticSupported );
+    return mData->GetVideoPropertyRange( property, min, max, step, defaultValue, isAutomaticSupported );
 }
 
 // Check if camera configuration is supported
@@ -643,9 +643,9 @@ XError XLocalVideoDevice::GetCameraProperty( XCameraProperty property, int32_t* 
 }
 
 // Get range of values supported by the specified camera property
-XError XLocalVideoDevice::GetCameraPropertyRange( XCameraProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* default, bool* isAutomaticSupported ) const
+XError XLocalVideoDevice::GetCameraPropertyRange( XCameraProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* defaultValue, bool* isAutomaticSupported ) const
 {
-    return mData->GetCameraPropertyRange( property, min, max, step, default, isAutomaticSupported );
+    return mData->GetCameraPropertyRange( property, min, max, step, defaultValue, isAutomaticSupported );
 }
 
 namespace Private
@@ -936,7 +936,7 @@ void XLocalVideoDeviceData::RunVideo( bool run )
                                                 // configure all video properties, which were set before device got running
                                                 for ( auto property : VideoPropertiesToSet )
                                                 {
-                                                    configOK &= SetVideoProperty( property.first, property.second.first, property.second.second );
+                                                    configOK &= static_cast<bool>(SetVideoProperty(property.first, property.second.first, property.second.second));
                                                 }
                                                 VideoPropertiesToSet.clear( );
 
@@ -955,7 +955,7 @@ void XLocalVideoDeviceData::RunVideo( bool run )
                                                 // configure all camera properties, which were set before device got running
                                                 for ( auto property : CameraPropertiesToSet )
                                                 {
-                                                    configOK &= SetCameraProperty( property.first, property.second.first, property.second.second );
+                                                    configOK &= static_cast<bool>(SetCameraProperty( property.first, property.second.first, property.second.second ));
                                                 }
                                                 CameraPropertiesToSet.clear( );
 
@@ -1185,12 +1185,12 @@ XError XLocalVideoDeviceData::GetVideoProperty( XVideoProperty property, int32_t
 }
 
 // Get range of values supported by the specified video property
-XError XLocalVideoDeviceData::GetVideoPropertyRange( XVideoProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* default, bool* isAutomaticSupported ) const
+XError XLocalVideoDeviceData::GetVideoPropertyRange( XVideoProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* defaultValue, bool* isAutomaticSupported ) const
 {
     lock_guard<recursive_mutex> lock( RunningSync );
     XError                      ret = XError::Success;
 
-    if ( ( min == nullptr ) || ( max == nullptr ) || ( step == nullptr ) || ( default == nullptr ) || ( isAutomaticSupported == nullptr ) )
+    if ( ( min == nullptr ) || ( max == nullptr ) || ( step == nullptr ) || ( defaultValue == nullptr ) || ( isAutomaticSupported == nullptr ) )
     {
         ret = XError::NullPointer;
     }
@@ -1220,7 +1220,7 @@ XError XLocalVideoDeviceData::GetVideoPropertyRange( XVideoProperty property, in
             *min     = propMin;
             *max     = propMax;
             *step    = propStep;
-            *default = propDef;
+            *defaultValue = propDef;
 
             *isAutomaticSupported = ( propFlags & VideoProcAmp_Flags_Auto );
         }
@@ -1333,12 +1333,12 @@ XError XLocalVideoDeviceData::GetCameraProperty( XCameraProperty property, int32
 }
 
 // Get range of values supported by the specified camera property
-XError XLocalVideoDeviceData::GetCameraPropertyRange( XCameraProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* default, bool* isAutomaticSupported ) const
+XError XLocalVideoDeviceData::GetCameraPropertyRange( XCameraProperty property, int32_t* min, int32_t* max, int32_t* step, int32_t* defaultValue, bool* isAutomaticSupported ) const
 {
     lock_guard<recursive_mutex> lock( RunningSync );
     XError                      ret = XError::Success;
 
-    if ( ( min == nullptr ) || ( max == nullptr ) || ( step == nullptr ) || ( default == nullptr ) || ( isAutomaticSupported == nullptr ) )
+    if ( ( min == nullptr ) || ( max == nullptr ) || ( step == nullptr ) || ( defaultValue == nullptr ) || ( isAutomaticSupported == nullptr ) )
     {
         ret = XError::NullPointer;
     }
@@ -1368,7 +1368,7 @@ XError XLocalVideoDeviceData::GetCameraPropertyRange( XCameraProperty property, 
             *min     = propMin;
             *max     = propMax;
             *step    = propStep;
-            *default = propDef;
+            *defaultValue = propDef;
 
             *isAutomaticSupported = ( propFlags & CameraControl_Flags_Auto );
         }

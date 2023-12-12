@@ -208,23 +208,23 @@ XError XLocalVideoDevicePropsInfo::GetProperty( const std::string& propertyName,
     }
     else
     {
-        int32_t min = 0, max = 0, step = 0, default = 0;
+        int32_t min = 0, max = 0, step = 0, defaultValue = 0;
         bool    isAutoSupported;
 
-        // get property features - min/max/default/etc
+        // get property features - min/max/defaultValue/etc
         if ( itSupportedProperty->second.PropertyKind == PROP_KIND_VIDEO )
         {
-            ret = mCamera->GetVideoPropertyRange( static_cast<XVideoProperty>( itSupportedProperty->second.Property ), &min, &max, &step, &default, &isAutoSupported );
+            ret = mCamera->GetVideoPropertyRange( static_cast<XVideoProperty>( itSupportedProperty->second.Property ), &min, &max, &step, &defaultValue, &isAutoSupported );
         }
         else
         {
             if ( itSupportedProperty->second.ValueType == TYPE_INT )
             {
-                ret = mCamera->GetCameraPropertyRange( static_cast< XCameraProperty >( itSupportedProperty->second.Property ), &min, &max, &step, &default, &isAutoSupported );
+                ret = mCamera->GetCameraPropertyRange( static_cast< XCameraProperty >( itSupportedProperty->second.Property ), &min, &max, &step, &defaultValue, &isAutoSupported );
             }
             else
             {
-                default = true;
+                defaultValue = true;
             }
         }
 
@@ -233,12 +233,12 @@ XError XLocalVideoDevicePropsInfo::GetProperty( const std::string& propertyName,
             if ( itSupportedProperty->second.ValueType == TYPE_INT )
             {
                 sprintf( buffer, "{\"min\":%d,\"max\":%d,\"def\":%d,\"type\":\"int\",\"order\":%d,\"name\":\"%s\"}",
-                         min, max, default, itSupportedProperty->second.Order, itSupportedProperty->second.Name );
+                         min, max, defaultValue, itSupportedProperty->second.Order, itSupportedProperty->second.Name );
             }
             else
             {
                 sprintf( buffer, "{\"def\":%d,\"type\":\"bool\",\"order\":%d,\"name\":\"%s\"}",
-                         default, itSupportedProperty->second.Order, itSupportedProperty->second.Name );
+                         defaultValue, itSupportedProperty->second.Order, itSupportedProperty->second.Name );
             }
 
             value = buffer;
