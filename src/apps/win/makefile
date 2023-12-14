@@ -22,8 +22,7 @@ OUT_FOLDER = ../../../build/gcc/
 
 # Resource file
 RES_FILE = cam2web.rc
-RES_OBJECT = cam2web_res.o # Changed to a unique name
-
+RES_OBJECT = cam2web.res 
 # Default target
 all: $(APP)
 
@@ -33,7 +32,7 @@ $(RES_OBJECT): $(RES_FILE)
 
 # Linking the application
 $(APP): $(CPP_OBJECTS) $(C_OBJECTS) $(RES_OBJECT)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(OUT_FOLDER)/$(APP) $(CPP_OBJECTS) $(C_OBJECTS) $(LIBS) $(RES_OBJECT)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(OUT_FOLDER)$(APP) $(CPP_OBJECTS) $(C_OBJECTS) $(LIBS) $(RES_OBJECT)
 
 # Compiling C++ source files into object files
 %.o: %.cpp
