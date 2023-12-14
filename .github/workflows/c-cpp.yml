@@ -21,7 +21,7 @@ jobs:
         update: true
     - name: create build dir
       shell: msys2 {0}
-      run: mkdir build/gcc
+      run: mkdir -p build/gcc
     - name: make
       shell: msys2 {0}
       run: cd src/apps/win/ && make
