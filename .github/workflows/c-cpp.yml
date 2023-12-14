@@ -18,4 +18,5 @@ jobs:
         install: mingw-w64-x86_64-gcc
         upgrade: true
     - name: make
+      shell: msys2 {0}
       run: cd src/apps/win/&&make
