@@ -11,12 +11,20 @@ jobs:
 
     runs-on: windows-latest
 
+
     steps:
+    - uses: actions/checkout@v3
     - uses: msys2/setup-msys2@v2
       with:
         msystem: MINGW64
         install: mingw-w64-x86_64-gcc
         upgrade: true
+    - name: Print working directory
+      shell: msys2 {0}
+      run: pwd
+    - name: List files
+      shell: msys2 {0}
+      run: ls -la
     - name: make
       shell: msys2 {0}
-      run: cd src/apps/win/&&make
+      run: cd src/apps/win/ && make
