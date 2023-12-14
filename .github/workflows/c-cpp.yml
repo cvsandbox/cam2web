@@ -19,12 +19,9 @@ jobs:
         msystem: MINGW64
         install: mingw-w64-x86_64-gcc mingw-w64-x86_64-make make mingw-w64-x86_64-libjpeg-turbo
         update: true
-    - name: Print working directory
+    - name: create build dir
       shell: msys2 {0}
-      run: pwd
-    - name: List files
-      shell: msys2 {0}
-      run: ls -la
+      run: mkdir build/gcc
     - name: make
       shell: msys2 {0}
       run: cd src/apps/win/ && make
