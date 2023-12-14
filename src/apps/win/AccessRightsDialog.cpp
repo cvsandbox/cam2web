@@ -132,8 +132,10 @@ static void AddUserToListView( HWND hwndListView, const string& userName, UserGr
     lvI.iItem     = ListView_GetItemCount( hwndListView );
 
     ListView_InsertItem( hwndListView, &lvI );
+    wchar_t adminText[] = L"Admin";
+    wchar_t userText[] = L"User";
+    lvI.pszText = (userGroup == UserGroup::Admin) ? adminText : userText;
 
-    lvI.pszText   = ( userGroup == UserGroup::Admin ) ? L"Admin" : L"User";
     lvI.mask      = LVIF_TEXT;
     lvI.iSubItem  = 1;
 
@@ -171,7 +173,9 @@ static void UpdateUserInListView( HWND hwndListView, const string& userName, Use
             lvI.mask     = LVIF_TEXT;
             lvI.iItem    = i;
             lvI.iSubItem = 1;
-            lvI.pszText  = ( userGroup == UserGroup::Admin ) ? L"Admin" : L"User";
+            wchar_t adminText[] = L"Admin";
+            wchar_t userText[] = L"User";
+            lvI.pszText = (userGroup == UserGroup::Admin) ? adminText : userText;
 
             ListView_SetItem( hwndListView, &lvI );
 
